@@ -924,7 +924,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
       cout << "Error in BFGS - the derivative is positive\n";
       ifail = 4;
     }
-    error= normgrad / (1.0 + ABS(y));
+    error = normgrad / (1.0 + absolute(y));
 
   } else {
     // Loop over BFGS iterations
@@ -948,7 +948,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
       cout << "Error in BFGS - the derivative is positive\n";
       ifail = 4;
     }
-    error= normgrad / (1.0 + ABS(y));
+    error = normgrad / (1.0 + absolute(y));
   }
 
   doLineseek();
@@ -956,7 +956,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
     alpha = min(s, 1.0) * pow(lineS->GetBeta(), lineS->GetPower());
 
   //JMB - changed to check if a double is very close to zero
-  if (ABS(alpha) < 1e-100) {
+  if (absolute(alpha) < 1e-100) {
     armijoproblem += 1;
     difficultgrad += 1;
     ifail = -2;
@@ -977,7 +977,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
     if (difficultgrad >= 1)
       diaghess = grad->getDiagonalHess();
 
-    error = normgrad / (1.0 + ABS(y));
+    error = normgrad / (1.0 + absolute(y));
     if (ifail != 6 && ifail != -2) {
       if (bfgs_constant == 1) {
         int update = bfgsUpdate();
@@ -986,7 +986,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
       }
     }
     normx = sqrt(normx);
-    relchng = (prevy - y) / (1.0 + ABS(prevy));
+    relchng = (prevy - y) / (1.0 + absolute(prevy));
   }
   net->setBestX(x);
 

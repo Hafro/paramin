@@ -415,7 +415,7 @@ void wolfe::initiateAlphas() {
   assert(rho != 0.0);
   assert(sigma != 0.0);
 
-  double tmpM = (1.0 + ABS(yl)) / dy0;
+  double tmpM = (1.0 + absolute(yl)) / dy0;
   inixvec[1] = -0.00001 * tmpM;
   inixvec[2] = 2.0;
   inixvec[3] = 0.5;
@@ -548,17 +548,18 @@ void wolfe::finishSweep() {
   vector xtmp(1);
   double tmpdelta;
   int i;
+  int maxreq = max(numberOfProcesses - askedfor, 3);
 
   if (xu < 0.0 && xl == 0.0)
-    tmpdelta = 2.0 / MAX(numberOfProcesses - askedfor, 3.0);
+    tmpdelta = 2.0 / maxreq;
   else if (xu > 0.0)
-    tmpdelta = (xu - xl) / MAX(numberOfProcesses - askedfor, 3.0);
+    tmpdelta = (xu - xl) / maxreq;
   else if (xl < 0.001)
-    tmpdelta = (0.01 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
+    tmpdelta = (0.01 - xl) / maxreq;
   else if (xl < 0.01)
-    tmpdelta = (0.1 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
+    tmpdelta = (0.1 - xl) / maxreq;
   else
-    tmpdelta = (1.0 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
+    tmpdelta = (1.0 - xl) / maxreq;
 
   for (i = askedfor, xtmp[0] = xl + tmpdelta;
       i < numberOfProcesses; xtmp[0] += tmpdelta, i++) {
@@ -621,7 +622,7 @@ int wolfe::tabu(double x) {
 
   for (i=0;i<n;i++) {
     alpha = net->getX(i);
-    if ((ABS(x - alpha[0])) < (acc / 100.0)) {
+    if ((absolute(x - alpha[0])) < (acc / 100.0)) {
       return 1;
     }
   }

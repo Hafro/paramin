@@ -48,7 +48,7 @@ void netGradient::setXVectors(const vector& x, netInterface* netInt) {
   vector tempVec;
   tempVec = x;
   for (i = 0; i < numberOfVariables; i++) {
-    deltai = deltavec[i] * (1.0 + ABS(tempVec[i]));
+    deltai = deltavec[i] * (1.0 + absolute(tempVec[i]));
     tempVec[i] -= deltai;
     netInt->setX(tempVec);
     if (difficultgrad == 1) {
@@ -90,7 +90,7 @@ int netGradient::computeGradient(netInterface* net, const vector& x, int difficu
 
   //Calculate f(x + hi * ei) for all i
   for (i = 0;  i < numberOfVariables; i++) {
-    deltai=(1. + ABS(x[i])) * deltavec[i];
+    deltai=(1. + absolute(x[i])) * deltavec[i];
     fx1 = net->getY(numfx);
     numfx++;
 
@@ -104,8 +104,8 @@ int netGradient::computeGradient(netInterface* net, const vector& x, int difficu
       if ((fx4 > fx) && (fx1 > fx))
         difficult = 1;
 
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
+      if (absolute(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
         cout << "Warning - roundoff errors in gradient\n";
       }
 
@@ -119,21 +119,21 @@ int netGradient::computeGradient(netInterface* net, const vector& x, int difficu
       grad[i] = (fx1 - fx4 + 8 * fx3 - 8 * fx2) / (6 * deltai);
       diagHess[i] = (fx4 - 2 * fx + fx1) / (deltai * deltai);
 
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
+      if (absolute(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
         cout << "Warning - roundoff errors in gradient\n";
       }
 
     } else {
       grad[i] = (fx - fx1) / deltai;
-      if (ABS(fx - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
+      if (absolute(fx - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
         cout << "Warning - roundoff errors in gradient\n";
       }
     }
 
     if (grad[i] > BIG) { // seem to be running outside the boundary
-      deltavec[i] = MAX(delta1, deltavec[i] / 5.0);
+      deltavec[i] = max(delta1, deltavec[i] / 5.0);
       cout << "Warning - roundoff errors in gradient\n";
     }
     normgrad += grad[i] * grad[i];

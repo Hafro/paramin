@@ -1,11 +1,10 @@
 ################################################################
 # Common for all architecture and compiler options
 ################################################################
-GCCWARNINGS = -Wimplicit -Wreturn-type -Wswitch -Wcomment -Wformat \
-              -Wparentheses -Wpointer-arith -Wcast-qual -Wcast-align \
-              -Wsynth -Woverloaded-virtual -Wbad-function-cast \
-              -Wwrite-strings -Wconversion -Wchar-subscripts \
-              -Wuninitialized -W -pedantic
+GCCWARNINGS = -Wimplicit -Wreturn-type -Wswitch -Wcomment -Wformat=2 \
+              -Wparentheses -Wpointer-arith -Wcast-qual -Wconversion \
+              -Wreorder -Wwrite-strings -Wsynth -Wchar-subscripts \
+              -Wuninitialized -W
 
 PVMDIR = $(PVM_ROOT)
 PVMLIBDIR = -L$(PVM_ROOT)/lib/$(PVM_ARCH)
@@ -29,20 +28,20 @@ GADGETDIR = ../source
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 #LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
+#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -G GADGET_INLINE -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 3. Solaris, g++ compiler, no gadget library
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR)
-#LIBRARIES = -lm -lpvm3 -lgpvm3 -lnsl -lsocket
+#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3
 #DEFINE_FLAGS = -D NDEBUG -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 4. Solaris, g++ compiler, with gadget library
 CXX = g++
 LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
+LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
 DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
