@@ -138,7 +138,6 @@ int NetCommunication::startNetCommunication() {
       }
     }
 
-    info = pvm_config(&nhost, &narch, &hostp);
     for (i = 0; i < nhost; i++) {
       /* hosts to be monitored for deletion, suspension and resumption*/
       hostTids[i] = hostp[i].hi_tid;
