@@ -15,13 +15,14 @@ PVMINCLUDE = $(PVM_ROOT)/include
 # NOTE that the Gadget input library needs to be compiled
 # first - see the Makefile for Gadget to create libgadgetinput.a
 # and the location of the gadget directory needs to be set here
-GADGETDIR = ../gadget
+GADGETDIR = ../source
 ################################################################
 # 1. Linux, g++ compiler
 CXX = g++
 LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 LIBRARIES = -lm -lnsl -lpvm3 -lgadgetinput
-DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
+DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
+#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 2. Solaris, g++ compiler

@@ -378,7 +378,7 @@ int Wolfe::tabu(double x) {
   int n = net->getNumDataItemsSet();
   vector alpha;
 
-  for (i=0;i<n;i++) {
+  for (i = 0; i < n; i++) {
     alpha = net->getX(i);
     if ((absolute(x - alpha[0])) < (acc / 100.0)) {
       return 1;

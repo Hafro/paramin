@@ -55,11 +55,10 @@ void ParaminBFGS::Read(CommentStream& infile, char* text) {
     } else if (strcasecmp(text, "bfgspar") == 0) {
       infile >> bfgs_constant;
 
-    } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "\
-maxiter") == 0) || (strcasecmp(text, "bfgsiter") == 0))  {
+    } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "maxiter") == 0) || (strcasecmp(text, "bfgsiter") == 0))  {
       infile >> maxiterations;
 
-    } else if ((strcasecmp(text, "eps") == 0) || (strcasecmp(text, "bfgseps") == 0) ||(strcasecmp(text, "errortol") == 0)) {
+    } else if ((strcasecmp(text, "eps") == 0) || (strcasecmp(text, "bfgseps") == 0) || (strcasecmp(text, "errortol") == 0)) {
       infile >> errortol;
 
     } else if (strcasecmp(text, "xtol") == 0) {
@@ -68,7 +67,7 @@ maxiter") == 0) || (strcasecmp(text, "bfgsiter") == 0))  {
     } else if ((strcasecmp(text, "maxrounds") == 0) || (strcasecmp(text, "bfgsrounds") == 0)) {
       infile >> maxrounds;
 
-    } else if ((strcasecmp(text, "printing") == 0) || (strcasecmp(text, "bfgsdebug") == 0)) {
+    } else if (strcasecmp(text, "printing") == 0) {
       infile >> to_print;
 
     } else if (strcasecmp(text, "sigma") == 0) {
@@ -78,10 +77,12 @@ maxiter") == 0) || (strcasecmp(text, "bfgsiter") == 0))  {
     } else if (strcasecmp(text, "beta") == 0) {
       infile >> temp;
       lineS->setBeta(temp);
-    } else if ((strcasecmp(text, "gradacc") == 0) || (strcasecmp(text, "gradstep") == 0) || (strcasecmp(text, "st") == 0) || (strcasecmp(text, "step") == 0) || (strcasecmp(text, "") == 0)) {
+
+    } else if ((strcasecmp(text, "gradacc") == 0) || (strcasecmp(text, "gradstep") == 0) || (strcasecmp(text, "st") == 0) || (strcasecmp(text, "step") == 0) || (strcasecmp(text, "scale") == 0)) {
       cout << "BFGS - " << text << " is not used in paramin" << endl;
       infile >> ws;
-   } else {
+
+    } else {
       cerr << "Error while reading optinfo for bfgs - unknown option " << text << endl;
       exit(EXIT_FAILURE);
     }

@@ -133,7 +133,7 @@ void Optimizer::OptimizeFunc() {
     parHJ->doSearch(startx, startf);
     startx = parHJ->getBestX();
     startf = parHJ->getBestF();
-    cout << "\nBest point from Hooke and Jeeves is f(x) = " << startf << " at\n" << startx;
+    cout << "\nBest point from Hooke & Jeeves is f(x) = " << startf << " at\n" << startx;
   }
 
   if (useBfgs) {
@@ -167,21 +167,24 @@ void Optimizer::PrintResult(NetInterface* net) {
   } else {
     // write the data in the gadget format so this file can be used as a starting point
     outfile << "; Output from Paramin version " << PARAMINVERSION << " on " << ctime(&timenow);
-    if(useSimann)
-      if(parSA->GetConverged())
-	outfile << "; Simulated Annealing stopped because an optimum was found\n";
+    if (useSimann) {
+      if (parSA->GetConverged())
+        outfile << "; Simulated Annealing stopped because the convergence criteria were met\n";
       else
-	outfile << "; Simulated Annealing stopped because the maxinmum number of functional evaluation was reached\n";
-    else if(useHooke)
-      if(parHJ->GetConverged())
-	outfile << "; Hooke&Jeeves stopped because an optimum was found\n";
-    else
-	outfile << "; Hooke&Jeeves stopped because the maxinmum number of functional evaluation was reached\n";
-    else if(useBfgs)
-      if(parBFGS->GetConverged())
-	outfile << "; BFGS stopped because an optimum was found\n";
-    else
-	outfile << "; BFGS stopped because the maxinmum number of functional evaluation was reached\n";
+        outfile << "; Simulated Annealing stopped because the maximum number of function evaluations was reached\n";
+    } 
+    if (useHooke) {
+      if (parHJ->GetConverged())
+        outfile << "; Hooke & Jeeves stopped because the convergence criteria were met\n";
+      else
+        outfile << "; Hooke & Jeeves stopped because the maximum number of function evaluations was reached\n";
+    } 
+    if (useBfgs) {
+      if (parBFGS->GetConverged())
+        outfile << "; BFGS stopped because the convergence criteria were met\n";
+      else
+        outfile << "; BFGS stopped because the maximum number of function evaluations was reached\n";
+    }
     outfile  << "; The final likelihood value was " << startf << "\nswitch\tvalue\t\tlower\tupper\toptimise\n";
     vector output;
     output = this->getBestX(net);

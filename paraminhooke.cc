@@ -253,7 +253,7 @@ int ParaminHooke::MyDataGroup() {
 void ParaminHooke::ReceiveValue() {
   int receive = net->receiveOne();
   if (receive == net->netError()) {
-    cerr << "Error in Hooke - failed to receive data in wolfe\n";
+    cerr << "Error in Hooke - failed to receive data in linesearch\n";
     net->stopUsingDataGroup();
     exit(EXIT_FAILURE);
   }
