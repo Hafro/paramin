@@ -86,6 +86,10 @@ public:
   int netError();
   int netSuccess();
 
+
+  //  int startOneProcess(int processNum, int processTid);
+  //  int sendInitialMessageToTid(int tid, int processNum);
+  #ifdef CONDOR
   //Added for condor
   void checkHostsForSuspend();
   void checkHostsForDelete();
@@ -94,6 +98,7 @@ public:
   int checkHostForSuspendReturnsDataid(int* procTids);
   int checkHostForDeleteReturnsDataid(int* procTids);
   int checkHostForResumeReturnsDataid(int* procTids);
+  #endif
   virtual int receiveDataNonBlocking(NetDataResult* rp);
   int startOneProcess(int processNum, int processTid);
   int spawnAndStartOneProcess(int processNumber);
@@ -109,7 +114,7 @@ public:
   int probeForReceiveData();
   int checkProcessByTid(int tidToCheck, int processNum);
   int sendData(NetDataVariables* sendP, int processId, int dataId);
-
+  //#endif
 
 
 #ifdef GADGET_NETWORK

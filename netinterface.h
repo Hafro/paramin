@@ -160,7 +160,7 @@ public:
   int sendAndReceiveAllData();
   int sendAndReceiveTillCondition(condition* con);
   int sendAndReceiveSetData(condition* con);
-
+#ifdef CONDOR
   //Added for condor
   int probeForReceiveOne();
   int receiveOneNonBlocking();
@@ -177,6 +177,9 @@ public:
   int sendAndReceiveAllDataCondor();
   int sendAndReceiveSetDataCondor(condition* con);
   int sendToAllIdleHostsCondor();
+#endif
+  int sendToIdleHostIfCan();
+  int sendOneAndDataid(int processId, int x_id);
 
   // ******************************************************
   // Functions concerning netcommunication

@@ -37,9 +37,13 @@ public:
   bfgs(NetInterface* netInt, gradient* g, armijo* lineseek);
   ~bfgs();
   void computeGradient();
+#ifdef CONDOR
   void computeGradientCondor();
+#endif
   void doLineseek();
+#ifdef CONDOR
   void doLineseekCondor();
+#endif
   int iteration(int maxit, double errortol, double xtol, int iteration);
   int iterationCondor(int maxit,double errortol, double xtol, int iteration);
   void scaleDirectionVector();
@@ -74,7 +78,9 @@ public:
   double f;
   virtual ~search();
   virtual int doSearch() = 0;
+#ifdef CONDOR
   virtual int doSearchCondor() = 0;
+#endif
   vector getBestX(NetInterface *net);
   double getBestF();
 };
@@ -84,7 +90,9 @@ private:
   bfgs* min;
   NetInterface* net;
 public:
+#ifdef CONDOR
   int doSearchCondor();
+#endif
   minimizer(NetInterface* netInt);
   virtual ~minimizer();
   int doSearch();
@@ -125,7 +133,9 @@ public:
     const vector& c, int T, const vector& vm);
   virtual ~simann();
   int doSearch();
+#ifdef CONDOR
   int doSearchCondor();
+#endif
   int sendData();
   double expRep(double d);
   double simannRandom();
@@ -159,9 +169,13 @@ public:
   hooke(NetInterface* netInt);
   virtual ~hooke();
   int doSearch();
+#ifdef CONDOR
   int doSearchCondor();
+#endif
   double bestNearby(const vector& delta, double prevbest);
+#ifdef CONDOR
   double bestNearbyCondor(const vector& delta, double prevbest);
+#endif
   int setPoint(int n, double flast);
   int sendData();
 };

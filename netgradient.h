@@ -12,7 +12,9 @@ public:
   virtual ~gradient();
   virtual void setXVectors(const vector& x, NetInterface* netInt) = 0;
   virtual int computeGradient(NetInterface* net, const vector& x, int linesprob) = 0;
+#ifdef CONDOR
   virtual int computeGradientCondor(NetInterface* net, const vector & x, int linesprob) = 0;
+#endif
   virtual vector getDiagonalHessian() = 0;
   virtual double getNormGrad() = 0;
   virtual vector getGradient() = 0;

@@ -15,22 +15,22 @@ PVMINCLUDE = $(PVM_ROOT)/include
 # For options 2 and 4, 5 and 6, the Gadget input library needs to be compiled
 # first - see the Makefile for Gadget to create libgadgetinput.a
 # and the location of the gadget directory needs to be set here
-GADGETDIR = ../source
+GADGETDIR = ../gadget/
 ################################################################
 # 1. Linux, g++ compiler, no gadget library
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3
-#DEFINE_FLAGS = -D NDEBUG -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
+CXX = g++
+LIBDIRS = $(PVMLIBDIR)
+LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3
+DEFINE_FLAGS = -D NDEBUG -O3
+CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 2. Linux, g++ compiler, with gadget library
-#CXX = g++
+#CXX = g++296
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 #LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
 #DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
-################################################################
+###############################################################
 # 3. Solaris, g++ compiler, no gadget library
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR)
@@ -39,14 +39,14 @@ GADGETDIR = ../source
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 4. Solaris, g++ compiler, with gadget library
-CXX = g++
-LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
-DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
-CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
+#CXX = g++
+#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
+#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
+#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
+#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 5. Linux, g++ compiler, with gadget library running CONDOR
-#CXX = g++
+#CXX = g++296
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 #LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
 #DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3

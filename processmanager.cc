@@ -182,7 +182,7 @@ int ProcessManager::getNextTidToSend(NetCommunication* n) {
   }
 }
 #endif
-
+#ifdef CONDOR
 int ProcessManager::checkForNewProcess(NetCommunication* n) {
   int newProcess;
   newProcess = n->getHealthOfProcessesAndHostAdded(procStat);
@@ -191,7 +191,7 @@ int ProcessManager::checkForNewProcess(NetCommunication* n) {
     addMoreProc(newProcess);
   return newProcess;
 }
-
+#endif
 #ifndef CONDOR
 int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;

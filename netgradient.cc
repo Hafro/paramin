@@ -145,7 +145,7 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, int difficu
   net->stopUsingDataGroup();
   return 1;
 }
-
+#ifdef CONDOR
 int NetGradient::computeGradientCondor(NetInterface* net, const vector & x, int difficultgradient) {
 
   difficult = 0;
@@ -231,6 +231,7 @@ int NetGradient::computeGradientCondor(NetInterface* net, const vector & x, int 
   net->stopUsingDataGroup();
   return 1;
 }
+#endif
 
 double NetGradient::getBaseFX() {
   return fx0;

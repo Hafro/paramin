@@ -291,6 +291,7 @@ int simann::doSearch() {
 }
 
 //Added jongud 27.05.03
+#ifdef CONDOR
 int simann::doSearchCondor() {
   int i, j, k, h, m, q, g;
   int check, quit, hasSent, sendInfo, found;
@@ -499,6 +500,7 @@ int simann::doSearchCondor() {
   net->setBestX(x);
   return nfcnev;
 }
+#endif
 
 int simann::sendData() {
   int sendInfo = net->sendToIdleHostIfCan();
@@ -646,7 +648,7 @@ void simann::receiveValue() {
     exit(EXIT_FAILURE);
   }
 }
-
+#ifdef CONDOR
 // Get a function value and do any update that's necessary
 void simann::receiveValueNonBlocking() {
   double p, pp;
@@ -691,7 +693,7 @@ void simann::receiveValueNonBlocking() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
 // ********************************************************
 // functions for class hooke
 // ********************************************************
@@ -884,7 +886,7 @@ double hooke::bestNearby(const vector& delta, double prevbest) {
   delete[] change;
   return fopt;
 }
-
+#ifdef CONDOR
 //Added jongud 27.05.03
 double hooke::bestNearbyCondor(const vector& delta, double prevbest) {
   int receive, check;
@@ -1120,7 +1122,7 @@ double hooke::bestNearbyCondor(const vector& delta, double prevbest) {
   delete[] change;
   return fopt;
 }
-
+#endif
 int hooke::doSearch() {
   hjcon val = readHJConstants();
   numvar = net->getNumVarsInDataGroup();
@@ -1228,7 +1230,7 @@ int hooke::doSearch() {
   net->setBestX(x);
   return iters;
 }
-
+#ifdef CONDOR
 //Added jongud 27.05.03 .
 int hooke::doSearchCondor() {
   hjcon val = readHJConstants();
@@ -1336,7 +1338,7 @@ int hooke::doSearchCondor() {
   net->setBestX(x);
   return iters;
 }
-
+#endif
 int hooke::setPoint(int n, double flast) {
   // return 0 and do nothing if the changes goes out of bounds
   z = newx;
@@ -1636,7 +1638,7 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
     ifail= -1;
   return ifail;
 }
-
+#ifdef CONDOR
 int bfgs::iterationCondor(int maxit,double errortol, double xtol, int iterno) {
   iter = iterno;
   int ifail = 0;
@@ -1748,7 +1750,7 @@ int bfgs::iterationCondor(int maxit,double errortol, double xtol, int iterno) {
     ifail= -1;
   return ifail;
 }
-
+#endif
 void bfgs::computeGradient() {
   int i = grad->computeGradient(net, x, difficultgrad);
   int tmp = grad->getDifficultGrad();
@@ -1761,7 +1763,7 @@ void bfgs::computeGradient() {
     exit(EXIT_FAILURE);
   }
 }
-
+#ifdef CONDOR
 void bfgs::computeGradientCondor() {
   int i = grad->computeGradientCondor(net, x, difficultgrad);
   int tmp = grad->getDifficultGrad();
@@ -1774,7 +1776,7 @@ void bfgs::computeGradientCondor() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
 void bfgs::doLineseek() {
   s = -1e10;
   double low = getS(0);
@@ -1792,7 +1794,7 @@ void bfgs::doLineseek() {
   }
   lineS->doArmijo(x, y, dery, h, net, min(s, 1.0));
 }
-
+#ifdef CONDOR
 void bfgs::doLineseekCondor() {
   s = -1e10;
   double low = getS(0);
@@ -1810,7 +1812,7 @@ void bfgs::doLineseekCondor() {
   }
   lineS->doArmijoCondor(x, y, dery, h, net, min(s, 1.0));
 }
-
+#endif
 void bfgs::scaleDirectionVector() {
   int i;
   dery *= normdeltax / normh;
@@ -2077,7 +2079,7 @@ int minimizer::doSearch() {
   delete lines;
   return 1;
 }
-
+#ifdef CONDOR
 //Added jongud 13.08.02
 int minimizer::doSearchCondor() {
   mainbfgscon par;
@@ -2123,3 +2125,4 @@ int minimizer::doSearchCondor() {
   delete lines;
   return 1;
 }
+#endif

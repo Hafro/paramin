@@ -2,22 +2,22 @@
 ; Maximum number of variables:
 NUMVARS  200
 ; Size of each component vm, the step length vector for simulated annealing:
-VM_COMPONENT  1.0
+VM_COMPONENT  10.0
 ; Size of each component of the step length adjustment for simulated annealing:
-C_COMPONENT 2.0
+C_COMPONENT 200.0
 ; Starting temperature for simulated annealing.
-TEMPERATURE  100
+TEMPERATURE  1000
 ; 0 for maximization, 1 for minimization in SA
-MAXIM 0
+MAXIM 1 
 ; Number of iterations for one running of simulated annealing:
-SIM_ITER 3000
+SIM_ITER 1000000
 ; Total number of function evaluations used by Hooke & Jeeves:
-HOOKE_ITER 3000
+HOOKE_ITER 10
 ; Halt criteria (is not in use):
 EPSILON  0.5
 ; Scaling parameters:
 SCALING 0
-; Which minimization methods should be used - should have value 0 or 1
-SimulatedAnnealing 1
-HookeAndJeeves     1 
-BFGS               1 
+; Which minimization methods should be used - should have value -1 or 1
+SimulatedAnnealing 1 
+HookeAndJeeves     0 
+BFGS               0 

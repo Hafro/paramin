@@ -131,7 +131,7 @@ void armijo::doArmijo(const vector& v1, double fx, double dery,
   net->stopUsingDataGroup();
 }
 
-
+#ifdef CONDOR
 void armijo::doArmijoCondor(const vector & v1, double fx, double dery,
   const vector & h, NetInterface *netI, double s1) {
 
@@ -170,6 +170,7 @@ void armijo::doArmijoCondor(const vector & v1, double fx, double dery,
   }
   net->stopUsingDataGroup();
 }
+#endif
 
 int armijo::computeConditionFunction() {
   int i, cond_satisfied = 0;

@@ -1,6 +1,6 @@
 ; "Magic" constants needed for the running of BFGS.
 ; Max iterations for each bfgs-minimization:
-MAXBFGSITER  200
+MAXBFGSITER  2000
 ; Error tolerance for termination criteria:
 ERRORTOL  0.01
 ; Tolerance for x:

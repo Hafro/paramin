@@ -78,7 +78,7 @@ int NetInterface::sendOne(int processId, int x_id) {
     return net->netError();
   }
 }
-
+//#ifdef CONDOR
 int NetInterface::sendOneAndDataid(int processId, int x_id) {
   // Function returns ERROR if error occures while trying to send
   // Function returns SUCCESS if successfully sent data
@@ -139,7 +139,7 @@ int NetInterface::sendOneAndDataid(int processId, int x_id) {
     return net->netError();
   }
 }
-
+//endif
 int NetInterface::resend() {
   int i, canresend;
   int tid = -1;
@@ -276,7 +276,7 @@ int NetInterface::receiveOne() {
     return net->netError();
   }
 }
-
+#ifdef CONDOR
 //Added jongud 24.07.02
 void NetInterface::checkHealthOfProcesses() {
   net->getHealthOfProcesses(pManager->getStatus());
@@ -342,6 +342,7 @@ int NetInterface::receiveOneNonBlocking() {
     return netError();
   }
 }
+#endif
 
 int NetInterface::sendToAllIdleHosts() {
   // functions returns ERROR if error occures in netcommunication
@@ -391,6 +392,7 @@ int NetInterface::sendToAllIdleHosts() {
   }
 }
 
+#ifdef CONDOR
 int NetInterface::sendToAllIdleHostsCondor() {
   // functions returns ERROR if error occures in netcommunication
   // while trying to send°
@@ -441,7 +443,8 @@ int NetInterface::sendToAllIdleHostsCondor() {
     return net->netSuccess();
   }
 }
-
+#endif
+//fdef CONDOR
 int NetInterface::sendToIdleHostIfCan() {
 
   int tid = 0;
@@ -457,11 +460,13 @@ int NetInterface::sendToIdleHostIfCan() {
   if (dctrl->allSent())
     return net->netNeedMoreData();
 
+#ifdef GADGET_NETWORK
   newTid = pManager->checkForNewProcess(net);
   if (newTid > -1) {
     sendStringValue(newTid);
     sendBoundValues(newTid);
   }
+#endif
 
   tid = pManager->getNextTidToSend(net);
   //Check if free process was available. If not return with NEEDMOREHOSTS
@@ -489,7 +494,10 @@ int NetInterface::sendToIdleHostIfCan() {
     }
   }
 }
+//#endif
+ 
 
+#ifdef CONDOR
 int NetInterface::checkHostForSuspend() {
   int dataId = net->checkHostForSuspendReturnsDataid(pManager->getStatus());
   if (dataId >= 0)
@@ -502,7 +510,9 @@ int NetInterface::checkHostForSuspend() {
   }
   return dataId;
 }
+#endif
 
+#ifdef CONDOR
 int NetInterface::checkHostForDelete() {
   int dataId = net->checkHostForDeleteReturnsDataid(pManager->getStatus());
   if (dataId >= 0)
@@ -520,6 +530,7 @@ int NetInterface::checkHostForResume() {
   int dataId = net->checkHostForResumeReturnsDataid(pManager->getStatus());
   return dataId;
 }
+#endif
 
 int NetInterface::sendToIdleHosts() {
   // function returns ERROR if error occures while trying to send data,
@@ -573,6 +584,7 @@ int NetInterface::sendAll() {
   return OK;
 }
 
+#ifdef CONDOR
 int NetInterface::sendAllCondor() {
   assert(dctrl != NULL);
   int OK = sendToIdleHostIfCan();
@@ -583,6 +595,7 @@ int NetInterface::sendAllCondor() {
   }
   return OK;
 }
+#endif
 
 int NetInterface::receiveAndSend() {
   // This function tries to keep all processes busy by first trying to
@@ -626,7 +639,7 @@ int NetInterface::receiveAndSend() {
     return net->netError();
   }
 }
-
+#ifdef CONDOR
 int NetInterface::receiveAndSendCondor() {
   // This function tries to keep all processes busy by first trying to
   // receive and then sending available data to all suitable processes
@@ -674,7 +687,9 @@ int NetInterface::receiveAndSendCondor() {
     return net->netError();
   }
 }
+#endif
 
+#ifdef CONDOR
 int NetInterface::sendDataCondor() {
   int sendInfo = sendToIdleHostIfCan();
   if (sendInfo == netSuccess())
@@ -695,7 +710,7 @@ int NetInterface::sendDataCondor() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
 int NetInterface::receiveOnCondition(condition* con) {
   int counter = 0;
   int cond = 0;
@@ -782,6 +797,7 @@ int NetInterface::receiveAll() {
   }
 }
 
+#ifdef CONDOR
 int NetInterface::receiveAllCondor() {
   int canreceive = 1;
   int cansend = 1;
@@ -824,6 +840,7 @@ int NetInterface::receiveAllCondor() {
     return net->netError();
   }
 }
+#endif
 
 int NetInterface::sendAndReceiveAllData() {
   int cansend_receive;
@@ -836,7 +853,7 @@ int NetInterface::sendAndReceiveAllData() {
   else
     return net->netError();
 }
-
+#ifdef CONDOR
 int NetInterface::sendAndReceiveAllDataCondor() {
   int cansend_receive;
   cansend_receive = sendAllCondor();
@@ -848,6 +865,7 @@ int NetInterface::sendAndReceiveAllDataCondor() {
   else
     return net->netError();
 }
+#endif
 
 int NetInterface::sendAllOnCondition(condition* con) {
   int cond = 0;
@@ -937,6 +955,7 @@ int NetInterface::sendAndReceiveSetData(condition* con) {
     return net->netError();
 }
 
+#ifdef CONDOR
 int NetInterface::sendAndReceiveSetDataCondor(condition* con) {
   int cond = 0;
   int sendreceive = 1;
@@ -983,6 +1002,7 @@ int NetInterface::sendAndReceiveSetDataCondor(condition* con) {
   else
     return net->netError();
 }
+#endif
 
 int NetInterface::sendAndReceiveTillCondition(condition* con) {
   int condition;

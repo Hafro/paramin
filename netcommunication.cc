@@ -462,7 +462,7 @@ int NetCommunication::startOneProcess(int processNum, int processTid) {
     stopNetCommunication();
     return ERROR;
   }
-
+#ifdef CONDOR 
   //jongud added pvm_notify for if host get suspended
   info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
   if (info < 0) {
@@ -486,7 +486,7 @@ int NetCommunication::startOneProcess(int processNum, int processTid) {
     stopNetCommunication();
     return ERROR;
   }
-
+#endif
   //Send initial message to the last spawned process, nhost == number of processes
   cansend = sendInitialMessageToTid(processTid, processNum);
   if (cansend == -1) {
@@ -737,7 +737,7 @@ void NetCommunication::getHealthOfProcesses(int* procTids) {
   for (i = 0; i < numProcesses; i++)
     procTids[i] = status[i];
 }
-
+#ifdef CONDOR
 int NetCommunication::getHealthOfProcessesAndHostAdded(int* procTids) {
   int i, newProcess = -1;
   checkProcesses();
@@ -748,7 +748,7 @@ int NetCommunication::getHealthOfProcessesAndHostAdded(int* procTids) {
     procTids[i] = status[i];
   return newProcess;
 }
-
+#endif
 void NetCommunication::checkProcesses() {
   int i, info, tidDown;
 
@@ -772,7 +772,7 @@ void NetCommunication::checkProcesses() {
     exit(EXIT_FAILURE);
   }
 }
-
+#ifdef CONDOR
 void  NetCommunication::checkHostsForSuspend() {
   int i, j, info;
   int taskSuspended = 0;
@@ -805,7 +805,8 @@ void  NetCommunication::checkHostsForSuspend() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
+#ifdef CONDOR
 void NetCommunication::checkHostsForDelete() {
   int i, info, tidDelete;
 
@@ -830,7 +831,7 @@ void NetCommunication::checkHostsForDelete() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
 int NetCommunication::spawnAndStartOneProcess(int processNumber) {
   int check;
   int newTid = 0;
@@ -848,7 +849,7 @@ int NetCommunication::spawnAndStartOneProcess(int processNumber) {
   }
   return SUCCESS;
 }
-
+#ifdef CONDOR
 int NetCommunication::checkHostsForAdded() {
   int i, check, info, infos, tidAdded;
   int numOfProcessAdded = -1;
@@ -897,7 +898,8 @@ int NetCommunication::checkHostsForAdded() {
     return ERROR;
   }
 }
-
+#endif
+#ifdef CONDOR
 void NetCommunication::checkHostsForResume() {
   int i, info, tidResume;
 
@@ -922,7 +924,8 @@ void NetCommunication::checkHostsForResume() {
     exit(EXIT_FAILURE);
   }
 }
-
+#endif
+#ifdef CONDOR
 int NetCommunication::checkHostForSuspendReturnsDataid(int* procTids) {
   int processId = -1;
   int dataId = -1;
@@ -966,7 +969,8 @@ int NetCommunication::checkHostForSuspendReturnsDataid(int* procTids) {
   }
   return -2;
 }
-
+#endif
+#ifdef CONDOR
 int NetCommunication::checkHostForDeleteReturnsDataid(int* procTids) {
   int processId = -1;
   int dataId = -1;
@@ -1015,7 +1019,9 @@ int NetCommunication::checkHostForDeleteReturnsDataid(int* procTids) {
   }
   return -2;
 }
+#endif
 
+#ifdef CONDOR
 int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
   int processId = -1;
   int dataId = -1;
@@ -1067,7 +1073,7 @@ int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
   }
   return -2;
 }
-
+#endif
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
