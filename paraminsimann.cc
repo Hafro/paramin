@@ -106,7 +106,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
   int i, numtoset, numacc;
   int numloops_ns, numloops_nt;
   int numset_nsloop;     // 0 < numset_nsloop <= numvar
-  int rock = 1;
+  int rock = 0;
 
   bestx = startx;
   xstart = startx;
@@ -138,7 +138,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
 
   // start the main loop.  Note that it terminates if (i) the algorithm
   // succesfully otimizes the function or (ii) there are too many func. eval.
-  while (rock && (nfcnev < maxiterations)) {
+  while ((rock == 0) && (nfcnev < maxiterations)) {
     numloops_nt = 0;
     net->startNewDataGroup((ns * nt * (numvar + 1)));
     while ((numloops_nt < nt) && (nfcnev < maxiterations)) {
@@ -200,7 +200,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
     cout << "\nChecking convergence criteria after " << nfcnev << " function evaluations ...\n";
 
     // if termination criteria is not met, prepare for another loop.
-    if (rock) {
+    if (rock == 0) {
       T *= rt;
       cout << "Reducing the temperature to " << T << endl;
       fstart = bestf;
