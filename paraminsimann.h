@@ -68,6 +68,7 @@ private:
    * \brief the number of accepted function evaluations accepted in (ns*numvar) number of function evaluations.
    */
   int naccepted_nsloop;  
+  
 public:
   ParaminSimann(NetInterface* netInt);
   virtual ~ParaminSimann();
@@ -77,6 +78,8 @@ public:
   void AcceptPoint();
   void UpdateVM();
   void ReceiveValue();
+  
+
 };
 
 #endif

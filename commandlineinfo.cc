@@ -188,7 +188,7 @@ int CommandLineInfo::OptinfoGiven() {
 
 void CommandLineInfo::ReadNetworkInfo() {
 
-  //Need to add check for vaues which can not be accepted...
+  //Need to add check for values which can not be accepted...
   int i = 0;
   char text[MaxStrLength];
   strncpy(text, "", MaxStrLength);

@@ -28,6 +28,7 @@ ParaminBFGS::ParaminBFGS(NetInterface* netInt) : ParaminSearch(netInt) {
   initial_difficultgrad = 1;
   // If want to set default value separately
   maxiterations = 200;
+  converged = 0;
 }
 
 ParaminBFGS::~ParaminBFGS() {
@@ -436,6 +437,7 @@ void ParaminBFGS::doSearch(const vector& startx, double startf) {
     //    net->setConvergedBfgs(1);
     //    net->setLikelihoodBfgs(bestf);
     cout << "\nStopping BFGS \n\nThe optimisation stopped after " << numrounds << " rounds (max " << maxrounds << ") and " << iter << " iterations  (max " << maxiterations << ")\nThe optimisation stopped because an optimum was found for this run\n";
+    converged = 1;
   }
 
   if (to_print) {

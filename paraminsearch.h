@@ -45,6 +45,7 @@ protected:
   double bestf;       // best point found so far..
   // The optimal value of the function, found so far
   // but where in the algo. Always or just at end..
+  int converged;
 public:
   /**
    * \brief The default constructor
@@ -93,6 +94,7 @@ public:
    * \brief Returns a randomNumber coming from an even distribution on the interval 0 to 1
    */
   double randomNumber();
+  int GetConverged() { return converged;};
 };
 
 #endif

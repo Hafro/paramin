@@ -166,8 +166,23 @@ void Optimizer::PrintResult(NetInterface* net) {
 
   } else {
     // write the data in the gadget format so this file can be used as a starting point
-    outfile << "; Output from Paramin version " << PARAMINVERSION << " on " << ctime(&timenow)
-      << "; The final likelihood value was " << startf << "\nswitch\tvalue\t\tlower\tupper\toptimise\n";
+    outfile << "; Output from Paramin version " << PARAMINVERSION << " on " << ctime(&timenow);
+    if(useSimann)
+      if(parSA->GetConverged())
+	outfile << "; Simulated Annealing stopped because an optimum was found\n";
+      else
+	outfile << "; Simulated Annealing stopped because the maxinmum number of functional evaluation was reached\n";
+    else if(useHooke)
+      if(parHJ->GetConverged())
+	outfile << "; Hooke&Jeeves stopped because an optimum was found\n";
+    else
+	outfile << "; Hooke&Jeeves stopped because the maxinmum number of functional evaluation was reached\n";
+    else if(useBfgs)
+      if(parBFGS->GetConverged())
+	outfile << "; BFGS stopped because an optimum was found\n";
+    else
+	outfile << "; BFGS stopped because the maxinmum number of functional evaluation was reached\n";
+    outfile  << "; The final likelihood value was " << startf << "\nswitch\tvalue\t\tlower\tupper\toptimise\n";
     vector output;
     output = this->getBestX(net);
     for (i = 0; i < output.dimension(); i++) {

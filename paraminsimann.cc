@@ -27,6 +27,7 @@ ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
   acpPointId = new int[numvar];
   // total number of processes initiated at beginning
   NumberOfHosts = net->getTotalNumProc();
+  converged = 0;
 }
 
 ParaminSimann::~ParaminSimann() {
@@ -224,6 +225,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
     cout << "\nStopping Simulated Annealing\n\nThe optimisation stopped after " << nfcnev
       << " function evaluations (max " << maxiterations << ")\nThe optimisation stopped "
       << "because an optimum was found for this run\n";
+    converged = 1;
   }
 }
 

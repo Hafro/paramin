@@ -39,14 +39,14 @@ void ParaminSearch::randomOrder(int* vec) {
   }
 }
 
-double ParaminSearch::expRep(double n) {
+double ParaminSearch::expRep(double x) {
   double exprep = 0.0;
-  if (n > verysmall)
+  if (x > verysmall)
     exprep = 1.0;
-  else if (n < -25.0)
+  else if (x < -25.0)
     exprep = rathersmall;
   else
-    exprep = exp(n);
+    exprep = exp(x);
   return exprep;
 }
 

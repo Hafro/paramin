@@ -10,6 +10,7 @@ ParaminHooke::ParaminHooke(NetInterface* netInt) : ParaminSearch(netInt) {
   rho = 0.5;
   epsilon = 1e-4;
   maxiterations = 1000;
+  converged = 0;
 }
 
 ParaminHooke::~ParaminHooke() {
@@ -160,9 +161,10 @@ void ParaminHooke::doSearch(const vector& startx, double startf) {
 
   if (numiters >= maxiterations)
     cout << "The optimisation stopped because the maximum number of iterations" << "\nwas reached and NOT because an optimum was found for this run\n";
-  else
+  else {
     cout << "The optimisation stopped because an optimum was found for this run\n";
-
+    converged = 1;
+  }
   delete lineS;
   delete[] change;
   delete[] param;

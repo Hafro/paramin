@@ -82,6 +82,7 @@ private:
   // test parameter AJ
   int totalsent;
 
+
 public:
   ParaminHooke(NetInterface* netInt);
   virtual ~ParaminHooke();
@@ -94,6 +95,7 @@ public:
   int UpdateOpt();
   void SetPointNearby();
   void SetPointNextCoord();
+ 
 };
 
 #endif

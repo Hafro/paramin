@@ -99,6 +99,7 @@ private:
   double error;
   // AJ adding for testing
   int computedGrad;
+
 public:
   /**
    * \brief the default constructor
@@ -139,6 +140,7 @@ public:
   void printInverseHessian();
   double GetS(int get);
   void printX();
+
   // About termination criteria:
   // bfgsfail = -1 iff minimization will be continued.
   // bfgsfail = 0 iff error <= errortol
