@@ -55,19 +55,20 @@ void ParaminBFGS::Read(CommentStream& infile, char* text) {
     } else if (strcasecmp(text, "bfgspar") == 0) {
       infile >> bfgs_constant;
 
-    } else if (strcasecmp(text, "maxiterations") == 0) {
+    } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "\
+maxiter") == 0) || (strcasecmp(text, "bfgsiter") == 0))  {
       infile >> maxiterations;
 
-    } else if (strcasecmp(text, "errortol") == 0) {
+    } else if ((strcasecmp(text, "eps") == 0) || (strcasecmp(text, "bfgseps") == 0) ||(strcasecmp(text, "errortol") == 0)) {
       infile >> errortol;
 
     } else if (strcasecmp(text, "xtol") == 0) {
       infile >> xtol;
 
-    } else if (strcasecmp(text, "maxrounds") == 0) {
+    } else if ((strcasecmp(text, "maxrounds") == 0) || (strcasecmp(text, "bfgsrounds") == 0)) {
       infile >> maxrounds;
 
-    } else if (strcasecmp(text, "printing") == 0) {
+    } else if ((strcasecmp(text, "printing") == 0) || (strcasecmp(text, "bfgsdebug") == 0)) {
       infile >> to_print;
 
     } else if (strcasecmp(text, "sigma") == 0) {
@@ -77,8 +78,10 @@ void ParaminBFGS::Read(CommentStream& infile, char* text) {
     } else if (strcasecmp(text, "beta") == 0) {
       infile >> temp;
       lineS->setBeta(temp);
-
-    } else {
+    } else if ((strcasecmp(text, "gradacc") == 0) || (strcasecmp(text, "gradstep") == 0) || (strcasecmp(text, "st") == 0) || (strcasecmp(text, "step") == 0) || (strcasecmp(text, "") == 0)) {
+      cout << "BFGS - " << text << " is not used in paramin" << endl;
+      infile >> ws;
+   } else {
       cerr << "Error while reading optinfo for bfgs - unknown option " << text << endl;
       exit(EXIT_FAILURE);
     }
@@ -434,8 +437,6 @@ void ParaminBFGS::doSearch(const vector& startx, double startf) {
   if ((rounds >= maxrounds) &&  (bfgsFail != 0)) {
     cout << "\nBFGS optimisation completed after " << rounds << " rounds (max " << maxrounds << ") and " << iter << " iterations (max " << maxiterations << ")\nThe model terminated because the maximum number of rounds was reached\n";
   } else if (bfgsFail == 0)  {
-    //    net->setConvergedBfgs(1);
-    //    net->setLikelihoodBfgs(bestf);
     cout << "\nStopping BFGS \n\nThe optimisation stopped after " << numrounds << " rounds (max " << maxrounds << ") and " << iter << " iterations  (max " << maxiterations << ")\nThe optimisation stopped because an optimum was found for this run\n";
     converged = 1;
   }

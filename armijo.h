@@ -10,11 +10,11 @@
 class Armijo : public LineSearch {
 private:
   /**
-   * \brief Linesearch done from x
+   * \brief Linesearch done from initialx
    */
   vector initialx;    
   /**
-   * \brief The function value at x.
+   * \brief The function value at initialx.
    */
   double initialf;    
   /**

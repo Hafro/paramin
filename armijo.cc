@@ -74,11 +74,14 @@ int Armijo::computeConditionFunction() {
     y = net->getY(returnId);
     cond_satisfied = ((conditionSatisfied(y) == 1) && (f > y));
     if (cond_satisfied) {
-      cout << "New optimum value f(x) = " << y << endl;
+      cout << "New optimum value f(x) = " << y << " at \n";
       f = y;
       power = returnId - 1;
       alpha = temp[0];
       x = net->makeVector(temp);
+      for (i = 0; i < x.dimension() ; i++)
+	cout << x[i] << " ";
+      cout << endl << endl;
     }
   }
 
