@@ -21,17 +21,17 @@ void CommandLineInfo::showUsage() {
     << " -i <filename>                read model parameters from <filename>\n"
     << " -function <function>         read function and options to be minimised\n"
     << "                              (this must be the last option specified)\n"
-    << "\nOptions for controlling a Paramin running Paramin:\n"
+    << "\nOptional information for controlling Paramin:\n"
     << " -opt <filename>              read optimising parameters from <filename>\n"
     << " -network <filename>          read network information from <filename>\n"
     << " -o <filename>                print model parameters to <filename>\n"
     << "                              (default filename is 'params.out')\n"
     << " -scale                       scale the variables to be optimised\n"
     << " -condor                      use CONDOR to control the PVM network\n"
-    << "\nOther valid options:\n"
+    << "\nOther valid command line options:\n"
     << " -v --version                 display version information and exit\n"
     << " -h --help                    display this help screen and exit\n"
-    << "\nFor more information see the Gadget web page at http://www.hafro.is/gadget\n\n";
+    << "\nFor more information see the web page at http://www.hafro.is/gadget/paramin.html\n\n";
   exit(EXIT_SUCCESS);
 }
 

@@ -53,7 +53,7 @@ OBJECTS =  paramin.o processmanager.o netdatacontrol.o netgradient.o \
 	netcomminterface.o condition.o datascaler.o dataconverter.o \
 	vector.o datastructure.o slavecommunication.o netdata.o pvmconstants.o \
 	commandlineinfo.o optimizer.o paraminsearch.o paraminhooke.o \
-	paraminsimann.o paraminbfgs.o armijo.o wolfe.o lineseeker.o
+	paraminsimann.o paraminbfgs.o armijo.o lineseeker.o
 
 LDFLAGS = $(CXXFLAGS) $(LIBDIRS) $(LIBRARIES)
 

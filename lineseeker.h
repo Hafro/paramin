@@ -2,9 +2,8 @@
 #define lineseeker_h
 
 #include "linesearch.h"
-#include "wolfe.h"
 
-class LineSeeker : public Wolfe {
+class LineSeeker : public LineSearch {
 private:
   NetInterface* net;
 public:
@@ -12,6 +11,8 @@ public:
   virtual ~LineSeeker();
   int doLineseek(const vector& xold, const vector& xnew, double fnew, NetInterface* netI);
   int outstandingRequests();
+  double getAlpha() { return 0.0;};
+  int computeConditionFunction() { return 0; };
 };
 
 #endif

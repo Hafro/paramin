@@ -3,7 +3,6 @@
 
 #include "netcommunication.h"
 #include "linesearch.h"
-#include "wolfe.h"
 #include "armijo.h"
 #include "paramin.h"
 #include "netgradient.h"

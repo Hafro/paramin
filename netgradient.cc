@@ -117,7 +117,7 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, double f, i
       numfx++;
       fx4 = net->getY(numfx);
       numfx++;
-      grad[i] = (fx1 - fx4 + 8.0 * fx3 - 8.0 * fx2) / (6.0 * deltai);
+      grad[i] = (fx1 - fx4 + 8.0 * fx3 - 8.0 * fx2) / (12.0 * deltai);
       diagHess[i] = (fx4 - 2.0 * fx0 + fx1) / (deltai * deltai);
 
       if (absolute(fx4 - fx1) / fx0 < rathersmall) {  // may be running into roundoff
