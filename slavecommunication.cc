@@ -1,10 +1,5 @@
 #include "slavecommunication.h"
-
-#ifdef GADGET_NETWORK
 #include "gadget.h"
-#else
-#include "paramin.h"
-#endif
 
 SlaveCommunication::SlaveCommunication() {
   #ifdef CONDOR
@@ -317,7 +312,6 @@ int SlaveCommunication::getReceiveType() {
 
 int SlaveCommunication::receiveString() {
   int OK = 1;
-#ifdef GADGET_NETWORK
   int i, info;
   char* tempString = new char[MaxStrLength + 1];
   strncpy(tempString, "", MaxStrLength);
@@ -339,7 +333,6 @@ int SlaveCommunication::receiveString() {
     netDataStr.resize(1, tempString);
   }
   delete tempString;
-#endif
   return OK;
 }
 
@@ -358,13 +351,9 @@ int SlaveCommunication::receivedBounds() {
 }
 
 char* SlaveCommunication::getString(int num) {
-#ifdef GADGET_NETWORK
   assert(num >= 0);
   assert(netDataStr.Size() == numberOfVar);
   return netDataStr[num];
-#else
-  return NULL;
-#endif
 }
 
 void SlaveCommunication::getBound(double* vec) {

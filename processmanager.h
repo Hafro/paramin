@@ -42,8 +42,8 @@ public:
 
 class ProcessManager {
 protected:
-  int NO_PROCESSES;
-  int WAIT_FOR_PROCESSES;
+  int errorNoProcesses;
+  int errorWaitForProcesses;
   queue* freeProcesses;
   int totalNumProc;
   int* procStat;

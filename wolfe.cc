@@ -42,7 +42,7 @@ void Wolfe::doWolfe(const vector& v1, double fx, double dery, const vector& hess
   newreturns = 0;
   askedfor = 0;
   net = netInt;
-  net->startNewDataGroup(NUMALPHA, v1, hess);
+  net->startNewDataGroup(numAlpha, v1, hess);
   prepareNewLineSearch(v1, fx, dery);
 
   while (!linesearchCondSatisfied()) {

@@ -52,9 +52,9 @@ int runtime::isRunning() {
 ProcessManager::ProcessManager() {
   maxNumHosts = 500;
   // Return value if no processes available.
-  NO_PROCESSES = -1;
+  errorNoProcesses = -1;
   // Return value if should wait for processes.
-  WAIT_FOR_PROCESSES = -2;
+  errorWaitForProcesses = -2;
   freeProcesses = new queue();
   totalNumProc = 0;
   pmCondor = 0;
@@ -170,7 +170,7 @@ int ProcessManager::getNextTidToSend(NetCommunication* n) {
   n->getHealthOfProcesses(procStat);
   removeBadProc();
   if (freeProcesses->isEmpty())
-    return NO_PROCESSES;
+    return errorNoProcesses;
   else {
     tid = freeProcesses->get();
     return tid;
@@ -195,7 +195,7 @@ int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
     addMoreProc(tid);
 
   if (freeProcesses->isEmpty())
-    return NO_PROCESSES;
+    return errorNoProcesses;
   else {
     tid = freeProcesses->get();
     return tid;
@@ -242,11 +242,11 @@ void ProcessManager::noProcessesRunning() {
 }
 
 int ProcessManager::noAvailableProcesses() {
-  return NO_PROCESSES;
+  return errorNoProcesses;
 }
 
 int ProcessManager::waitForBetterProcesses() {
-  return WAIT_FOR_PROCESSES;
+  return errorWaitForProcesses;
 }
 
 
@@ -295,7 +295,7 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
   n->getHealthOfProcesses(procStat);
   ProcessManager::removeBadProc();
   if (freeProcesses->isEmpty()) {
-    return NO_PROCESSES;
+    return errorNoProcesses;
   } else if (numLeftToSend >= hostMultiple * totalNumProc) {
     nextTid = freeProcesses->get();
     return nextTid;
@@ -306,7 +306,7 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
 
     q = quickBusyProcesses();
     if (q == 1)
-      return WAIT_FOR_PROCESSES;
+      return errorWaitForProcesses;
 
     id = freeProcesses->get();
     return id;

@@ -7,9 +7,7 @@
 #include "pvmconstants.h"
 #include "vector.h"
 #include "commandlineinfo.h"
-#ifdef GADGET_NETWORK
 #include "vectorofcharptr.h"
-#endif
 
 // AJ, 26.02.99
 /**
@@ -109,16 +107,16 @@ public:
   int netCommStarted();
   int netError();
   int netSuccess();
-  void setConvergedSA(int set){convergedSA = set;};
-  int getConvergedSA(){return convergedSA;};
+  void setConvergedSA(int set) { convergedSA = set; };
+  int getConvergedSA() { return convergedSA; };
   double getLikelihoodSA() const { return likelihoodSA; };
   void setLikelihoodSA(double set) { likelihoodSA = set; };
-  void setConvergedBfgs(int set){convergedBfgs = set;};
-  int getConvergedBfgs(){return convergedBfgs;};
+  void setConvergedBfgs(int set) { convergedBfgs = set; };
+  int getConvergedBfgs() { return convergedBfgs; };
   double getLikelihoodBfgs() const { return likelihoodBfgs; };
   void setLikelihoodBfgs(double set) { likelihoodBfgs = set; };
-  void setConvergedHJ(int set){convergedHJ = set;};
-  int getConvergedHJ(){return convergedHJ;};
+  void setConvergedHJ(int set) { convergedHJ = set; };
+  int getConvergedHJ() { return convergedHJ; };
   double getLikelihoodHJ() const { return likelihoodHJ; };
   void setLikelihoodHJ(double set) { likelihoodHJ = set; };
 
@@ -146,14 +144,10 @@ public:
   int checkProcessByTid(int tidToCheck, int processNum);
   int sendData(NetDataVariables* sendP, int processId, int dataId);
 
-
-
-#ifdef GADGET_NETWORK
   int sendData(VectorOfCharPtr sendP);
   int sendData(VectorOfCharPtr sendP, int processId);
   int sendBoundData(vector sendP);
   int sendBoundData(vector sendP, int processId);
-#endif
 
 };
 

@@ -596,7 +596,7 @@ int NetInterface::receiveAndSend() {
   int cansend = 1;
   int canreceive = 0;
 
-  while (counter < NUM_TRIES_TO_RECEIVE && canreceive == 0) {
+  while (counter < numTries && canreceive == 0) {
     // Try to receive again from a process, netcommunication is OK but
     // could not receive probably because there are no messages coming in
     canreceive = receiveOne();
@@ -708,7 +708,7 @@ int NetInterface::receiveOnCondition(Condition* con) {
 
   while (!dctrl->allReceived() && !cond&& canreceive == 1) {
     canreceive = receiveOne();
-    while (counter < (NUM_TRIES_TO_RECEIVE - 1) && canreceive == 0) {
+    while (counter < (numTries - 1) && canreceive == 0) {
       canreceive = receiveOne();
       counter++;
     }
@@ -751,7 +751,7 @@ int NetInterface::receiveAll() {
 
   while (!(dctrl->allReceived()) && (canreceive == 0 || canreceive == 1) && cansend == 1) {
     canreceive = receiveOne();
-    while (counter < (NUM_TRIES_TO_RECEIVE - 1) && canreceive == 0) {
+    while (counter < (numTries - 1) && canreceive == 0) {
       canreceive = receiveOne();
       counter++;
     }
@@ -896,7 +896,7 @@ int NetInterface::sendAndReceiveSetData(Condition* con) {
       if ((numLeftToReceive < totalNumHosts) && dctrl->allSent()) {
         // can start resending, waiting for last data to come in
         sendreceive = receiveOne();
-        while (numTries < (NUM_TRIES_TO_RECEIVE - 1) && sendreceive == 0) {
+        while (numTries < (numTries - 1) && sendreceive == 0) {
           sendreceive = receiveOne();
           numTries++;
         }
@@ -914,7 +914,7 @@ int NetInterface::sendAndReceiveSetData(Condition* con) {
 
       } else {
         sendreceive = receiveOne();
-        while (numTries < (NUM_TRIES_TO_RECEIVE - 1) && sendreceive == 0) {
+        while (numTries < (numTries - 1) && sendreceive == 0) {
           sendreceive = receiveOne();
           numTries++;
         }
@@ -1003,7 +1003,6 @@ int NetInterface::startNetComm() {
   return net->startNetCommunication();
 }
 
-#ifdef GADGET_NETWORK
 void NetInterface::sendStringValue() {
   assert(numVarToSend > 0);
   assert(switches.Size() == numVarToSend);
@@ -1056,7 +1055,6 @@ void NetInterface::sendBoundValues(int processId) {
     exit(EXIT_FAILURE);
   }
 }
-#endif
 
 void NetInterface::stopNetComm() {
   net->stopNetCommunication();

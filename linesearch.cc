@@ -5,7 +5,7 @@
 //  Functions for base class linesearch
 // ********************************************************
 LineSearch::LineSearch() {
-  NUMALPHA = 200;
+  numAlpha = 200;
 }
 
 LineSearch::~LineSearch() {

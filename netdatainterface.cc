@@ -7,24 +7,24 @@ void NetInterface::startNewDataGroup() {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new NetDataControl(MAXNUMX, numVarInDataGroup, newTag);
+  dctrl = new NetDataControl(maxNumX, numVarInDataGroup, newTag);
   if (scaler != NULL)
-    scaler->setPenalty(MAXNUMX);
+    scaler->setPenalty(maxNumX);
   dataSet = new queue();
-  ISALPHA = 0;
+  isAlpha = 0;
 }
 
 void NetInterface::startNewDataGroup(const vector& x1, const vector& h1) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new NetDataControl(MAXNUMX, 1, newTag);
+  dctrl = new NetDataControl(maxNumX, 1, newTag);
   if (scaler != NULL)
-    scaler->setPenalty(MAXNUMX);
+    scaler->setPenalty(maxNumX);
   dataSet = new queue();
   h = h1;
   alphaX = x1;
-  ISALPHA = 1;
+  isAlpha = 1;
 }
 
 void NetInterface::startNewDataGroup(int numInGroup) {
@@ -35,7 +35,7 @@ void NetInterface::startNewDataGroup(int numInGroup) {
   if (scaler != NULL)
     scaler->setPenalty(numInGroup);
   dataSet = new queue();
-  ISALPHA = 0;
+  isAlpha = 0;
 }
 
 void NetInterface::startNewDataGroup(int numInGroup, const vector& x1, const vector& h1) {
@@ -48,7 +48,7 @@ void NetInterface::startNewDataGroup(int numInGroup, const vector& x1, const vec
   dataSet = new queue();
   h = h1;
   alphaX = x1;
-  ISALPHA = 1;
+  isAlpha = 1;
 }
 
 void NetInterface::stopUsingDataGroup() {
@@ -61,7 +61,7 @@ void NetInterface::stopUsingDataGroup() {
     dataSet = NULL;
   }
   receiveId = -1;
-  ISALPHA = -1;
+  isAlpha = -1;
 }
 
 // ********************************************************
@@ -281,7 +281,7 @@ void NetInterface::printXUnscaled(int id) {
 // Functions for data converting and data scaling vectors
 // ********************************************************
 const vector& NetInterface::makeVector(const vector& vec) {
-  if (ISALPHA == 1) {
+  if (isAlpha == 1) {
     tmp = alphaX + (vec[0] * h);
     return tmp;
   } else
@@ -310,31 +310,19 @@ const vector& NetInterface::prepareVectorToSend(const vector& vec) {
 }
 
 const vector& NetInterface::getLowerbound() {
-#ifdef GADGET_NETWORK
   assert(lowerBound.dimension() != 0);
   return lowerBound;
-#else
-  assert(scaler != NULL);
-  return scaler->getLower();
-#endif
 }
 
 const vector& NetInterface::getUpperbound() {
-#ifdef GADGET_NETWORK
   assert(upperBound.dimension() != 0);
   return upperBound;
-#else
-  assert(scaler != NULL);
-  return scaler->getUpper();
-#endif
 }
 
-#ifdef GADGET_NETWORK
 VectorOfCharPtr NetInterface::getSwitches() {
   assert(switches.Size() != 0);
   return switches;
 }
-#endif
 
 const vector& NetInterface::getOptInfo() {
   int i;

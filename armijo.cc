@@ -114,7 +114,7 @@ int Armijo::computeConditionFunction() {
 }
 
 void Armijo::prepareNewLineSearch() {
-  net->startNewDataGroup(NUMALPHA, x, hvec);
+  net->startNewDataGroup(numAlpha, x, hvec);
   if (df > 0) {
     cerr << "Error in linesearch - bad derivative\n";
     net->stopUsingDataGroup();

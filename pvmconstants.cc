@@ -1,10 +1,5 @@
 #include "pvmconstants.h"
-
-#ifdef GADGET_NETWORK
 #include "gadget.h"
-#else
-#include "paramin.h"
-#endif
 
 PVMConstants::PVMConstants() {
   endType = 1;

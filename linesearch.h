@@ -9,7 +9,7 @@ class Condition;
 
 class LineSearch {
 protected:
-  int NUMALPHA;
+  int numAlpha;
 public:
   LineSearch();
   virtual ~LineSearch();

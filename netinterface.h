@@ -1,16 +1,13 @@
 #ifndef netinterface_h
 #define netinterface_h
 
-#ifdef GADGET_NETWORK
-#include "initialinputfile.h"
-#endif
-
 #include "dataconverter.h"
 #include "datascaler.h"
 #include "processmanager.h"
 #include "netdatacontrol.h"
 #include "condition.h"
 #include "paramin.h"
+#include "initialinputfile.h"
 
 class Condition;
 
@@ -21,8 +18,8 @@ class Condition;
 
 class NetInterface {
 private:
-  int MAXNUMX;
-  int NUM_TRIES_TO_RECEIVE;
+  int maxNumX;
+  int numTries;
   /**
    * \brief dctrl stores data for current datagroup
    */
@@ -67,21 +64,17 @@ private:
   vector xUnscale;  
   vector xConvert;  
   vector xToSend;  
-  int ISALPHA;
-  int TOSCALE;
-  #ifdef GADGET_NETWORK
-    VectorOfCharPtr switches;
-    vector upperBound;
-    vector lowerBound;
-  #endif
+  int isAlpha;
+  int toscale;
+  VectorOfCharPtr switches;
+  vector upperBound;
+  vector lowerBound;
 public:
   NetInterface(NetCommunication* netComm, ProcessManager* pm, CommandLineInfo* commandline);
-  NetInterface(char* initValsFileName, NetCommunication* netComm, ProcessManager* pm);
   ~NetInterface();
   // ******************************************************
   // Functions for reading input values from file
   // ******************************************************
-  #ifdef GADGET_NETWORK
    /* initvals can be opened and initvals has one of those three formats:
     * 1.   Only vector value/s
     *      x11 x12 x13 .. x1n
@@ -102,15 +95,12 @@ public:
     * if initvals is of type 1 or 2 then can add all vector values
     * to one datagroup. If initvals is of type 3 and optimize given then not
     * all variables can be set to 0. */
-    void readInputFile(char* initvalsFileName);
-    void setSwitches(InitialInputFile* data);
-    void setVector(InitialInputFile* data);
-    void setNumVars(InitialInputFile* data);
-    void setOptInfo(InitialInputFile* data);
-  #endif
+  void readInputFile(char* initvalsFileName);
+  void setSwitches(InitialInputFile* data);
+  void setVector(InitialInputFile* data);
+  void setNumVars(InitialInputFile* data);
+  void setOptInfo(InitialInputFile* data);
 
-  void readAllInitVals(char* fileName);
-  void readInitVals(char* fileName);
   // ******************************************************
   // Function for initiating values before start using class NetInterface
   // ******************************************************
@@ -160,9 +150,7 @@ public:
   const vector& getLowerbound();
   const vector& getUpperbound();
   const vector& getOptInfo();
-  #ifdef GADGET_NETWORK
-    VectorOfCharPtr getSwitches();
-  #endif
+  VectorOfCharPtr getSwitches();
   // ******************************************************
   // Input and output functions for data
   // ******************************************************
@@ -218,12 +206,10 @@ public:
   int netSuccess();
   int noAvailableProcesses();
   int waitForBetterProcesses();
-  #ifdef GADGET_NETWORK
-    void sendStringValue();
-    void sendStringValue(int processId);
-    void sendBoundValues();
-    void sendBoundValues(int processId);
-  #endif
+  void sendStringValue();
+  void sendStringValue(int processId);
+  void sendBoundValues();
+  void sendBoundValues(int processId);
 
   //Added for condor
   int netNoneToReceive();

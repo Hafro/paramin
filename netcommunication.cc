@@ -967,7 +967,6 @@ int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
-#ifdef GADGET_NETWORK
 int NetCommunication::sendData(VectorOfCharPtr sendP) {
   int i, info;
 
@@ -1115,7 +1114,6 @@ int NetCommunication::sendBoundData(vector sendP, int processId) {
     return ERROR;
   }
 }
-#endif
 
 int NetCommunication::sendData(NetDataVariables* sendP, int processId) {
   int info;
