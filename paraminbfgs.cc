@@ -42,38 +42,39 @@ ParaminBFGS::~ParaminBFGS() {
 void ParaminBFGS::Read(CommentStream& infile, char* text) {
   int i = 0;
   double temp;
-  infile >> text >> ws;
-  while (!infile.eof() && !strcasecmp(text, "[hooke]") == 0 && !strcasecmp(text, "[simann]") == 0 && !strcasecmp(text, "seed") == 0) {
+
+  while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
+    infile >> ws;
     if (strcasecmp(text, "shannonscaling") == 0) {
-      infile >> shannonScaling >> ws;
+      infile >> shannonScaling;
 
     } else if (strcasecmp(text, "difficultgrad") == 0) {
-      infile >> initial_difficultgrad >> ws;
+      infile >> initial_difficultgrad;
 
     } else if (strcasecmp(text, "bfgspar") == 0) {
-      infile >> bfgs_constant >> ws;
+      infile >> bfgs_constant;
 
     } else if (strcasecmp(text, "maxiterations") == 0) {
-      infile >> maxiterations >> ws;
+      infile >> maxiterations;
 
     } else if (strcasecmp(text, "errortol") == 0) {
-      infile >> errortol >> ws;
+      infile >> errortol;
 
     } else if (strcasecmp(text, "xtol") == 0) {
-      infile >> xtol >> ws;
+      infile >> xtol;
 
     } else if (strcasecmp(text, "maxrounds") == 0) {
-      infile >> maxrounds >> ws;
+      infile >> maxrounds;
 
     } else if (strcasecmp(text, "printing") == 0) {
-      infile >> to_print >> ws;
+      infile >> to_print;
 
     } else if (strcasecmp(text, "sigma") == 0) {
-      infile >> temp >> ws;
+      infile >> temp;
       lineS->setSigma(temp);
 
     } else if (strcasecmp(text, "beta") == 0) {
-      infile >> temp >> ws;
+      infile >> temp;
       lineS->setBeta(temp);
 
     } else {
@@ -81,7 +82,7 @@ void ParaminBFGS::Read(CommentStream& infile, char* text) {
       exit(EXIT_FAILURE);
     }
     i++;
-    infile >> text >> ws;
+    infile >> text;
   }
 
   if (i == 0)

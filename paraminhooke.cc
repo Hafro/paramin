@@ -17,31 +17,31 @@ ParaminHooke::~ParaminHooke() {
 
 void ParaminHooke::Read(CommentStream& infile, char* text)  {
   int i = 0;
-  infile >> text >> ws;
-  while (!infile.eof() && !(strcasecmp(text, "[simann]") == 0) && !(strcasecmp(text, "[bfgs]") == 0) && !(strcasecmp(text, "seed") == 0)) {
 
+  while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
+    infile >> ws;
     if ((strcasecmp(text, "epsilon") == 0) || (strcasecmp(text, "hookeeps") == 0)) {
-      infile >> epsilon >> ws;
+      infile >> epsilon;
 
     } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "hookeiter") == 0)) {
-      infile >> maxiterations >> ws;
+      infile >> maxiterations;
 
     } else if (strcasecmp(text, "rho") == 0) {
-      infile >> rho >> ws;
+      infile >> rho;
 
     } else if (strcasecmp(text, "lambda") == 0) {
-      infile >> lambda >> ws;
+      infile >> lambda;
 
     } else if (strcasecmp(text, "bndcheck") == 0) {
       //JMB - read and ignore bndcheck
-      infile >> text >> ws;
+      infile >> text;
 
     } else {
       cerr << "Error while reading optinfo for Hooke - unknown option " << text << endl;
       exit(EXIT_FAILURE);
     }
+    infile >> text;
     i++;
-    infile >> text >> ws;
   }
 
   if (i == 0)

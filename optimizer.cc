@@ -51,26 +51,54 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
   CommentStream commin(infile);
 
   // Now I need to look for seed, [simann], [hooke] or [bfgs]
-  commin >> text >> ws;
+  commin >> text;
   while (!commin.eof()) {
-    if (strcasecmp(text, "seed") == 0) {
-      commin >> seed >> ws >> text >> ws;
+    commin >> ws;  //trim whitespace from infile
+    if ((strcasecmp(text, "seed")) == 0 && (!commin.eof())) {
+      commin >> seed >> ws >> text;
       srand(seed);
 
     } else if (strcasecmp(text, "[simann]") == 0) {
       parSA = new ParaminSimann(net);
-      parSA->Read(commin, text);
       useSimann = 1;
+
+      if (!commin.eof()) {
+        commin >> text;
+	if ((text[0] == '[') || (strcasecmp(text, "seed") == 0))
+          cerr << "Warning - no optimisation parameters specified for Simulated Annealing algorithm\n";
+	else
+          parSA->Read(commin, text);
+	  
+      } else
+        cerr << "Warning - no optimisation parameters specified for Simulated Annealing algorithm\n";
 
     } else if (strcasecmp(text, "[hooke]") == 0) {
       parHJ = new ParaminHooke(net);
-      parHJ->Read(commin, text);
       useHooke = 1;
+
+      if (!commin.eof()) {
+        commin >> text;
+	if ((text[0] == '[') || (strcasecmp(text, "seed") == 0))
+          cerr << "Warning - no optimisation parameters specified for Hooke & Jeeves algorithm\n";
+	else
+          parHJ->Read(commin, text);
+	  
+      } else
+        cerr << "Warning - no optimisation parameters specified for Hooke & Jeeves algorithm\n";
 
     } else if (strcasecmp(text, "[bfgs]") == 0) {
       parBFGS = new ParaminBFGS(net);
-      parBFGS->Read(commin, text);
       useBfgs = 1;
+
+      if (!commin.eof()) {
+        commin >> text;
+	if ((text[0] == '[') || (strcasecmp(text, "seed") == 0))
+          cerr << "Warning - no optimisation parameters specified for BFGS algorithm\n";
+	else
+          parBFGS->Read(commin, text);
+	  
+      } else
+        cerr << "Warning - no optimisation parameters specified for BFGS algorithm\n";
 
     } else {
       cerr << "Error in optfile, expecting to read seed, [simann], [hooke] or [bfgs] but got: " << text << "\n";
@@ -82,9 +110,9 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
 
   infile.close();
   infile.clear();
+
   if (useSimann == 0 && useHooke == 0 && useBfgs == 0) {
-    cerr << "Was not able to read optinfo successfully\n"
-      << "No optimization method specified in file\n";
+    cerr << "Error in optinfofile - no valid optimisation methods found\n";
     exit(EXIT_FAILURE);
   }
 }

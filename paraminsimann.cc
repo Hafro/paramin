@@ -39,47 +39,48 @@ ParaminSimann::~ParaminSimann() {
 void ParaminSimann::Read(CommentStream& infile, char* text) {
   int i = 0;
   double temp;
-  infile >> text >> ws;
-  while (!infile.eof() && !strcasecmp(text, "[hooke]") == 0 && !strcasecmp(text, "[bfgs]") == 0 && !strcasecmp(text, "seed") == 0) {
+
+  while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
+    infile >> ws;
     if (strcasecmp(text, "ns") == 0) {
-      infile >> ns >> ws;
+      infile >> ns;
 
     } else if (strcasecmp(text, "nt") == 0) {
-      infile >> nt >> ws;
+      infile >> nt;
 
     } else if (strcasecmp(text, "check") == 0) {
-      infile >> check >> ws;
+      infile >> check;
 
     } else if (strcasecmp(text, "rt") == 0) {
-      infile >> rt >> ws;
+      infile >> rt;
 
     } else if ((strcasecmp(text, "eps") == 0) || (strcasecmp(text, "simanneps") == 0)) {
-      infile >> eps >> ws;
+      infile >> eps;
 
     } else if (strcasecmp(text, "t") == 0) {
-      infile >> T >> ws;
+      infile >> T;
 
     } else if (strcasecmp(text, "cstep") == 0) {
-      infile >> cs >> ws;
+      infile >> cs;
 
     } else if (strcasecmp(text, "uratio") == 0) {
-      infile >> uratio >> ws;
+      infile >> uratio;
 
     } else if (strcasecmp(text, "lratio") == 0) {
-      infile >> lratio >> ws;
+      infile >> lratio;
 
     } else if (strcasecmp(text, "vm") == 0) {
-      infile >> temp >> ws;
+      infile >> temp;
       vm.setValue(temp);
 
     } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "simanniter") == 0)) {
-      infile >> maxiterations >> ws;
+      infile >> maxiterations;
 
     } else {
       cerr << "Error while reading optinfo for Simulated Annealing - unknown option " << text << endl;
       exit(EXIT_FAILURE);
     }
-    infile >> text >> ws;
+    infile >> text;
     i++;
   }
 
@@ -147,10 +148,13 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
       randomOrder(Id);
 
       while ((numloops_ns < ns) && (nfcnev < maxiterations)) {
-        for (i = 0; i < numtoset; i++)
-           SetXP(Id[i]);
+        if (numloops_ns == 1) {
+          for (i = 0; i < numtoset; i++)
+            SetXP(Id[i]);
+          numset_nsloop = numtoset;
+        } else
+          numset_nsloop = 0;
 
-        numset_nsloop = numtoset;
         // sends all available data to all free hosts.
         net->sendToAllIdleHosts();
         while ((numset_nsloop < numvar) && (nfcnev < maxiterations)) {
