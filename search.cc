@@ -470,7 +470,7 @@ hjcon readHJConstants() {
     exit(EXIT_FAILURE);
   }
 
-  if (tmp.rho > tmp.epsilon) {
+  if (tmp.rho < tmp.epsilon) {
     cout << "Error in Hooke - the value for rho must be greater than epsilon\n";
     exit(EXIT_FAILURE);
   }
@@ -1221,20 +1221,6 @@ double bfgs::GetS(int get) {
     cout << "Error in BFGS - unrecognised return value\n";
     exit(EXIT_FAILURE);
   }
-}
-
-double bfgs::max(double a, double b) {
-  if (a < b)
-    return b;
-  else
-    return a;
-}
-
-double bfgs::min(double a, double b) {
-  if (a < b)
-    return a;
-  else
-    return b;
 }
 
 vector bfgs::GetBestX() {

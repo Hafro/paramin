@@ -38,8 +38,8 @@ int main(int argc, char* argv[]) {
   if (argc < 7) {
     cout << "\nMust specify number of processors, -i inputfilename -o outputfilename\n"
       << "and the name of program to be run on slaves\n"
-      << "For example: master 4 -i inputfile -o outputfile slaveProg\n"
-      << "Will start 4 processes of slaveProg, reading input values from inputfile\n"
+      << "For example: paramin 4 -i inputfile -o outputfile slave-prog\n"
+      << "Will start 4 processes of slave-prog, reading input values from inputfile\n"
       << "and writing the final minimum vector value to outputfile\n"
       << "If number of processes specified is equal to 0\n"
       << "the program will start as many processes as number of available hosts\n";

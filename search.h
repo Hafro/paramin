@@ -49,8 +49,6 @@ public:
   void printGradient();
   void printInverseHessian();
   double GetS(int get);
-  double max(double a, double b);
-  double min(double a, double b);
   vector GetBestX();
   void printX();
   double GetBestF();
