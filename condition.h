@@ -6,17 +6,27 @@
 
 class LineSearch;
 
-/* class condition is an abstract class containing
- * only pure virtual functions except for the destructor */
+/**
+ * \class Condition
+ * \brief class condition is an abstract class containing only pure virtual functions except for the destructor 
+*/
 
 class Condition {
 public:
+  /**
+   * \brief default destructor
+   */
   virtual ~Condition() {};
+  /**
+   * \brief Is the search criteria met?
+   */
   virtual int computeCondition() = 0;
 };
 
-/* class LineSeekerCondition can be used to compute a condition function
- * belonging to class lineSeeker which must return an interger value 0 or 1 */
+/**
+ * \class  LineSeekerCondition
+ * \brief class LineSeekerCondition can be used to compute a condition function belonging to class lineSeeker which must return an interger value 0 or 1 
+ */
 
 class LineSeekerCondition : public Condition {
 public:

@@ -4,9 +4,10 @@
 #include "paramin.h"
 #include "vector.h"
 
-/* The class NetInfo keeps together information concerning status of
- * data that is being sent/received during netcommunication. It
- * contains functions to get information about status of data. */
+/**
+ * \class NetInfo
+ * \brief The class NetInfo keeps together information concerning status of data that is being sent/received during netcommunication. It contains functions to get information about status of data. 
+ */
 
 class NetInfo {
 public:
@@ -23,9 +24,10 @@ public:
   int numCopiesSent();
 };
 
-/* The class coordinates stores the datapair (x, y) where
- * x is a vector of p paramaters. It contains functions to
- * set and access (x, y) and parameter p in x. */
+/**
+ * \class coordinates
+ * \brief The class coordinates stores the datapair (x, y) where x is a vector of p paramaters. It contains functions to set and access (x, y) and parameter p in x. 
+*/
 
 class coordinates {
 private:
@@ -43,29 +45,53 @@ public:
   int getNumParameters();
 };
 
-/* The class NetDataControl stores a set of datapairs (x[0..p-1], y)
- * which can be identified with a specific tag and each pair has a
- * unique identity. x[0..p-1] is thought of being sent to a process
- * and y is received from a process using net communication.  NetDataControl
- * provides functions to initialize and access each datapair and get
- * information about the status of net communication for the set of
- * datapairs as well as each pair.  NetDataControl uses the class
- * coordinates to store each datapair and the class NetInfo to set
- * information about the status of the data pair concerning netcommunication */
+/**
+ * \class NetDataControl
+ * \brief The class NetDataControl stores a set of datapairs (x[0..p-1], y) which can be identified with a specific tag and each pair has a unique identity. x[0..p-1] is thought of being sent to a process and y is received from a process using net communication.  NetDataControl provides functions to initialize and access each datapair and get information about the status of net communication for the set of datapairs as well as each pair.  NetDataControl uses the class coordinates to store each datapair and the class NetInfo to set information about the status of the data pair concerning netcommunication 
+*/
 
 class NetDataControl {
 private:
-  int tag;               // identification for the set of datapairs.
-  int numberOfx;         // number of vectors set, numberOfx <= totalNumx
-  int totalNumx;         // total number of vectors that can be set,
-  int numberSent;        // number of x-vectors that have been sent to processes
-  int numberAnswers;     // number of y-s that have been received from processes
-  int nextAns;           // nextAns points to identity of the next data pair
-  int numPar;            // number of parameters in vector x
-  coordinates** xyCoord; // stores a set data pairs equals totalNumx
-  NetInfo** nInfo;       // for each datapair there is a corresponding class
-                         // which keeps track of the status of netcommunication.
-  int resendId;          // resendId points to the last x which can be resent
+  /**
+   * \brief identification for the set of datapairs.
+   */
+  int tag;               
+  /**
+   * \brief number of vectors set, numberOfx <= totalNumx
+   */
+  int numberOfx;         
+  /**
+   * \brief total number of vectors that can be set,
+   */
+  int totalNumx;         
+  /**
+   * \brief number of x-vectors that have been sent to processes
+   */
+  int numberSent;        
+  /**
+   * \brief number of y-s that have been received from processes
+   */
+  int numberAnswers;     
+  /**
+   * \brief nextAns points to identity of the next data pair
+   */
+  int nextAns;           
+  /**
+   * \brief number of parameters in vector x
+   */
+  int numPar;            
+  /**
+   * \brief stores a set data pairs equals totalNumx
+   */
+  coordinates** xyCoord; 
+  /**
+   * \brief for each datapair there is a corresponding class which keeps track of the status of netcommunication.
+   */
+  NetInfo** nInfo;       
+  /**
+   * \brief resendId points to the last x which can be resent
+   */
+  int resendId;         
 public:
   NetDataControl(int numberOfx, int numberOfParameters, int t);
   ~NetDataControl();

@@ -14,27 +14,47 @@
 
 class Condition;
 
-/* NetInterface is a class which manages netcommunication.
- * NetInterface uses the class NetCommunication to send/receive data.
- * The class ProcessManager is used to dispatch processes to be used
- * by NetInterface. It uses the class NetDataControl to store data
- * and keep track of information about status of data concerning
- * netcommunication. It can use the class DataConverter to prepare
- * data before sending and the class DataScaler to scale/unscale
- * data after/before sending. */
+/** 
+ * \class NetInterface
+ * \brief NetInterface is a class which manages netcommunication. NetInterface uses the class NetCommunication to send/receive data. The class ProcessManager isused to dispatch processes to be used by NetInterface. It uses the class NetDataControl to store data and keep track of information about status of data concerning netcommunication. It can use the class DataConverter to prepare data beforesending and the class DataScaler to scale/unscale data after/before sending. 
+*/
 
 class NetInterface {
 private:
   int MAXNUMX;
   int NUM_TRIES_TO_RECEIVE;
-  NetDataControl* dctrl;      // dctrl stores data for current datagroup
-  ProcessManager* pManager;   // pManager keeps track of processes
-  NetCommunication* net;      // net manages all netcommunication.
-  DataConverter* dataConvert; // dataConvert prepares data for sending
-  DataScaler* scaler;         // scales/unscaled data after/before sending/receiving
-  queue* dataSet;             // dataSet keeps track of unsent data which has been set
-  int numberOfTags;           // number of tags that have been used.
-  vector initialX;            // initial starting point for sending data
+  /**
+   * \brief dctrl stores data for current datagroup
+   */
+  NetDataControl* dctrl;      
+  /**
+   * \brief pManager keeps track of processes
+   */
+  ProcessManager* pManager;   
+  /**
+   * \brief net manages all netcommunication.
+   */
+  NetCommunication* net;      
+  /**
+   * \brief dataConvert prepares data for sending
+   */
+  DataConverter* dataConvert; 
+  /**
+   * \brief scales/unscaled data after/before sending/receiving
+   */
+  DataScaler* scaler;         
+  /**
+   * \brief dataSet keeps track of unsent data which has been set
+   */
+  queue* dataSet;             
+  /**
+   * \brief number of tags that have been used.
+   */
+  int numberOfTags;           
+  /**
+   * \brief initial starting point for sending data
+   */
+  vector initialX;            
   int receiveId;
   int numVarInDataGroup;
   int numVarToSend;

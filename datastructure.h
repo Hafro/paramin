@@ -9,8 +9,10 @@ public:
   int tid;
 };
 
-/* class queue stores data items of type integer. Items can be added to
- * the end or front of the queue and removed from the end or the front */
+/**
+ * \class Queue 
+ * \brief class queue stores data items of type integer. Items can be added to the end or front of the queue and removed from the end or the front 
+*/
 
 class queue {
 private:

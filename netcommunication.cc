@@ -32,6 +32,13 @@ NetCommunication::NetCommunication(const VectorOfCharPtr& funcNameArgs, int nh) 
   ERROR = -1;
   SUCCESS = 1;
 
+  likelihoodHJ = 0.0;
+  likelihoodSA = 0.0;
+  likelihoodBfgs = 0.0;
+  convergedSA = 0;
+  convergedHJ = 0;
+  convergedBfgs = 0;
+
   //For condor
   NONTORECEIVE = 0;
   tidsCounter = 0;

@@ -13,8 +13,14 @@ protected:
 public:
   LineSearch();
   virtual ~LineSearch();
-  double f;           // best function value found in linesearch.
-  vector x;           // best point found in linesearch.
+  /**
+   * \brief best function value found in linesearch.
+   */
+  double f;           
+  /**
+   * \brief best point found in linesearch.
+   */.
+  vector x;           
   //int fail;
   double getBestF();
   vector getBestX();

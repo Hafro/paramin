@@ -130,7 +130,7 @@ void Armijo::initiateAlphas() {
   vector tempx(1);
   assert(beta > 0.0);
   assert(beta <= 0.5);
-    for (j = 0; j < i; j++) {
+  for (j = 0; j < i; j++) {
     inixvec[j] = pow(beta, j) * s;
     tempx[0] = inixvec[j];
     net->setX(tempx);

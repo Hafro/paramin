@@ -444,6 +444,8 @@ void ParaminBFGS::doSearch(const vector& startx, double startf) {
   if ((rounds >= maxrounds) &&  (bfgsFail != 0)) {
     cout << "\nBFGS optimisation completed after " << rounds << " rounds (max " << maxrounds << ") and " << iter << " iterations (max " << maxiterations << ")\nThe model terminated because the maximum number of rounds was reached\n";
   } else if (bfgsFail == 0)  {
+    //    net->setConvergedBfgs(1);
+    //    net->setLikelihoodBfgs(bestf);
     cout << "\nStopping BFGS \n\nThe optimisation stopped after " << numrounds << " rounds (max " << maxrounds << ") and " << iter << " iterations  (max " << maxiterations << ")\nThe optimisation stopped because an optimum was found for this run\n";
   }
 

@@ -1,24 +1,46 @@
 #ifndef netdata_h
 #define netdata_h
 
-/* classes NetDataVariables and NetDataResult keep together
- * relevant data to be sent/received in netcommunication */
+/**
+ * \class NetDataVaribles
+ * \brief classes NetDataVariables and NetDataResult keep together relevant data to be sent/received in netcommunication 
+ */
 
 class NetDataVariables {
 public:
   int tag;
   int x_id;
-  double* x;                     //x[0..n-1], where 0 <= n < numVar
-  NetDataVariables(int numVar);  //numVar is the number of variables (>0)
+  /**
+   * \brief x[0..n-1], where 0 <= n < numVar
+   */
+  double* x;                     
+  /**
+   * \brief numVar is the number of variables (>0)
+   */
+  NetDataVariables(int numVar);  
+  /**
+   * \brief Default destructor
+   */
   ~NetDataVariables();
 };
+
+/**
+ * \class NetDataResult
+ * \brief classes NetDataVariables and NetDataResult keep together relevant data to be sent/received in netcommunication 
+ */
 
 class NetDataResult {
 public:
   int tag;
   int x_id;
-  double result;                 //result of f(x) where x is identified by tag, x_id.
-  int who;                       //identifies which process is sending result
+  /**
+   * \brief result of f(x) where x is identified by tag x_id.
+   */
+  double result;                 
+  /**
+   * \brief identifies which process is sending result
+   */
+  int who;                       
   NetDataResult();
   ~NetDataResult();
 };
