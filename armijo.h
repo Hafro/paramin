@@ -10,10 +10,6 @@
 class Armijo : public LineSearch {
 private:
   /**
-   * \brief Stores initial alpha at beginning of linesearch computation
-   */
-  vector inixvec;     
-  /**
    * \brief Linesearch done from x
    */
   vector initialx;    

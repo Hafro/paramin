@@ -5,8 +5,6 @@
 // ********************************************************
 Armijo::Armijo() {
   cond = new LineSeekerCondition(this);
-  vector tempVec(50);
-  inixvec = tempVec;
   beta = 0.3;
   sigma = 0.01;
   alpha = 0.0;
@@ -131,8 +129,7 @@ void Armijo::initiateAlphas() {
   assert(beta > 0.0);
   assert(beta <= 0.5);
   for (j = 0; j < i; j++) {
-    inixvec[j] = pow(beta, j) * s;
-    tempx[0] = inixvec[j];
+    tempx[0] = pow(beta, j) * s;
     net->setX(tempx);
   }
 }
