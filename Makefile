@@ -29,8 +29,7 @@ GADGETDIR = ../source
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 #LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK \
-#               -D INLINE_POPINFO_CC -D INLINE_VECTORS -O3
+#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 3. Solaris, g++ compiler, no gadget library
@@ -44,8 +43,7 @@ GADGETDIR = ../source
 CXX = g++
 LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
 LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
-DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK \
-               -D INLINE_POPINFO_CC -D INLINE_VECTORS -O3
+DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 OBJECTS =  paramin.o processmanager.o netdatacontrol.o netgradient.o \

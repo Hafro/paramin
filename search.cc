@@ -469,6 +469,12 @@ hjcon readHJConstants() {
     cerr << "Error in reading from input file hjconstants\n";
     exit(EXIT_FAILURE);
   }
+
+  if (tmp.rho > tmp.epsilon) {
+    cout << "Error in Hooke - the value for rho must be greater than epsilon\n";
+    exit(EXIT_FAILURE);
+  }
+
   return(tmp);
 }
 
@@ -547,7 +553,7 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
       ftmp = net->getY(returnId);
       iters++;
       if (iters % 1000 == 0)
-        cout << "\nAfter " << iters << " function evaluations, f(x) = " << fopt << " at\n" << newx << endl;
+        cout << "\nAfter " << iters << " function evaluations, f(x) = " << fopt << " at\n" << newx;
 
       if (iters > val.maxiter) {
         // break out of the while loop and return ...

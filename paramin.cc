@@ -2,9 +2,6 @@
 #include "search.h"
 #include "paramin.h"
 
-// Returns uniformly-distributed doubles in range 0.0 to 1.0
-//double Random();
-
 struct con {
   int VARS;           // max. number of variables.
   double vm_comp;     // step length for sim. ann.
@@ -119,7 +116,7 @@ int main(int argc, char* argv[]) {
 
   int numit = 0;
   if (par.SA == 1) {
-    cout << "Starting Simulated Annealing\n";
+    cout << "\nStarting Simulated Annealing\n";
     minMethod = new simann(netInt, par.MAXIM, par.SIM_ITER, c, par.T, vm);
     while (numit < par.SIM_ITER) {
       numit += minMethod->DoSearch();
@@ -131,7 +128,7 @@ int main(int argc, char* argv[]) {
 
   numit = 0;
   if (par.HJ == 1) {
-    cout << "Starting Hooke and Jeeves\n";
+    cout << "\nStarting Hooke and Jeeves\n";
     minMethod = new hooke(netInt);
     while (numit < par.HOOKE_ITER) {
       numit += minMethod->DoSearch();
@@ -142,7 +139,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (par.BFGS == 1) {
-    cout << "Starting BFGS\n";
+    cout << "\nStarting BFGS\n";
     minMethod = new minimizer(netInt);
     minMethod->DoSearch();
     f = minMethod->GetBestF();
@@ -158,6 +155,7 @@ int main(int argc, char* argv[]) {
     cout << "Warning - can't open outputfile\nThe best point calculated is:\n";
     cout << netInt->prepareVectorToSend(temp) << endl;
   } else {
+
 #ifdef GADGET_NETWORK
     // write the data in the gadget format so this file can be used as a starting point
     outfile << "; Output from Paramin version " << paramin_version << " on " << ctime(&startExec)
@@ -175,6 +173,7 @@ int main(int argc, char* argv[]) {
     // write the output data in the old format
     outfile << netInt->prepareVectorToSend(temp) << endl;
 #endif
+
   }
   outfile.close();
 
@@ -202,12 +201,6 @@ int main(int argc, char* argv[]) {
   exit(EXIT_SUCCESS);
 }
 
-/*double Random() {
-  int r = random();
-  double k = r % 32767;
-  return k / 32767.;
-}*/
-
 con getConstants() {
   char letter;
   int i = 0;
@@ -222,7 +215,7 @@ con getConstants() {
 
   while (!mainfile.eof()) {
     mainfile >> text;
-    if (strcasecmp(text, ";") == 0 ) {
+    if (strcasecmp(text, ";") == 0) {
       mainfile.get(letter);
       while ((letter != '\n') && !mainfile.eof())
         mainfile.get(letter);

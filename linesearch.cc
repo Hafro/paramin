@@ -389,7 +389,7 @@ void wolfe::setNewLinesearchResults(double fx) {
     oldxc = xu;
   }
 
-  if (xl == 0.0 && xu - xl < MACHEPS && yu > yl && (yc > yl || xc < 0.0 ) && wolfecond == 0) {
+  if (xl == 0.0 && xu - xl < MACHEPS && yu > yl && (yc > yl || xc < 0.0) && wolfecond == 0) {
     xc = -1.0;
     cout << "Error in linesearch - algorithm converges to zero\n";
   }
