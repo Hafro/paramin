@@ -5,13 +5,13 @@
 #include "paramin.h"
 
 /**
- * \class gradient
- * \brief class gradient is an abstract class containing only pure virtual functions except for the destructor. 
+ * \class Gradient
+ * \brief class Gradient is an abstract class containing only pure virtual functions except for the destructor. 
  */
 
-class gradient {
+class Gradient {
 public:
-  virtual ~gradient();
+  virtual ~Gradient();
   virtual void setXVectors(const vector& x, double fx, NetInterface* netInt) = 0;
   virtual int computeGradient(NetInterface* net, const vector& x, double fx, int linesprob) = 0;
   virtual vector getDiagonalHessian() = 0;
@@ -24,12 +24,12 @@ public:
 
 /**
  * \class NetGradient
- * \brief class NetGradient is a derived class of gradient and implements gradient computation which uses net communication to send/receive data. 
+ * \brief class NetGradient is a derived class of Gradient and implements gradient computation which uses net communication to send/receive data. 
  */
 
-class NetGradient : public gradient {
+class NetGradient : public Gradient {
 private:
-  int numberOfVariables;
+  int numVar;
   /**
    * \brief Upper bound on percentage h in f(x+h).
    */
@@ -66,7 +66,7 @@ private:
    */
   double fx0;              
 public:
-  NetGradient(int numVar);
+  NetGradient(int numVars);
   virtual ~NetGradient();
   void setXVectors(const vector& x, double fx, NetInterface* netInt);
   int computeGradient(NetInterface* net, const vector& x, double fx, int symgrad);

@@ -10,7 +10,7 @@ void NetInterface::startNewDataGroup() {
   dctrl = new NetDataControl(maxNumX, numVarInDataGroup, newTag);
   if (scaler != NULL)
     scaler->setPenalty(maxNumX);
-  dataSet = new queue();
+  dataSet = new Queue();
   isAlpha = 0;
 }
 
@@ -21,7 +21,7 @@ void NetInterface::startNewDataGroup(const vector& x1, const vector& h1) {
   dctrl = new NetDataControl(maxNumX, 1, newTag);
   if (scaler != NULL)
     scaler->setPenalty(maxNumX);
-  dataSet = new queue();
+  dataSet = new Queue();
   h = h1;
   alphaX = x1;
   isAlpha = 1;
@@ -34,7 +34,7 @@ void NetInterface::startNewDataGroup(int numInGroup) {
   dctrl = new NetDataControl(numInGroup, numVarInDataGroup, newTag);
   if (scaler != NULL)
     scaler->setPenalty(numInGroup);
-  dataSet = new queue();
+  dataSet = new Queue();
   isAlpha = 0;
 }
 
@@ -45,7 +45,7 @@ void NetInterface::startNewDataGroup(int numInGroup, const vector& x1, const vec
   dctrl = new NetDataControl(numInGroup, 1, newTag);
   if (scaler != NULL)
     scaler->setPenalty(numInGroup);
-  dataSet = new queue();
+  dataSet = new Queue();
   h = h1;
   alphaX = x1;
   isAlpha = 1;
@@ -60,7 +60,7 @@ void NetInterface::stopUsingDataGroup() {
     delete dataSet;
     dataSet = NULL;
   }
-  receiveId = -1;
+  receiveID = -1;
   isAlpha = -1;
 }
 
@@ -77,7 +77,7 @@ void NetInterface::setX(const vector& x1) {
     exit(EXIT_FAILURE);
   }
   dctrl->setX(x1);
-  int id = dctrl->getLastSetId();
+  int id = dctrl->getLastSetID();
   dataSet->put(id);
 }
 
@@ -91,7 +91,7 @@ void NetInterface::setXFirstToSend(const vector& x1) {
     exit(EXIT_FAILURE);
   }
   dctrl->setX(x1);
-  int id = dctrl->getLastSetId();
+  int id = dctrl->getLastSetID();
   dataSet->putFirst(id);
 }
 
@@ -162,8 +162,8 @@ void NetInterface::setBestX(const vector& x) {
 // ********************************************************
 // Functions for getting/setting information about datagroup
 // ********************************************************
-int NetInterface::getReceiveId() {
-  return receiveId;
+int NetInterface::getReceiveID() {
+  return receiveID;
 }
 
 void NetInterface::sentDataItem(int id) {

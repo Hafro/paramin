@@ -25,17 +25,17 @@ public:
 };
 
 /**
- * \class coordinates
- * \brief The class coordinates stores the datapair (x, y) where x is a vector of p paramaters. It contains functions to set and access (x, y) and parameter p in x. 
+ * \class Coordinates
+ * \brief The class Coordinates stores the datapair (x, y) where x is a vector of p paramaters. It contains functions to set and access (x, y) and parameter p in x. 
 */
 
-class coordinates {
+class Coordinates {
 private:
   vector x;
   double y;
 public:
-  coordinates();
-  ~coordinates();
+  Coordinates();
+  ~Coordinates();
   vector getX();
   double getParameter(int num);
   double getY();
@@ -83,15 +83,15 @@ private:
   /**
    * \brief stores a set data pairs equals totalNumx
    */
-  coordinates** xyCoord; 
+  Coordinates** xyCoord; 
   /**
    * \brief for each datapair there is a corresponding class which keeps track of the status of netcommunication.
    */
   NetInfo** nInfo;       
   /**
-   * \brief resendId points to the last x which can be resent
+   * \brief resendID points to the last x which can be resent
    */
-  int resendId;         
+  int resendID;         
 public:
   NetDataControl(int numberOfx, int numberOfParameters, int t);
   ~NetDataControl();
@@ -103,11 +103,11 @@ public:
   double getY(int id);
   vector getNextAnsweredX();
   double getNextAnsweredY();
-  int getNextSendId();
+  int getNextSendID();
   int getNextXToResend();
   void sentOne(int id);
   void resentOne(int id);
-  int getIdToSetNext();
+  int getIDToSetNext();
   int getTag();
   int getNumLeftToSend();
   int allSent();
@@ -117,7 +117,7 @@ public:
   void setFirstAnswered();
   int allReceived();
   int getNumAnswered();
-  int getLastSetId();
+  int getLastSetID();
   int getMaxNumData();
   int hasAnswer(int id);
   int isFull();

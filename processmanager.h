@@ -18,13 +18,13 @@
  * difftime(time_t t1, time_t t2) which returns 0 when difference in seconds < 1.
  * but we do not know the accuracy of difftime */
 
-class runtime {
+class RunTime {
 private:
   time_t startExec;
   double execTime;
 public:
-  runtime();
-  ~runtime();
+  RunTime();
+  ~RunTime();
   void startRun();
   void stopRun(double a);
   double getRunTime();
@@ -44,7 +44,7 @@ class ProcessManager {
 protected:
   int errorNoProcesses;
   int errorWaitForProcesses;
-  queue* freeProcesses;
+  Queue* freeProcesses;
   int totalNumProc;
   int* procStat;
   int maxNumHosts;
@@ -62,7 +62,7 @@ public:
   int getNextTidToSend(NetCommunication* n);
   int checkForNewProcess(NetCommunication* n);
   virtual int getNextTidToSend(int numLeftToSend, NetCommunication* n);
-  virtual void sent(int procId);
+  virtual void sent(int procID);
   int allReceived();
   int getStatus(int id);
   void setStatus(int id, int stat);
@@ -86,7 +86,7 @@ private:
   double alpha;
   double hostMultiple;
   double besttimeMultiple;
-  runtime** runInfo;
+  RunTime** runInfo;
 public:
   WorkLoadScheduler(CommandLineInfo* info);
   ~WorkLoadScheduler();
@@ -95,7 +95,7 @@ public:
   virtual void addMoreProc(int id);
   virtual void setFreeProc(int tid);
   virtual int getNextTidToSend(int numLeftToSend, NetCommunication* n);
-  virtual void sent(int procId);
+  virtual void sent(int procID);
   int quickHostsAvailable();
   int quickBusyProcesses();
 };

@@ -16,13 +16,13 @@
  */
 
 class NetCommunication {
- private:
+private:
   int convergedSA;
   int convergedHJ;
-  int convergedBfgs;
+  int convergedBFGS;
   double likelihoodSA;
   double likelihoodHJ;
-  double likelihoodBfgs;
+  double likelihoodBFGS;
 protected:
   PVMConstants* pvmConst;
   int nHostInn;
@@ -74,7 +74,7 @@ protected:
   int SUCCESS;
 
   int* hostTids;
-  int* dataIds;
+  int* dataIDs;
   int maxNumHosts;
 
   int NONTORECEIVE;
@@ -96,7 +96,7 @@ public:
   int checkProcess(int id);
   void checkProcesses();
   void getHealthOfProcesses(int* procTids);
-  int sendData(NetDataVariables* sendP, int processId);
+  int sendData(NetDataVariables* sendP, int processID);
   virtual int receiveData(NetDataResult* rp);
   void setNumInSendVar(int nVar);
   int getNumHosts();
@@ -111,10 +111,10 @@ public:
   int getConvergedSA() { return convergedSA; };
   double getLikelihoodSA() const { return likelihoodSA; };
   void setLikelihoodSA(double set) { likelihoodSA = set; };
-  void setConvergedBfgs(int set) { convergedBfgs = set; };
-  int getConvergedBfgs() { return convergedBfgs; };
-  double getLikelihoodBfgs() const { return likelihoodBfgs; };
-  void setLikelihoodBfgs(double set) { likelihoodBfgs = set; };
+  void setConvergedBFGS(int set) { convergedBFGS = set; };
+  int getConvergedBFGS() { return convergedBFGS; };
+  double getLikelihoodBFGS() const { return likelihoodBFGS; };
+  void setLikelihoodBFGS(double set) { likelihoodBFGS = set; };
   void setConvergedHJ(int set) { convergedHJ = set; };
   int getConvergedHJ() { return convergedHJ; };
   double getLikelihoodHJ() const { return likelihoodHJ; };
@@ -142,12 +142,12 @@ public:
   int getHealthOfProcessesAndHostAdded(int* procTids);
   int probeForReceiveData();
   int checkProcessByTid(int tidToCheck, int processNum);
-  int sendData(NetDataVariables* sendP, int processId, int dataId);
+  int sendData(NetDataVariables* sendP, int processID, int dataID);
 
   int sendData(VectorOfCharPtr sendP);
-  int sendData(VectorOfCharPtr sendP, int processId);
+  int sendData(VectorOfCharPtr sendP, int processID);
   int sendBoundData(vector sendP);
-  int sendBoundData(vector sendP, int processId);
+  int sendBoundData(vector sendP, int processID);
 
 };
 

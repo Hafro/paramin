@@ -8,7 +8,6 @@
 
 class Optimizer {
 public:
-  
   Optimizer(CommandLineInfo* info, NetInterface* net);
   /**
    * \brief Default destructor
@@ -18,17 +17,14 @@ public:
    * \brief Starts the optimisation
    */
   void OptimizeFunc();
-  /**
-   * 
-   */
-  void PrintResult(NetInterface* net);
+  void printResult(NetInterface* net);
   const vector& getBestX(NetInterface* net);
   double getBestF();
   /**
    * \brief This is the file reader
    */
-  void ReadOptInfo(char* optfilename, NetInterface* net);
- private:
+  void readOptInfo(char* optfilename, NetInterface* net);
+private:
   /**
    * \brief Pointer to a Simulated Annealing object/search method
    */
@@ -56,15 +52,15 @@ public:
   /**
    * \brief Switch for Simulated Annealing, if 0 don't use else use 
    */
-  int useSimann;
+  int useSA;
   /**
    * \brief Switch for Hooke & Jeeves, if 0 don't use else use 
    */
-  int useHooke;
+  int useHJ;
   /**
    * \brief Switch for BFGS, if 0 don't use else use 
    */
-  int useBfgs;
+  int useBFGS;
   /**
    * \brief Name the outputfile
    */

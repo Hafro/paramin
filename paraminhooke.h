@@ -78,7 +78,7 @@ private:
   /**
    * \brief id of the last returned function value.
    */
-  int returnId;      
+  int returnID;      
   // test parameter AJ
   int totalsent;
 

@@ -37,25 +37,25 @@ void CommandLineInfo::showUsage() {
 
 CommandLineInfo::CommandLineInfo() {
   numProc = 0;
-  toScale = 0;
+  scale = 0;
   condor = 0;
-  waitForMaster = 300;
+  waitMaster = 300;
   hostMultiple = 2.0;
-  runtimeMultiple = 0.5;
-  besttimeMultiple = 3.0;
+  runMultiple = 0.5;
+  bestMultiple = 3.0;
 }
 
 CommandLineInfo::~CommandLineInfo() {
 }
 
-void CommandLineInfo::Read(int aNumber, char* const aVector[]) {
+void CommandLineInfo::read(int aNumber, char* const aVector[]) {
   int k, len;
 
   if (aNumber > 1) {
     k = 1;
     while (k < aNumber) {
       if (strcasecmp(aVector[k], "-scale") == 0) {
-        toScale = 1;
+        scale = 1;
 
       } else if (strcasecmp(aVector[k], "-condor") == 0) {
         #ifndef CONDOR
@@ -81,7 +81,7 @@ void CommandLineInfo::Read(int aNumber, char* const aVector[]) {
           showCorrectUsage(aVector[k]);
         k++;
         networkfile.resize(1, aVector[k]);
-        this->ReadNetworkInfo();
+        this->readNetworkInfo();
 
       } else if (strcasecmp(aVector[k], "-opt") == 0) {
         if (k == aNumber - 1)
@@ -131,62 +131,42 @@ void CommandLineInfo::Read(int aNumber, char* const aVector[]) {
 
   // Set the network paramaters for CONDOR is required
   if (condor)
-    waitForMaster = -1;
+    waitMaster = -1;
 }
 
-int CommandLineInfo::NumOfProc() {
-  return numProc;
-}
-
-const VectorOfCharPtr& CommandLineInfo::FunctionNameArgs() {
+const VectorOfCharPtr& CommandLineInfo::getFunction() {
   return function;
 }
 
-int CommandLineInfo::WaitForMaster() {
-  return waitForMaster;
-}
-
-double CommandLineInfo::RunTimeMultiple() {
-  return runtimeMultiple;
-}
-
-double CommandLineInfo::BestTimeMultiple() {
-  return besttimeMultiple;
-}
-
-double CommandLineInfo::HostMultiple() {
-  return hostMultiple;
-}
-
-int CommandLineInfo::ToScale() {
-  return toScale;
-}
-
-int CommandLineInfo::runCondor() {
-  return condor;
-}
-
-char* CommandLineInfo::InputFilename() {
+char* CommandLineInfo::getInputFilename() {
   if (inputfile.Size() != 1) {
-    cerr << "Error, have not been able to get inputfile from commandline\n";
+    cerr << "Error on commandline - inputfile not specified\n";
     exit(EXIT_FAILURE);
   }
   return inputfile[0];
 }
 
-char* CommandLineInfo::OutputFilename() {
+char* CommandLineInfo::getOutputFilename() {
+  if (outputfile.Size() != 1) {
+    cerr << "Error on commandline - outputfile not specified\n";
+    exit(EXIT_FAILURE);
+  }
   return outputfile[0];
 }
 
-char* CommandLineInfo::OptFilename() {
+char* CommandLineInfo::getOptFilename() {
+  if (optfile.Size() != 1) {
+    cerr << "Error on commandline - optfile not specified\n";
+    exit(EXIT_FAILURE);
+  }
   return optfile[0];
 }
 
-int CommandLineInfo::OptinfoGiven() {
+int CommandLineInfo::getOptInfoFileGiven() {
   return (optfile.Size() > 0);
 }
 
-void CommandLineInfo::ReadNetworkInfo() {
+void CommandLineInfo::readNetworkInfo() {
 
   //Need to add check for values which can not be accepted...
   int i = 0;
@@ -200,25 +180,25 @@ void CommandLineInfo::ReadNetworkInfo() {
     if (strcasecmp(text, "numproc") == 0) {
       commin >> numProc >> ws;
       if (numProc < 0) {
-        cerr << "number of processors specified must be greater than 0\n";
+        cerr << "Error in networkfile - numproc must be greater than 0\n";
         infile.close();
         infile.clear();
         exit(EXIT_FAILURE);
       }
 
     } else if (strcasecmp(text, "waitformaster") == 0) {
-      commin >> waitForMaster >> ws;
-      if (waitForMaster < -1) {
-        cerr << "Value of waitformaster must be greater that -1, got: " << waitForMaster << "\n";
+      commin >> waitMaster >> ws;
+      if (waitMaster < -1) {
+        cerr << "Error in networkfile - waitformaster must be greater than -1\n";
         infile.close();
         infile.clear();
         exit(EXIT_FAILURE);
       }
 
     } else if (strcasecmp(text, "runtimemultiple") == 0) {
-      commin >> runtimeMultiple >> ws;
-      if (runtimeMultiple < 0) {
-        cerr << "runtimeMultiple must be greater that 0, got: " << runtimeMultiple << "\n";
+      commin >> runMultiple >> ws;
+      if (runMultiple < 0) {
+        cerr << "Error in networkfile - runtimemultiple must be greater than 0\n";
         infile.close();
         infile.clear();
         exit(EXIT_FAILURE);
@@ -227,9 +207,9 @@ void CommandLineInfo::ReadNetworkInfo() {
     } else if (strcasecmp(text, "hostmultiple") == 0) {
       commin >> hostMultiple >> ws;
     } else if (strcasecmp(text, "besttimemultiple") == 0) {
-      commin >> besttimeMultiple >> ws;
+      commin >> bestMultiple >> ws;
     } else {
-      cerr << "Error in networkfile, unknown option: " << text << "\n";
+      cerr << "Error in networkfile - unknown option " << text << "\n";
       infile.close();
       infile.clear();
       exit(EXIT_FAILURE);

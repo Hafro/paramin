@@ -1,19 +1,19 @@
 #include "processmanager.h"
 
-runtime::runtime() {
+RunTime::RunTime() {
   execTime = -1.0;
   startExec = -1;
 }
 
-runtime::~runtime() {
+RunTime::~RunTime() {
 }
 
-void runtime::startRun() {
+void RunTime::startRun() {
   startExec = time(NULL);
 
 }
 
-void runtime::stopRun(double a) {
+void RunTime::stopRun(double a) {
   time_t stopExec;
   double newTime;
   stopExec = time(NULL);
@@ -33,19 +33,19 @@ void runtime::stopRun(double a) {
   startExec = -1;
 }
 
-double runtime::getRunTime() {
+double RunTime::getRunTime() {
   return execTime;
 }
 
-void runtime::setRunTime(double t) {
+void RunTime::setRunTime(double t) {
   execTime = t;
 }
 
-time_t runtime::getStartTime() {
+time_t RunTime::getStartTime() {
   return startExec;
 }
 
-int runtime::isRunning() {
+int RunTime::isRunning() {
   return !(startExec == -1);
 }
 
@@ -55,7 +55,7 @@ ProcessManager::ProcessManager() {
   errorNoProcesses = -1;
   // Return value if should wait for processes.
   errorWaitForProcesses = -2;
-  freeProcesses = new queue();
+  freeProcesses = new Queue();
   totalNumProc = 0;
   pmCondor = 0;
   procStat = NULL;
@@ -202,7 +202,7 @@ int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   }
 }
 
-void ProcessManager::sent(int processId) {
+void ProcessManager::sent(int processID) {
 }
 
 int* ProcessManager::getStatus() {
@@ -251,9 +251,9 @@ int ProcessManager::waitForBetterProcesses() {
 
 
 WorkLoadScheduler::WorkLoadScheduler(CommandLineInfo* info) {
-  alpha = info->RunTimeMultiple();
-  hostMultiple = info->HostMultiple();
-  besttimeMultiple = info->BestTimeMultiple();
+  alpha = info->getRunMultiple();
+  hostMultiple = info->getHostMultiple();
+  besttimeMultiple = info->getBestMultiple();
   runInfo = NULL;
   bestTime = 360000.0;
 }
@@ -268,18 +268,18 @@ WorkLoadScheduler::~WorkLoadScheduler() {
 }
 
 void WorkLoadScheduler::initializePM(int totalNumProc, int condor) {
-  runInfo = new runtime*[totalNumProc];
+  runInfo = new RunTime*[totalNumProc];
   ProcessManager::initializePM(totalNumProc, condor);
 }
 
 void WorkLoadScheduler::addProc(int id) {
   ProcessManager::addProc(id);
-  runInfo[id] = new runtime();
+  runInfo[id] = new RunTime();
 }
 
 void WorkLoadScheduler::addMoreProc(int id) {
   ProcessManager::addMoreProc(id);
-  runInfo[id] = new runtime();
+  runInfo[id] = new RunTime();
 }
 
 void WorkLoadScheduler::setFreeProc(int tid) {
@@ -313,12 +313,12 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
   }
 }
 
-void WorkLoadScheduler::sent(int procId) {
-  if (procId < 0 || procId >= totalNumProc) {
-    cerr << "Error in workloadscheduler - invalid process id " << procId << endl;
+void WorkLoadScheduler::sent(int procID) {
+  if (procID < 0 || procID >= totalNumProc) {
+    cerr << "Error in workloadscheduler - invalid process id " << procID << endl;
     exit(EXIT_FAILURE);
   }
-  runInfo[procId]->startRun();
+  runInfo[procID]->startRun();
 }
 
 int WorkLoadScheduler::quickHostsAvailable() {

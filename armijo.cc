@@ -19,9 +19,9 @@ double Armijo::getAlpha() {
 }
 
 int Armijo::conditionSatisfied(double y) {
-  int returnId = net->getReceiveId();
+  int returnID = net->getReceiveID();
   vector temp(1);
-  temp = (net->getX(returnId));
+  temp = (net->getX(returnID));
   if ((initialf - y) >= (-sigma * temp[0] * df))
     return 1;
   else
@@ -34,7 +34,7 @@ void Armijo::doArmijo(const vector& v1, double fx, double dery,
   int cond_satisfied;
   alpha = 0.0;
   power = -1;
-  numberOfVariables = netI->getNumVarsInDataGroup();
+  numVar = netI->getNumVarsInDataGroup();
   x = v1;
   s = s1;
   f = fx;
@@ -62,21 +62,21 @@ void Armijo::doArmijo(const vector& v1, double fx, double dery,
 }
 
 int Armijo::computeConditionFunction() {
-  int returnId, i, cond_satisfied = 0;
+  int returnID, i, cond_satisfied = 0;
   int counter = net->getNumDataItemsSet();
   int newreturns = net->getNumDataItemsAnswered();
   double y;
   vector temp;
 
-  returnId = net->getReceiveId();
-  if (returnId >= 0) {
-    temp = net->getX(returnId);
-    y = net->getY(returnId);
+  returnID = net->getReceiveID();
+  if (returnID >= 0) {
+    temp = net->getX(returnID);
+    y = net->getY(returnID);
     cond_satisfied = ((conditionSatisfied(y) == 1) && (f > y));
     if (cond_satisfied) {
       cout << "New optimum value f(x) = " << y << " at \n";
       f = y;
-      power = returnId - 1;
+      power = returnID - 1;
       alpha = temp[0];
       x = net->makeVector(temp);
       for (i = 0; i < x.dimension() ; i++)

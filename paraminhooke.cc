@@ -5,7 +5,7 @@
 // ********************************************************
 ParaminHooke::ParaminHooke(NetInterface* netInt) : ParaminSearch(netInt) {
   numiters = 0;
-  returnId = -1;
+  returnID = -1;
   lambda = 0;
   rho = 0.5;
   epsilon = 1e-4;
@@ -247,7 +247,7 @@ int ParaminHooke::SetPoint(int n) {
 }
 
 int ParaminHooke::MyDataGroup() {
-  return (returnId >= 0);
+  return (returnID >= 0);
 }
 
 void ParaminHooke::ReceiveValue() {
@@ -257,10 +257,10 @@ void ParaminHooke::ReceiveValue() {
     net->stopUsingDataGroup();
     exit(EXIT_FAILURE);
   }
-  returnId = net->getReceiveId();
+  returnID = net->getReceiveID();
   if (MyDataGroup()) {
     numiters++;
-    freceive = net->getY(returnId);
+    freceive = net->getY(returnID);
   }
 }
 
@@ -268,7 +268,7 @@ int ParaminHooke::UpdateOpt() {
   int newopt = 0;
   if (freceive < bestf) {
     bestf = freceive;
-    bestx = net->getX(returnId);
+    bestx = net->getX(returnID);
     newopt = 1;
   }
   return newopt;
@@ -277,9 +277,9 @@ int ParaminHooke::UpdateOpt() {
 void ParaminHooke::SetPointNearby()  {
   int withinbounds = 0;
   int returnparam;
-  returnparam = par[returnId];
+  returnparam = par[returnID];
   if (change[returnparam] == 1) {
-    if (freceive < previousf[returnId])
+    if (freceive < previousf[returnID])
       withinbounds = SetPoint(returnparam);
     else {
       delta[returnparam] = 0.0 - delta[returnparam];

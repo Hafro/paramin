@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
 
   commandline = new CommandLineInfo;
   // Find out options given on command line
-  commandline->Read(argc, argv);
+  commandline->read(argc, argv);
 
   net = new MasterCommunication(commandline);
   processM = new WorkLoadScheduler(commandline);
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   // This prints X full, unscaled and including all parameteters. Not x as
   // possibly used by opt. methods.
   optimize->OptimizeFunc();
-  optimize->PrintResult(netInt);
+  optimize->printResult(netInt);
 
   // clean up
   delete netInt;

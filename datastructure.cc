@@ -1,34 +1,34 @@
 #include "datastructure.h"
 
-queue::queue() {
+Queue::Queue() {
   first = NULL;
   last = NULL;
   numberInQueue = 0;
 }
 
-queue::~queue() {
+Queue::~Queue() {
   int temp;
   while (!isEmpty())
     temp = get();
 }
 
-int queue::isEmpty() {
+int Queue::isEmpty() {
   return (first == NULL);
 }
 
-int queue::getNumItems() {
+int Queue::getNumItems() {
   return numberInQueue;
 }
 
-void queue::put(int tid) {
+void Queue::put(int tid) {
   if (first) {
-    myLink* temp = new myLink;
+    Link* temp = new Link;
     last->l = temp;
     last = temp;
     last->tid = tid;
     last->l = NULL;
   } else {
-    first = new myLink;
+    first = new Link;
     last = first;
     first->tid = tid;
     last->l = NULL;
@@ -37,7 +37,7 @@ void queue::put(int tid) {
   numberInQueue++;
 }
 
-int queue::get() {
+int Queue::get() {
   assert(first);
   int tid = first->tid;
   if (first == last) {
@@ -45,7 +45,7 @@ int queue::get() {
     last = NULL;
     first = NULL;
   } else {
-    myLink* temp = first->l;
+    Link* temp = first->l;
     delete first;
     first = temp;
   }
@@ -53,7 +53,7 @@ int queue::get() {
   return tid;
 }
 
-int queue::getLast() {
+int Queue::getLast() {
   assert(last);
   int tid = last->tid;
   if (first == last) {
@@ -61,7 +61,7 @@ int queue::getLast() {
     last = NULL;
     first = NULL;
   } else {
-    myLink* temp = last->l;
+    Link* temp = last->l;
     delete last;
     last = temp;
   }
@@ -69,27 +69,27 @@ int queue::getLast() {
   return tid;
 }
 
-void queue::putFirst(int dataId) {
+void Queue::putFirst(int dataID) {
   if (first) {
     // the queue is not empty
-    myLink* temp = new myLink;
+    Link* temp = new Link;
     temp->l = first;
     first = temp;
-    first->tid = dataId;
+    first->tid = dataID;
   } else {
     // making first link in queue
-    first = new myLink;
+    first = new Link;
     last = first;
-    first->tid = dataId;
+    first->tid = dataID;
     last->l = NULL;
   }
   numberInQueue++;
 }
 
-int queue::contains(int id) {
+int Queue::contains(int id) {
   int i = 0;
   int inQueue = 0;
-  myLink* temp;
+  Link* temp;
   if (isEmpty())
     return 0;
 

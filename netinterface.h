@@ -43,7 +43,7 @@ private:
   /**
    * \brief dataSet keeps track of unsent data which has been set
    */
-  queue* dataSet;             
+  Queue* dataSet;             
   /**
    * \brief number of tags that have been used.
    */
@@ -52,7 +52,7 @@ private:
    * \brief initial starting point for sending data
    */
   vector initialX;            
-  int receiveId;
+  int receiveID;
   int numVarInDataGroup;
   int numVarToSend;
   vector h;
@@ -130,7 +130,7 @@ public:
   // ******************************************************
   // Functions for getting/setting information about datagroup
   // ******************************************************
-  int getReceiveId();
+  int getReceiveID();
   void sentDataItem(int id);
   int getNumNotAns();
   int getNumDataItemsSet();
@@ -160,7 +160,7 @@ public:
   // ******************************************************
   // Functions for sending/receiving
   // ******************************************************
-  int sendOne(int processId, int x_id);
+  int sendOne(int processID, int x_id);
   void sendOne();
   int resend();
   int receiveOne();
@@ -179,7 +179,7 @@ public:
   int probeForReceiveOne();
   int receiveOneNonBlocking();
   int sendToIdleHostIfCan();
-  int sendOneAndDataid(int processId, int x_id);
+  int sendOneAndDataid(int processID, int x_id);
   int checkHostForSuspend();
   int checkHostForDelete();
   int checkHostForResume();
@@ -207,9 +207,9 @@ public:
   int noAvailableProcesses();
   int waitForBetterProcesses();
   void sendStringValue();
-  void sendStringValue(int processId);
+  void sendStringValue(int processID);
   void sendBoundValues();
-  void sendBoundValues(int processId);
+  void sendBoundValues(int processID);
 
   //Added for condor
   int netNoneToReceive();

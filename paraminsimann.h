@@ -44,9 +44,9 @@ private:
    */
   int maxim;         
   /**
-   * \brief acpPointId[0..numvar], acpPointId[i] = -1 if point with trial parameter x[i] was not accepted else acpPointId[i] = returnId of the value which gives the accepted point.
+   * \brief acpPointID[0..numvar], acpPointID[i] = -1 if point with trial parameter x[i] was not accepted else acpPointID[i] = returnID of the value which gives the accepted point.
    */
-  int* acpPointId;     
+  int* acpPointID;     
   /**
    * \brief number of accepted points for each parameter
    */
@@ -58,8 +58,8 @@ private:
   /**
    * \brief denotes in what order the points were sent
    */
-  int *Id;            
-  int returnId;
+  int *ID;            
+  int returnID;
   /**
    * \brief number of hosts available.
    */

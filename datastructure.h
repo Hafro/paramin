@@ -3,31 +3,31 @@
 
 #include "paramin.h"
 
-class myLink {
+class Link {
 public:
-  myLink* l;
+  Link* l;
   int tid;
 };
 
 /**
  * \class Queue 
- * \brief class queue stores data items of type integer. Items can be added to the end or front of the queue and removed from the end or the front 
+ * \brief class Queue stores data items of type integer. Items can be added to the end or front of the queue and removed from the end or the front 
 */
 
-class queue {
+class Queue {
 private:
   int numberInQueue;
-  myLink* first;
-  myLink* last;
+  Link* first;
+  Link* last;
 public:
-  queue();
-  ~queue();
+  Queue();
+  ~Queue();
   void put(int tid);
   int get();
   int isEmpty();
   int getNumItems();
   int getLast();
-  void putFirst(int dataId);
+  void putFirst(int dataID);
   int contains(int id);
 };
 

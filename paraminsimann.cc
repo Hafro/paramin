@@ -22,18 +22,18 @@ ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
   eps = 1e-4;
   maxiterations = 2000;
   
-  Id = new int[numvar];
+  ID = new int[numvar];
   nacp = new int[numvar];
-  acpPointId = new int[numvar];
+  acpPointID = new int[numvar];
   // total number of processes initiated at beginning
   NumberOfHosts = net->getTotalNumProc();
   converged = 0;
 }
 
 ParaminSimann::~ParaminSimann() {
-  delete[] Id;
+  delete[] ID;
   delete[] nacp;
-  delete[] acpPointId;
+  delete[] acpPointID;
 }
 
 void ParaminSimann::Read(CommentStream& infile, char* text) {
@@ -127,9 +127,9 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
   fstart = bestf;
 
   for (i = 0; i < numvar; i++) {
-    Id[i] = i;
+    ID[i] = i;
     nacp[i] = 0;
-    acpPointId[i] = -1;
+    acpPointID[i] = -1;
   }
   // Find out how many values to set at beginning of each ns loop.
   if (numvar > NumberOfHosts)
@@ -145,12 +145,12 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
     while ((numloops_nt < nt) && (nfcnev < maxiterations)) {
       numloops_ns = 0;
       naccepted_nsloop = 0;
-      randomOrder(Id);
+      randomOrder(ID);
 
       while ((numloops_ns < ns) && (nfcnev < maxiterations)) {
         if (numloops_ns == 0) {
           for (i = 0; i < numtoset; i++)
-            SetXP(Id[i]);
+            SetXP(ID[i]);
           numset_nsloop = numtoset;
         } else
           numset_nsloop = 0;
@@ -161,7 +161,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
           // get a function value and do any update that's necessary.
           ReceiveValue();
           if (nfcnev < maxiterations) {
-            SetXP(Id[numset_nsloop]);
+            SetXP(ID[numset_nsloop]);
             numset_nsloop++;
           }
         }
@@ -185,7 +185,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
 
     net->stopUsingDataGroup();
     for (i = 0; i < numvar; i++)
-      acpPointId[i] = -1;
+      acpPointID[i] = -1;
 
     // check termination criteria.
     for (i = check - 1; i > 0; i--)
@@ -245,9 +245,9 @@ void ParaminSimann::SetXP(int k) {
 	
       }
     } else {
-      if (acpPointId[i] >= 0) {
+      if (acpPointID[i] >= 0) {
         // Use parameter from x with id = nacp_ns[i] which was accepted earlier
-        temp = net->getX(acpPointId[i]);
+        temp = net->getX(acpPointID[i]);
         xp[i] = temp[i];
       } else
         xp[i] = xstart[i];
@@ -267,8 +267,8 @@ void ParaminSimann::SetXP(int k) {
 void ParaminSimann::AcceptPoint() {
   xstart = xp;
   fstart = fp;
-  nacp[Id[returnId % numvar]]++;
-  acpPointId[Id[returnId % numvar]] = returnId;
+  nacp[ID[returnID % numvar]]++;
+  acpPointID[ID[returnID % numvar]] = returnID;
   naccepted_nsloop++;
 
   // if better than any other point record as new optimum.
@@ -309,12 +309,12 @@ void ParaminSimann::ReceiveValue() {
 
   receive = net->receiveOne();
   if (receive == net->netSuccess()) {
-    returnId = net->getReceiveId();
-    if (returnId >= 0) {
+    returnID = net->getReceiveID();
+    if (returnID >= 0) {
       // received data belonging to correct datagroup
       nfcnev++;
-      fp = net->getY(returnId);
-      xp = net->getX(returnId);
+      fp = net->getY(returnID);
+      xp = net->getX(returnID);
       if (!maxim)
         fp = -fp;
       // accept the new point if the function value increases.

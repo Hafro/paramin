@@ -8,39 +8,18 @@
  * \brief This class performs a linestearch along a given line without using derivatives. The method works as follows, a sequence of alpha_n = beta^n*s is generated and if f(x)-f(x+alpha_n*s) >= - sigma * alpha_n * grad(f,x)'*s otherwise the method continues
  */
 class Armijo : public LineSearch {
-private:
-  /**
-   * \brief Linesearch done from initialx
-   */
-  vector initialx;    
-  /**
-   * \brief The function value at initialx.
-   */
-  double initialf;    
-  /**
-   * \brief The derivative of g(alpha)=f(x + alpha * h).
-   */
-  double df;          
-  vector hvec;
-  double s;
-  double sigma;
-  NetInterface* net;
-  Condition* cond;
-  int numberOfVariables;
-  double alpha;
-  int power;
-  double beta;
 public:
   /**
-   * \brief Default constructor
+   * \brief This is the default Armijo constructor
    */
   Armijo();
   /**
-   * \brief Default destructor
+   * \brief This is the default Armijo destructor
    */
   virtual ~Armijo();
   /**
-   * \brief returns the best alpha
+   * \brief This function will return the best value for alpha obtained by the search
+   * \return alpha
    */
   double getAlpha();
   /**
@@ -49,14 +28,11 @@ public:
    */
   int conditionSatisfied(double y);
   /**
-   * \brief not implemented
-   */
-  void doLinesearch();
-  /**
    * \brief doArmijo does the Armijo linesearch
    * \param v1 is the inital starting point
    * \param fx is the f-value at v1
    * \param dery is the dot product of the gradient and search direction
+   * \param h 
    * \param netI 
    * \param s is the starting alpha value
    */
@@ -78,7 +54,7 @@ public:
    */
   void setSigma(double s);
   /**
-   * \param s is the new value for sigma
+   * \param b is the new value for beta
    */
   void setBeta(double b);
   /**
@@ -97,6 +73,28 @@ public:
    * \brief Computes the conditionfunction and supplies nodes new jobs 
    */
   int computeConditionFunction();
+private:
+  /**
+   * \brief Linesearch done from initialx
+   */
+  vector initialx;    
+  /**
+   * \brief The function value at initialx.
+   */
+  double initialf;    
+  /**
+   * \brief The derivative of g(alpha)=f(x + alpha * h).
+   */
+  double df;          
+  vector hvec;
+  double s;
+  double sigma;
+  NetInterface* net;
+  Condition* cond;
+  int numVar;
+  double alpha;
+  int power;
+  double beta;
 };
 
 #endif

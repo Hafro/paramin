@@ -5,9 +5,9 @@
 // ********************************************************
 Optimizer::Optimizer(CommandLineInfo* info, NetInterface* net) {
 
-  useSimann = 0;
-  useHooke = 0;
-  useBfgs = 0;
+  useSA = 0;
+  useHJ = 0;
+  useBFGS = 0;
   parSA = NULL;
   parHJ = NULL;
   parBFGS = NULL;
@@ -15,13 +15,13 @@ Optimizer::Optimizer(CommandLineInfo* info, NetInterface* net) {
   // Initialise random number generator
   srand(time(NULL));
 
-  outputfile = info->OutputFilename();
-  if (info->OptinfoGiven())
-    this->ReadOptInfo(info->OptFilename(), net);
+  outputfile = info->getOutputFilename();
+  if (info->getOptInfoFileGiven())
+    this->readOptInfo(info->getOptFilename(), net);
   else {
     cout << "No optimizing information given - using default information\n";
     parHJ = new ParaminHooke(net);
-    useHooke = 1;
+    useHJ = 1;
   }
 
   // Set the starting value of x and f
@@ -43,7 +43,7 @@ Optimizer::~Optimizer() {
     delete parBFGS;
 }
 
-void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
+void Optimizer::readOptInfo(char* optfilename, NetInterface* net) {
 
   char text[MaxStrLength];
   strncpy(text, "", MaxStrLength);
@@ -60,7 +60,7 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
 
     } else if (strcasecmp(text, "[simann]") == 0) {
       parSA = new ParaminSimann(net);
-      useSimann = 1;
+      useSA = 1;
 
       if (!commin.eof()) {
         commin >> text;
@@ -74,7 +74,7 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
 
     } else if (strcasecmp(text, "[hooke]") == 0) {
       parHJ = new ParaminHooke(net);
-      useHooke = 1;
+      useHJ = 1;
 
       if (!commin.eof()) {
         commin >> text;
@@ -88,7 +88,7 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
 
     } else if (strcasecmp(text, "[bfgs]") == 0) {
       parBFGS = new ParaminBFGS(net);
-      useBfgs = 1;
+      useBFGS = 1;
 
       if (!commin.eof()) {
         commin >> text;
@@ -111,14 +111,14 @@ void Optimizer::ReadOptInfo(char* optfilename, NetInterface* net) {
   infile.close();
   infile.clear();
 
-  if (useSimann == 0 && useHooke == 0 && useBfgs == 0) {
+  if (useSA == 0 && useHJ == 0 && useBFGS == 0) {
     cerr << "Error in optinfofile - no valid optimisation methods found\n";
     exit(EXIT_FAILURE);
   }
 }
 
 void Optimizer::OptimizeFunc() {
-  if (useSimann) {
+  if (useSA) {
     cout << "\nStarting Simulated Annealing\n";
     parSA->doSearch(startx, startf);
     // startx is scaled if scaling is used..
@@ -128,7 +128,7 @@ void Optimizer::OptimizeFunc() {
     cout << "\nBest point from Simulated Annealing is f(x) = " << startf << " at\n" << startx;
   }
 
-  if (useHooke) {
+  if (useHJ) {
     cout << "\nStarting Hooke & Jeeves\n";
     parHJ->doSearch(startx, startf);
     startx = parHJ->getBestX();
@@ -136,7 +136,7 @@ void Optimizer::OptimizeFunc() {
     cout << "\nBest point from Hooke & Jeeves is f(x) = " << startf << " at\n" << startx;
   }
 
-  if (useBfgs) {
+  if (useBFGS) {
     cout << "\nStarting BFGS\n";
     parBFGS->doSearch(startx, startf);
     startx = parBFGS->getBestX();
@@ -153,7 +153,7 @@ double Optimizer::getBestF() {
   return startf;
 }
 
-void Optimizer::PrintResult(NetInterface* net) {
+void Optimizer::printResult(NetInterface* net) {
   // write the best point out to a file
   int i;
   time_t timenow;
@@ -167,19 +167,19 @@ void Optimizer::PrintResult(NetInterface* net) {
   } else {
     // write the data in the gadget format so this file can be used as a starting point
     outfile << "; Output from Paramin version " << PARAMINVERSION << " on " << ctime(&timenow);
-    if (useSimann) {
+    if (useSA) {
       if (parSA->GetConverged())
         outfile << "; Simulated Annealing stopped because the convergence criteria were met\n";
       else
         outfile << "; Simulated Annealing stopped because the maximum number of function evaluations was reached\n";
     } 
-    if (useHooke) {
+    if (useHJ) {
       if (parHJ->GetConverged())
         outfile << "; Hooke & Jeeves stopped because the convergence criteria were met\n";
       else
         outfile << "; Hooke & Jeeves stopped because the maximum number of function evaluations was reached\n";
     } 
-    if (useBfgs) {
+    if (useBFGS) {
       if (parBFGS->GetConverged())
         outfile << "; BFGS stopped because the convergence criteria were met\n";
       else

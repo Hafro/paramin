@@ -14,9 +14,9 @@ NetInterface::NetInterface(NetCommunication* netComm,
   dataSet = NULL;
   numVarInDataGroup = 0;
   numVarToSend = 0;
-  toscale = commandline->ToScale();
+  toscale = commandline->getScale();
   net = netComm;
-  readInputFile(commandline->InputFilename());
+  readInputFile(commandline->getInputFilename());
   initiateNetComm(pm, commandline->runCondor());
 }
 
@@ -196,7 +196,7 @@ void NetInterface::initiateNetComm(ProcessManager* pm, int condor) {
     }
     pManager->initializePM(numProc, condor);
     numberOfTags = 0;
-    receiveId = -1;
+    receiveID = -1;
   }
 
   if (switches.Size() > 0)

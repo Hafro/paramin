@@ -26,22 +26,22 @@ int NetInfo::numCopiesSent() {
   return numPendingAnswers;
 }
 
-coordinates::coordinates() {
+Coordinates::Coordinates() {
   y = 0.0;
 }
 
-coordinates::~coordinates() {
+Coordinates::~Coordinates() {
 }
 
-double coordinates::getY() {
+double Coordinates::getY() {
   return y;
 }
 
-vector coordinates::getX() {
+vector Coordinates::getX() {
   return x;
 }
 
-double coordinates::getParameter(int num) {
+double Coordinates::getParameter(int num) {
   assert(num >= 0);
   if (x.dimension() <= 0) {
     cerr << "Error in coordinates - vector has not been initialised\n";
@@ -50,11 +50,11 @@ double coordinates::getParameter(int num) {
   return x[num];
 }
 
-void coordinates::setX(const vector& x1) {
+void Coordinates::setX(const vector& x1) {
   x = x1;
 }
 
-void coordinates::setParameter(double p, int num) {
+void Coordinates::setParameter(double p, int num) {
   if ((num < 0) || (num >= x.dimension())) {
     cerr << "Error in coordinates - number is out of bounds\n";
     exit(EXIT_FAILURE);
@@ -62,11 +62,11 @@ void coordinates::setParameter(double p, int num) {
   x[num] = p;
 }
 
-void coordinates::setY(double y1) {
+void Coordinates::setY(double y1) {
   y = y1;
 }
 
-int coordinates::getNumParameters() {
+int Coordinates::getNumParameters() {
   return x.dimension();
 }
 
@@ -75,14 +75,14 @@ NetDataControl::NetDataControl(int numx, int numberOfParameters, int t) {
   totalNumx = numx;
   numberSent = 0;
   numberAnswers = 0;
-  resendId = -1;
+  resendID = -1;
   tag = t;
   numPar = numberOfParameters;
-  xyCoord = new coordinates*[numx];
+  xyCoord = new Coordinates*[numx];
   nInfo = new NetInfo*[numx];
   int i;
   for (i = 0; i < numx; i++) {
-    xyCoord[i] = new coordinates();
+    xyCoord[i] = new Coordinates();
     nInfo[i] = new NetInfo;
   }
 }
@@ -115,7 +115,7 @@ void NetDataControl::setX(const vector& x1) {
   numberOfx++;
 }
 
-int NetDataControl::getIdToSetNext() {
+int NetDataControl::getIDToSetNext() {
   // might change
   if (numberOfx == totalNumx)
     return -1;
@@ -218,7 +218,7 @@ double NetDataControl::getNextAnsweredY() {
 
 // ----------------------------------------------------------------------------
 // Functions concerning sending data
-int NetDataControl::getNextSendId() {
+int NetDataControl::getNextSendID() {
   int i = 0;
   int FOUND = 0;
   if (allSent()) {
@@ -240,19 +240,19 @@ int NetDataControl::getNextXToResend() {
     cerr << "Error in netdatacontrol - no data to resend\n";
     exit(EXIT_FAILURE);
   }
-  resendId++;
-  if (resendId == totalNumx)
-    resendId = 0;
-  while ((nInfo[resendId]->hasReceived() || !nInfo[resendId]->hasSent()
-      || nInfo[resendId]->numPendingAnswers > numPending)) {
+  resendID++;
+  if (resendID == totalNumx)
+    resendID = 0;
+  while ((nInfo[resendID]->hasReceived() || !nInfo[resendID]->hasSent()
+      || nInfo[resendID]->numPendingAnswers > numPending)) {
     counter++;
-    resendId++;
-    if (resendId == totalNumx)
-      resendId = 0;
+    resendID++;
+    if (resendID == totalNumx)
+      resendID = 0;
     if (counter == totalNumx)
       numPending++;
   }
-  return resendId;
+  return resendID;
 }
 
 void NetDataControl::sentOne(int id) {
@@ -316,7 +316,7 @@ int NetDataControl::getTag() {
   return tag;
 }
 
-int NetDataControl::getLastSetId() {
+int NetDataControl::getLastSetID() {
   return numberOfx - 1;
 }
 

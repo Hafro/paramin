@@ -29,9 +29,9 @@ private:
   /**
    *\brief id recognized by master, equals -1 if has not started initial communication with master,
    */
-  int myId;           
+  int myID;           
 
-  int numberOfVar;
+  int numVar;
   NetDataVariables* netDataVar;
   double* netDataDouble;
   struct timeval tmout;

@@ -1,18 +1,18 @@
 #include "netgradient.h"
 #include "mathfunc.h"
 
-gradient::~gradient() {
+Gradient::~Gradient() {
 }
 
-NetGradient::NetGradient(int numVar) {
+NetGradient::NetGradient(int numVars) {
   difficultgrad = 1;
   delta0 = 0.01;
   delta1 = 0.0001;
   delta2 = 0.00001;
   delta = 0.0001;
-  numberOfVariables = numVar;
+  numVar = numVars;
   normgrad = -1.0;
-  vector tempVec(numVar);
+  vector tempVec(numVars);
   grad = tempVec;
   diagHess = tempVec;
   deltavec = tempVec;
@@ -24,7 +24,7 @@ NetGradient::~NetGradient() {
 
 void NetGradient::initializeDiagonalHessian() {
   int i;
-  for (i = 0; i < numberOfVariables; i++)
+  for (i = 0; i < numVar; i++)
     diagHess[i]= -1.0;
 }
 
@@ -34,11 +34,11 @@ void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
   int numberOfx = 0;
 
   if (difficultgrad == 0)
-    numberOfx = numberOfVariables + 1;
+    numberOfx = numVar + 1;
   else if (difficultgrad == 1)
-    numberOfx = numberOfVariables * 2 + 1;
+    numberOfx = numVar * 2 + 1;
   else if (difficultgrad >= 2)
-    numberOfx = numberOfVariables * 4 + 1;
+    numberOfx = numVar * 4 + 1;
 
   // initialize new datagroup for gradient computing and set current point
   netInt->startNewDataGroup(numberOfx);
@@ -48,7 +48,7 @@ void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
   // compute x + hi * ei for all i
   vector tempVec;
   tempVec = x;
-  for (i = 0; i < numberOfVariables; i++) {
+  for (i = 0; i < numVar; i++) {
     deltai = deltavec[i] * (1.0 + absolute(tempVec[i]));
     tempVec[i] -= deltai;
     netInt->setX(tempVec);
@@ -90,7 +90,7 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, double f, i
   normgrad = 0.0;
 
   //Calculate f(x + hi * ei) for all i
-  for (i = 0;  i < numberOfVariables; i++) {
+  for (i = 0;  i < numVar; i++) {
     deltai = (1.0 + absolute(x[i])) * deltavec[i];
     fx1 = net->getY(numfx);
     numfx++;
