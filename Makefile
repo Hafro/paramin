@@ -20,35 +20,35 @@ GADGETDIR = ../gadget
 # 1. Linux, g++ compiler, no gadget library
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3
+#LIBRARIES = -lm -lnsl -lpvm3
 #DEFINE_FLAGS = -D NDEBUG -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 2. Linux, g++ compiler, with gadget library
 CXX = g++
 LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
+LIBRARIES = -lm -lnsl -lpvm3 -lgadgetinput
 DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 3. Solaris, g++ compiler, no gadget library
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR)
-#LIBRARIES = -lm -lpvm3 -lgpvm3 -lnsl -lsocket
+#LIBRARIES = -lm -lpvm3 -lnsl -lsocket
 #DEFINE_FLAGS = -D NDEBUG -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 4. Solaris, g++ compiler, with gadget library
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
+#LIBRARIES = -lm -lnsl -lpvm3 -lsocket -lgadgetinput
 #DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ################################################################
 # 5. Linux, g++ compiler, with gadget library running CONDOR
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
+#LIBRARIES = -lm -lnsl -lpvm3 -lgadgetinput
 ##DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
 #DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
@@ -56,7 +56,7 @@ CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 # 6. Solaris, g++ compiler, with gadget library running CONDOR
 #CXX = g++
 #LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
+#LIBRARIES = -lm -lnsl -lpvm3 -lsocket -lgadgetinput
 #DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -O3
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ###############################################################

@@ -148,7 +148,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
       randomOrder(Id);
 
       while ((numloops_ns < ns) && (nfcnev < maxiterations)) {
-        if (numloops_ns == 1) {
+        if (numloops_ns == 0) {
           for (i = 0; i < numtoset; i++)
             SetXP(Id[i]);
           numset_nsloop = numtoset;
