@@ -1,0 +1,12 @@
+; "Magic" constants needed for the running of Simulated Annealing.  
+; The number of times through function before V adjustment (see
+; mainconstants)
+NS 15 
+; The number of times through NS loop before temperature reduction.
+NT  10
+; Number of times that epsilon tolerance is achieved before termination.
+NEPS   4
+; Temperature reduction factor
+RT  0.8
+; Epsilon, used for halt criteria.
+EPS  0.00001

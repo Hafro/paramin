@@ -1,0 +1,20 @@
+; "Magic" constants needed for the running of BFGS.
+; Max iterations for each bfgs-minimization:
+MAXBFGSITER  200
+; Error tolerance for termination criteria:
+ERRORTOL  0.01
+; Tolerance for x:
+XTOL  0.000001
+; Max number of minmizations:
+MAXROUNDS  5 
+; Scale direction vector (Shannon Scaling):
+SHANNONSCALING  0
+; Gradient calculations:
+DIFFICULTGRAD  1
+; Use bfgs (I) or steepest decent (O):
+BFGSPAR  1
+; Magic constants for armijo-linesearch:
+BETA  0.3
+SIGMA  0.01
+; Print the gradient and the hessian matrix
+PRINTING 0

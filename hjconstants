@@ -1,0 +1,7 @@
+; "Magic" constants needed for the running of Hooke&Jeeves.  
+; Halt criteria:
+epsilon  1e-5
+; Maximum number of iterations per minimization:
+MAXITER  3000
+; Initial value of rho: (resizing multiplier for the stepsize)
+rho  0.5
