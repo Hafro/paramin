@@ -63,7 +63,7 @@ void NetInterface::readInputFile(char* initvalsFileName) {
 void NetInterface::setSwitches(InitialInputFile* data) {
   int i;
   for (i = 0; i < data->numVariables(); i++)
-     switches.resize(1, data->Switches(i).getValue());
+     switches.resize(1, data->Switches(i).getName());
 }
 
 void NetInterface::setVector(InitialInputFile* data) {
