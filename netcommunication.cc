@@ -321,6 +321,7 @@ void NetCommunication::stopNetCommunication() {
   mytid = -1;
   NETSTARTED = 0;
 }
+#endif
 
 int NetCommunication::spawnProgram() {
   int i, nspawn;
@@ -360,7 +361,6 @@ int NetCommunication::spawnProgram() {
     return SUCCESS;
   }
 }
-#endif
 
 int NetCommunication::spawnOneProgram(int vectorNumber) {
   int i, nspawn;
@@ -853,7 +853,7 @@ int NetCommunication::checkHostsForAdded() {
   int i, check, info, infos, tidAdded;
   int numOfProcessAdded = -1;
   char* nullString = "0";
-  bool checkIfNew = true;
+  int checkIfNew = 0;
 
   int received = pvm_nrecv(-1, pvmConst->getAddHostTag());
   if (received > 0) {
@@ -862,12 +862,12 @@ int NetCommunication::checkHostsForAdded() {
     // find id of tidDown
     for (i = 0; i < (tidsCounter + 1); i++) {
       if (tids[i] == tidAdded) {
-        checkIfNew = false;
+        checkIfNew++;
         numOfProcessAdded = i;
       }
     }
 
-    if (checkIfNew) {
+    if (checkIfNew == 0) {
       nhost++;
       numOfProcessAdded = tidsCounter + 1;
       hostTids[numOfProcessAdded] = tidAdded;

@@ -162,7 +162,7 @@ int simann::doSearch() {
           if (n > NumberOfHosts) {
             i = 0;
             while (i < NumberOfHosts) {
-              q = simannRandom() % n;
+              q = rand() % n;
               if (!IdContains(q)) {
                 Id[h] = q;
                 xp = getXP(q);
@@ -293,7 +293,7 @@ int simann::doSearch() {
 //Added jongud 27.05.03
 int simann::doSearchCondor() {
   int i, j, k, h, m, q, g;
-  int check, quit, hasSent, sendInfo;
+  int check, quit, hasSent, sendInfo, found;
   sacon par;
   par = readSAConstants();
   nacc = 0;
@@ -351,7 +351,7 @@ int simann::doSearchCondor() {
             Id[i] = -1;
 
           for (i = 0; i < n; i++) {
-            q = simannRandom() % n;
+            q = rand() % n;
             while (Id[q] != -1) {
               if (q == 0)
                 q = n;
@@ -360,16 +360,15 @@ int simann::doSearchCondor() {
             Id[q] = i;
           }
 
-          bool found;
           for (i = 0; i < n; i++) {
-            found = false;
+            found = 0;
             for (k = 0; k < n; k++) {
               if (k == Id[i]) {
-                found = true;
+                found++;
                 break;
               }
             }
-            if (found == false) {
+            if (found == 0) {
               cerr << "Error in simulated annealing - no valid identifier found\n";
               exit(EXIT_FAILURE);
             }
@@ -426,7 +425,7 @@ int simann::doSearchCondor() {
         // get a function value and do any update that's necessary
         check = net->checkHostForSuspend();
         if (check >= 0) {
-          bool hasSent = false;
+          hasSent = 0;
           while (hasSent != net->netSuccess()) {
             hasSent = sendData();
             if (net->probeForReceiveOne()) {
@@ -651,7 +650,7 @@ void simann::receiveValue() {
 // Get a function value and do any update that's necessary
 void simann::receiveValueNonBlocking() {
   double p, pp;
-  int returnId:
+  int returnId;
 
   int receive = net->receiveOneNonBlocking();
   if (receive == net->netSuccess()) {
@@ -892,7 +891,7 @@ double hooke::bestNearbyCondor(const vector& delta, double prevbest) {
   double fopt;
   double ftmp;
   int i, j, k, h, p;
-  int returnId;
+  int returnId, hasSetFirst;
   int* change;
   change = new int[numvar];
   int hasSent;
@@ -923,13 +922,13 @@ double hooke::bestNearbyCondor(const vector& delta, double prevbest) {
 
   h = 0;
   i = 0;
-  bool hasSetFirst = false;
-  while ((h < numvar) && (hasSetFirst == false)) {
+  hasSetFirst = 0;
+  while ((h < numvar) && (hasSetFirst == 0)) {
     j = setPoint(param[h], fopt);
     if (j == 1) {
       change[param[h]]++;
       i++;
-      hasSetFirst = true;
+      hasSetFirst++;
     }
     h++;
   }

@@ -181,6 +181,7 @@ int ProcessManager::getNextTidToSend(NetCommunication* n) {
     return nextTid;
   }
 }
+#endif
 
 int ProcessManager::checkForNewProcess(NetCommunication* n) {
   int newProcess;
@@ -190,7 +191,6 @@ int ProcessManager::checkForNewProcess(NetCommunication* n) {
     addMoreProc(newProcess);
   return newProcess;
 }
-#endif
 
 #ifndef CONDOR
 int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {

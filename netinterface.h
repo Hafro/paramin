@@ -205,7 +205,6 @@ public:
   int netNeedMoreHosts();
   int netDataNotSent();
   int netWaitForBetterProcesses();
-  bool isFreeProcess();
 };
 
 #endif

@@ -39,18 +39,18 @@ GADGETDIR = ../source
 #CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE)
 ################################################################
 # 4. Solaris, g++ compiler, with gadget library
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
-################################################################
-# 5. Linux, g++ compiler, with gadget library running CONDOR
 CXX = g++
 LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
-DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
+LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lsocket -lgadgetinput
+DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
+################################################################
+# 5. Linux, g++ compiler, with gadget library running CONDOR
+#CXX = g++
+#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
+#LIBRARIES = -lm -lnsl -lpvm3 -lgpvm3 -lgadgetinput
+#DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -D GADGET_INLINE -O3
+#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 ###############################################################
 # 6. Solaris, g++ compiler, with gadget library running CONDOR
 #CXX = g++
