@@ -4,23 +4,23 @@
 #include "paramin.h"
 #include "vector.h"
 
-/* The class netInfo keeps together information concerning status of
+/* The class NetInfo keeps together information concerning status of
  * data that is being sent/received during netcommunication. It
  * contains functions to get information about status of data. */
 
-class netInfo {
+class NetInfo {
 public:
   int set;
   int sent;
   int received;
-  int numberOfPendingAnswers;
+  int numPendingAnswers;
 
-  netInfo();
-  ~netInfo();
+  NetInfo();
+  ~NetInfo();
   int hasSet();
   int hasReceived();
   int hasSent();
-  int numberOfCopiesSent();
+  int numCopiesSent();
 };
 
 /* The class coordinates stores the datapair (x, y) where
@@ -43,17 +43,17 @@ public:
   int getNumParameters();
 };
 
-/* The class netDataControl stores a set of datapairs (x[0..p-1], y)
+/* The class NetDataControl stores a set of datapairs (x[0..p-1], y)
  * which can be identified with a specific tag and each pair has a
  * unique identity. x[0..p-1] is thought of being sent to a process
- * and y is received from a process using net communication.  netDataControl
+ * and y is received from a process using net communication.  NetDataControl
  * provides functions to initialize and access each datapair and get
  * information about the status of net communication for the set of
- * datapairs as well as each pair.  netDataControl uses the class
- * coordinates to store each datapair and the class netInfo to set
+ * datapairs as well as each pair.  NetDataControl uses the class
+ * coordinates to store each datapair and the class NetInfo to set
  * information about the status of the data pair concerning netcommunication */
 
-class netDataControl {
+class NetDataControl {
 private:
   int tag;               // identification for the set of datapairs.
   int numberOfx;         // number of vectors set, numberOfx <= totalNumx
@@ -63,12 +63,12 @@ private:
   int nextAns;           // nextAns points to identity of the next data pair
   int numPar;            // number of parameters in vector x
   coordinates** xyCoord; // stores a set data pairs equals totalNumx
-  netInfo** nInfo;       // for each datapair there is a corresponding class
+  NetInfo** nInfo;       // for each datapair there is a corresponding class
                          // which keeps track of the status of netcommunication.
   int resendId;          // resendId points to the last x which can be resent
 public:
-  netDataControl(int numberOfx, int numberOfParameters, int t);
-  ~netDataControl();
+  NetDataControl(int numberOfx, int numberOfParameters, int t);
+  ~NetDataControl();
   void setX(const vector& x1);
   void setY(int id, double fx);
   void setDataPair(const vector& x1, double fx);
@@ -83,7 +83,7 @@ public:
   void resentOne(int id);
   int getIdToSetNext();
   int getTag();
-  int getNumberLeftToSend();
+  int getNumLeftToSend();
   int allSent();
   int getNumNotAnswered();
   int getTotalReceived();
@@ -92,7 +92,7 @@ public:
   int allReceived();
   int getNumAnswered();
   int getLastSetId();
-  int getMaxNumberOfData();
+  int getMaxNumData();
   int hasAnswer(int id);
   int isFull();
 };

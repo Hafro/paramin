@@ -8,7 +8,7 @@ vector::vector() {
 vector::vector(int n) {
   int i;
   if (n < 1) {
-    cout << "Error - illegal number of parameters in vector\n";
+    cerr << "Error in vector - illegal number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   dim = n;
@@ -20,7 +20,7 @@ vector::vector(int n) {
 vector::vector(DFP* f, int numVar) {
   int i;
   if (numVar < 1) {
-    cout << "Error - illegal number of parameters in vector\n";
+    cerr << "Error in vector - illegal number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   dim = numVar;
@@ -40,7 +40,7 @@ vector::vector(const vector& v) {
     for (i = 0; i < dim; i++)
       p[i] = v[i];
   } else {
-    cout << "Error - illegal number of parameters in vector\n";
+    cerr << "Error in vector - illegal number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
 }
@@ -69,7 +69,7 @@ vector& vector::operator = (const vector& v) {
     p = NULL;
     dim = 0;
   } else {
-    cout << "Error - illegal number of parameters in vector\n";
+    cerr << "Error in vector - illegal number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   return (*this);
@@ -84,7 +84,7 @@ vector operator + (const vector& v1, const vector& v2) {
   vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] + v2.p[i];
-  return (result);
+  return result;
 }
 
 vector operator - (const vector& v1, const vector& v2) {
@@ -95,7 +95,7 @@ vector operator - (const vector& v1, const vector& v2) {
   vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] - v2.p[i];
-  return (result);
+  return result;
 }
 
 vector operator - (const vector& v1) {
@@ -105,7 +105,7 @@ vector operator - (const vector& v1) {
   vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = -v1.p[i];
-  return (result);
+  return result;
 }
 
 vector operator * (DFP a, const vector& v1) {
@@ -115,7 +115,7 @@ vector operator * (DFP a, const vector& v1) {
   vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = a * v1.p[i];
-  return (result);
+  return result;
 }
 
 vector operator * (const vector& v1, DFP a) {
@@ -125,7 +125,7 @@ vector operator * (const vector& v1, DFP a) {
   vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] * a;
-  return (result);
+  return result;
 }
 
 DFP operator * (const vector& v1, const vector& v2) {
@@ -136,7 +136,7 @@ DFP operator * (const vector& v1, const vector& v2) {
   DFP result = 0.0;
   for (i = 0; i < v1.dim; i++)
     result += (v1.p[i] * v2.p[i]);
-  return (result);
+  return result;
 }
 
 int operator < (const vector& v1, const vector& v2) {
@@ -176,7 +176,6 @@ int operator == (const vector& v1, const vector& v2) {
     for (i = 0; i < v1.dim; i++)
       if (v1[i] != v2[i])
         return 0;
-
     return 1;
   }
 }
@@ -188,7 +187,7 @@ int operator != (const vector& v1, const vector& v2) {
 DFP& vector::operator [] (int i) const {
   assert(dim > 0);
   if ((i < 0) || (i >= dim)) {
-    cout << "Error - illegal reference to vector\n";
+    cerr << "Error in vector - illegal reference to vector\n";
     exit(EXIT_FAILURE);
   }
   return (p[i]);
@@ -209,7 +208,7 @@ vector normalize(vector& v1) {
   vector newVector(v1.dimension());
   DFP m = v1.magnitude();
   if (m == 0) {
-    cout << "Error - cannot normalize vector with zero magnitude\n";
+    cerr << "Error in vector - cannot normalize vector with zero magnitude\n";
     exit(EXIT_FAILURE);
   }
   for (i = 0; i < v1.dimension(); i++)
@@ -242,6 +241,6 @@ int vector::dimension() const {
 
 void vector::setValue(DFP f) {
   int i;
-  for(i = 0; i < dim; i++)
+  for (i = 0; i < dim; i++)
     p[i] = f;
 }

@@ -4,7 +4,7 @@
 #include "paramin.h"
 #include "netinterface.h"
 
-class netInterface;
+class NetInterface;
 class condition;
 
 class linesearch {
@@ -16,9 +16,9 @@ public:
   double f;           // best function value found in linesearch.
   vector x;           // best point found in linesearch.
   int fail;
-  double GetBestF();
-  vector GetBestX();
-  virtual double GetAlpha() = 0;
+  double getBestF();
+  vector getBestX();
+  virtual double getAlpha() = 0;
   virtual int computeConditionFunction() = 0;
 };
 
@@ -32,7 +32,7 @@ private:
   vector  hvec;
   double s;
   double sigma;
-  netInterface* net;
+  NetInterface* net;
   condition* cond;
   int numberOfVariables;
 public:
@@ -42,21 +42,21 @@ public:
     double beta;
   };
   optimal opt;
-
   armijo();
   virtual ~armijo();
-  double GetAlpha();
-  int CondSatisfied(double y);
-  void DoLinesearch();
-  void DoArmijo(const vector& v1, double fx, double dery,
-    const vector& h, netInterface* netI, double s);
+  double getAlpha();
+  int conditionSatisfied(double y);
+  void doLinesearch();
+  void doArmijo(const vector& v1, double fx, double dery,
+    const vector& h, NetInterface* netI, double s);
+  void doArmijoCondor(const vector & v1, double fx, double dery, const vector & h, NetInterface* netI, double s);
   vector getXvector(const vector& x, const vector& inixvec);
   void prepareNewLineSearch();
-  void InitateAlphas();
-  int SetData();
-  double GetBeta();
-  int GetPower();
-  int OutstandingRequests();
+  void initiateAlphas();
+  int setData();
+  double getBeta();
+  int getPower();
+  int outstandingRequests();
   int computeConditionFunction();
 };
 
@@ -78,13 +78,13 @@ private:
   double y0;             // function value at 0
   int numberOfProcesses;
   double dy0;
-  netInterface* net;
+  NetInterface* net;
   condition* con;
 public:
   wolfe();
   virtual ~wolfe();
-  void DoWolfe(const vector& x, double y, double dery,
-    const vector& invH, netInterface* netInt);
+  void doWolfe(const vector& x, double y, double dery,
+    const vector& invH, NetInterface* netInt);
   void prepareNewLineSearch(const vector& v1, double fx, double dery);
   void seekNewLimits(int i);
   void initiateAlphas();
@@ -106,20 +106,20 @@ public:
   int tabu(double xtmp);
   int wolf(double xtmp, double ytmp);
   double maximum();
-  void swapstuff(double x, double y);
-  int OutstandingRequests();
-  double GetAlpha();
+  void swapStuff(double x, double y);
+  int outstandingRequests();
 };
 
 class lineseeker : public wolfe {
 private:
-  netInterface* net;
+  NetInterface* net;
 public:
   lineseeker();
   virtual ~lineseeker();
-  void DoLineseek(const vector& xold, const vector& xnew,
-    double fnew, netInterface* netI);
-  int OutstandingRequests();
+  void doLineseek(const vector& xold, const vector& xnew,
+    double fnew, NetInterface* netI);
+  void doLineseekCondor(const vector & xold, const vector & xnew, double fnew, NetInterface *netI);
+  int outstandingRequests();
 };
 
 #endif

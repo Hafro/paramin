@@ -14,24 +14,24 @@
 
 class condition;
 
-/* netInterface is a class which manages netcommunication.
- * netInterface uses the class netCommunication to send/receive data.
- * The class processManager is used to dispatch processes to be used
- * by netInterface. It uses the class netDataControl to store data
+/* NetInterface is a class which manages netcommunication.
+ * NetInterface uses the class NetCommunication to send/receive data.
+ * The class ProcessManager is used to dispatch processes to be used
+ * by NetInterface. It uses the class NetDataControl to store data
  * and keep track of information about status of data concerning
- * netcommunication. It can use the class dataConverter to prepare
- * data before sending and the class dataScaler to scale/unscale
+ * netcommunication. It can use the class DataConverter to prepare
+ * data before sending and the class DataScaler to scale/unscale
  * data after/before sending. */
 
-class netInterface {
+class NetInterface {
 private:
   int MAXNUMX;
   int NUM_TRIES_TO_RECEIVE;
-  netDataControl* dctrl;      // dctrl stores data for current datagroup
-  processManager* pManager;   // pManager keeps track of processes
-  netCommunication* net;      // net manages all netcommunication.
-  dataConverter* dataConvert; // dataConvert prepares data for sending
-  dataScaler* scaler;         // scales/unscaled data after/before sending/receiving
+  NetDataControl* dctrl;      // dctrl stores data for current datagroup
+  ProcessManager* pManager;   // pManager keeps track of processes
+  NetCommunication* net;      // net manages all netcommunication.
+  DataConverter* dataConvert; // dataConvert prepares data for sending
+  DataScaler* scaler;         // scales/unscaled data after/before sending/receiving
   queue* dataSet;             // dataSet keeps track of unsent data which has been set
   int numberOfTags;           // number of tags that have been used.
   vector initialX;            // initial starting point for sending data
@@ -45,14 +45,14 @@ private:
   int ISALPHA;
   int TOSCALE;
   #ifdef GADGET_NETWORK
-    vectorofcharptr switches;
+    VectorOfCharPtr switches;
     vector upperBound;
     vector lowerBound;
   #endif
 public:
-  netInterface(char* initValsFilename, netCommunication* netComm, processManager* pm, int to_scale);
-  netInterface(char* initValsFileName, netCommunication* netComm, processManager* pm);
-  ~netInterface();
+  NetInterface(char* initValsFilename, NetCommunication* netComm, ProcessManager* pm, int to_scale);
+  NetInterface(char* initValsFileName, NetCommunication* netComm, ProcessManager* pm);
+  ~NetInterface();
   // ******************************************************
   // Functions for reading input values from file
   // ******************************************************
@@ -87,9 +87,9 @@ public:
   void readAllInitVals(char* fileName);
   void readInitVals(char* fileName);
   // ******************************************************
-  // Function for initiating values before start using class netInterface
+  // Function for initiating values before start using class NetInterface
   // ******************************************************
-  void initiateNetComm(processManager* pm);
+  void initiateNetComm(ProcessManager* pm);
   // ******************************************************
   // Functions for starting/stopping a new data group
   // ******************************************************
@@ -121,8 +121,8 @@ public:
   int getNumDataItemsSet();
   int getNumDataItemsAnswered();
   void setFirstAnsweredData();
-  int getNumOfVarsInDataGroup();
-  int getNumOfVarsInSendData();
+  int getNumVarsInDataGroup();
+  int getNumVarsInSendData();
   int dataGroupFull();
   // ******************************************************
   // Functions for data converting and data scaling vectors
@@ -135,7 +135,7 @@ public:
   vector getUpperbound();
   vector getOptInfo();
   #ifdef GADGET_NETWORK
-    vectorofcharptr getSwitches();
+    VectorOfCharPtr getSwitches();
   #endif
   // ******************************************************
   // Input and output functions for data
@@ -157,9 +157,27 @@ public:
   int receiveAndSend();
   int receiveAll();
   int receiveOnCondition(condition* con);
-  int send_receiveAllData();
-  int send_receiveTillCondition(condition* con);
-  int send_receive_setData(condition* con);
+  int sendAndReceiveAllData();
+  int sendAndReceiveTillCondition(condition* con);
+  int sendAndReceiveSetData(condition* con);
+
+  //Added for condor
+  int probeForReceiveOne();
+  int receiveOneNonBlocking();
+  int sendToIdleHostIfCan();
+  int sendOneAndDataid(int processId, int x_id);
+  int checkHostForSuspend();
+  int checkHostForDelete();
+  int checkHostForResume();
+  void checkHealthOfProcesses();
+  int sendAllCondor();
+  int receiveAndSendCondor();
+  int receiveAllCondor();
+  int sendDataCondor();
+  int sendAndReceiveAllDataCondor();
+  int sendAndReceiveSetDataCondor(condition* con);
+  int sendToAllIdleHostsCondor();
+
   // ******************************************************
   // Functions concerning netcommunication
   // ******************************************************
@@ -168,16 +186,26 @@ public:
   int getNumFreeProcesses();
   int getTotalNumProc();
   int getNextMsgTag();
-  int getNumberOfTags();
+  int getNumTags();
   int isUpAndRunning();
-  int NET_ERROR();
-  int NET_SUCCESS();
-  int NO_AVAILABLE_PROCESSES();
-  int WAIT_FOR_BETTER_PROCESSES();
+  int netError();
+  int netSuccess();
+  int noAvailableProcesses();
+  int waitForBetterProcesses();
   #ifdef GADGET_NETWORK
     void sendStringValue();
+    void sendStringValue(int processId);
     void sendBoundValues();
+    void sendBoundValues(int processId);
   #endif
+
+  //Added for condor
+  int netNoneToReceive();
+  int netNeedMoreData();
+  int netNeedMoreHosts();
+  int netDataNotSent();
+  int netWaitForBetterProcesses();
+  bool isFreeProcess();
 };
 
 #endif

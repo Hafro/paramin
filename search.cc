@@ -6,11 +6,11 @@
 search::~search() {
 }
 
-vector search::GetBestX(netInterface *net) {
+vector search::getBestX(NetInterface *net) {
   return net->unscaleX(x);
 }
 
-double search::GetBestF() {
+double search::getBestF() {
   return f;
 }
 
@@ -31,9 +31,9 @@ sacon readSAConstants() {
   char text[MaxStrLength];
   sacon tmp;
 
-  ifstream simfile("simconstants", ios::in|ios::binary|ios::nocreate);
+  ifstream simfile("simconstants", ios::in);
   if (!simfile) {
-    cerr << "Unable to open inputfile simconstants\n";
+    cerr << "Error in simulated annealing - unable to open inputfile simconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -75,17 +75,17 @@ sacon readSAConstants() {
 
   simfile.close();
   if (i != 5) {
-    cerr << "Error in reading from input file simconstants\n";
+    cerr << "Error in simmulated annealing - failed to read from input file simconstants\n";
     exit(EXIT_FAILURE);
   }
-  return(tmp);
+  return tmp;
 }
 
-simann::simann(netInterface* netInt, int m, int evl, const vector& stp,
+simann::simann(NetInterface* netInt, int m, int evl, const vector& stp,
   int tempt, const vector& stepl) {
 
   net = netInt;
-  n = net->getNumOfVarsInDataGroup();
+  n = net->getNumVarsInDataGroup();
   maxmin = m;
   maxevl = evl;
   xstart = net->getInitialX();
@@ -101,8 +101,8 @@ simann::simann(netInterface* netInt, int m, int evl, const vector& stp,
 simann::~simann() {
 }
 
-int simann::DoSearch() {
-  int i, m, j, h, q, g, quit;
+int simann::doSearch() {
+  int i, j, h, m, q, g, quit;
   sacon par;
   par = readSAConstants();
   nacc = 0;
@@ -111,7 +111,7 @@ int simann::DoSearch() {
   t = initialT;
   c = initialC;
 
-  // getInitialX() gives x scaled if scaling is defined in net.
+  // getInitialX() gives x scaled if scaling is defined in net
   x = net->getInitialX();
   xstart = net->getInitialX();
   vector tempVec(par.NEPS);
@@ -120,17 +120,17 @@ int simann::DoSearch() {
   vector upper = net->getUpperScaleConstant();
   vector lower = net->getLowerScaleConstant();
   if (xstart > upper || xstart < lower) {
-    cout << "Error in Simmulated Annealing - x is not within bounds\n";
+    cerr << "Error in simulated annealing - initial x is not within bounds\n";
     exit(EXIT_FAILURE);
   }
 
   // total number of processes initiated at beginning
   NumberOfHosts = net->getTotalNumProc();
 
-  // Find the function value at the starting point.
+  // Find the function value at the starting point
   net->startNewDataGroup(1);
   net->setX(xstart);
-  net->send_receiveAllData();
+  net->sendAndReceiveAllData();
   f = net->getY(0);
   net->stopUsingDataGroup();
 
@@ -141,8 +141,8 @@ int simann::DoSearch() {
   fstar[0] = f;
 
   // start the main loop.  Note that it terminates if (i) the algorithm
-  // succesfully otimizes the function or (ii) there are too many func. eval.
-  net->startNewDataGroup(maxevl*2);
+  // succesfully otimizes the function or (ii) there are too many func eval
+  net->startNewDataGroup(maxevl * 2);
   Id = new int[n];
   int rock = 1;
 
@@ -162,17 +162,17 @@ int simann::DoSearch() {
           if (n > NumberOfHosts) {
             i = 0;
             while (i < NumberOfHosts) {
-              q = random() % n;
+              q = simannRandom() % n;
               if (!IdContains(q)) {
                 Id[h] = q;
-                xp = GetXP(q);
+                xp = getXP(q);
                 net->setX(xp);
                 h++;
                 i++;
               }
             }
 
-            // put the remaining parameters in the Id array.
+            // put the remaining parameters in the Id array
             g = 0;
             for (i = 0; i < n; i++) {
               if (!IdContains(i)) {
@@ -187,7 +187,7 @@ int simann::DoSearch() {
               q = random() % n;
               if (!IdContains(q)) {
                 Id[h] = q;
-                xp = GetXP(q);
+                xp = getXP(q);
                 net->setX(xp);
                 h++;
                 i++;
@@ -195,14 +195,14 @@ int simann::DoSearch() {
             }
           }
 
-          // sends all available data to all free hosts.
+          // sends all available data to all free hosts
           net->sendToAllIdleHosts();
         }
 
         while (h < n) {
-          // get a function value and do any update that's necessary.
-          nfcnev = nfcnev + 1;
-          ReceiveValue();
+          // get a function value and do any update that's necessary
+          nfcnev++;
+          receiveValue();
           // if too many function evaluations occur, terminate the algorithm
           if (nfcnev > maxevl) {
             cout << "\nSimulated Annealing optimisation completed after " << nfcnev
@@ -215,12 +215,12 @@ int simann::DoSearch() {
             i = net->receiveAll();  //WHY? this takes time
             net->stopUsingDataGroup();
             net->setBestX(x);
-            delete [] Id;
-            return(nfcnev);
+            delete[] Id;
+            return nfcnev;
           }
 
-          // sending new point instead of the one just recieved.
-          xp = GetXP(Id[h]);
+          // sending new point instead of the one just received
+          xp = getXP(Id[h]);
           net->setX(xp);
           net->sendToAllIdleHosts();
           h++;
@@ -228,9 +228,9 @@ int simann::DoSearch() {
       }
 
       while (net->getNumNotAns() > 0) {
-        // get a function value and do any update that's necessary.
-        nfcnev = nfcnev + 1;
-        ReceiveValue();
+        // get a function value and do any update that's necessary
+        nfcnev++;
+        receiveValue();
         // if too many function evaluations occur, terminate the algorithm
         if (nfcnev > maxevl) {
           cout << "\nSimulated Annealing optimisation completed after " << nfcnev
@@ -243,18 +243,18 @@ int simann::DoSearch() {
           i = net->receiveAll();  //WHY? this takes time
           net->setBestX(x);
           net->stopUsingDataGroup();
-          delete [] Id;
-          return(nfcnev);
+          delete[] Id;
+          return nfcnev;
         }
       }
 
-      // adjust vm so that approximately half of all evaluations are accepted.
-      UpdateVM();
+      // adjust vm so that approximately half of all evaluations are accepted
+      updateVM();
       for (i = 0; i < n; i++)
         nacp[i] = 0;
     }
 
-    // check termination criteria.
+    // check termination criteria
     quit = 0;
     fstar[0] = f;
     if ((fopt - fstar[0]) <= par.EPS)
@@ -264,14 +264,14 @@ int simann::DoSearch() {
       if (fabs(f - fstar[i]) > par.EPS)
         quit = 0;
 
-    // terminate SA if appropriate.
+    // terminate SA if appropriate
     if (quit) {
       if (!maxmin)
         fopt = -fopt;
       rock = 0;
     }
 
-    // if termination criteria is not met, prepare for another loop.
+    // if termination criteria is not met, prepare for another loop
     if (rock) {
       t = par.RT * t;
       for (i = par.NEPS - 1; i > 0; i--)
@@ -283,29 +283,261 @@ int simann::DoSearch() {
   }
 
   net->stopUsingDataGroup();
-  delete [] Id;
+  delete[] Id;
+  f = fopt;
+  // update net with best x found so far
+  net->setBestX(x);
+  return nfcnev;
+}
+
+//Added jongud 27.05.03
+int simann::doSearchCondor() {
+  int i, j, k, h, m, q, g;
+  int check, quit, hasSent, sendInfo;
+  sacon par;
+  par = readSAConstants();
+  nacc = 0;
+  nobds = 0;
+  nfcnev = 0;
+  vm = initialVm;
+  t = initialT;
+  c = initialC;
+
+  // getInitialX() gives x scaled if scaling is defined in net
+  x = net->getInitialX();
+  xstart = net->getInitialX();
+  vector tempVec(par.NEPS);
+  tempVec.setValue(1.0e20);
+  fstar = tempVec;
+  vector upper = net->getUpperScaleConstant();
+  vector lower = net->getLowerScaleConstant();
+  if (xstart > upper || xstart < lower) {
+    cerr << "Error in simulated annealing - initial x is not within bounds\n" << endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // total number of processes initiated at beginning
+  NumberOfHosts = net->getTotalNumProc();
+
+  // Find the function value at the starting point.
+  net->startNewDataGroup(1);
+  net->setX(xstart);
+  net->sendAndReceiveAllData();
+  f = net->getY(0);
+  net->stopUsingDataGroup();
+
+  if (!maxmin)
+    f = -f;
+
+  fopt = f;
+  fstar[0] = f;
+
+  // start the main loop.  Note that it terminates if (i) the algorithm
+  // succesfully otimizes the function or (ii) there are too many func eval
+  net->startNewDataGroup(maxevl * 2);
+  Id = new int[n];
+  int rock = 1;
+
+  while (rock) {
+    nup = 0;
+    nrej = 0;
+    ndown = 0;
+    lnobds = 0;
+    for (m = 0; m < par.NT; m++) {
+      for (j = 0; j < par.NS; j++) {
+        h = 0;
+        if (j == 0) {
+          for (i = 0; i < n; i++)
+            Id[i] = -1;
+
+          for (i = 0; i < n; i++) {
+            q = simannRandom() % n;
+            while (Id[q] != -1) {
+              if (q == 0)
+                q = n;
+              q--;
+            }
+            Id[q] = i;
+          }
+
+          bool found;
+          for (i = 0; i < n; i++) {
+            found = false;
+            for (k = 0; k < n; k++) {
+              if (k == Id[i]) {
+                found = true;
+                break;
+              }
+            }
+            if (found == false) {
+              cerr << "Error in simulated annealing - no valid identifier found\n";
+              exit(EXIT_FAILURE);
+            }
+          }
+          xp = getXP(Id[h]);
+          net->setX(xp);
+        }
+
+        while (h < n) {
+          // get a function value and do any update that's necessary
+          hasSent = sendData();
+          if (hasSent == net->netSuccess()) {
+            xp = getXP(Id[h]);
+            net->setX(xp);
+            h++;
+          }
+
+          if (net->probeForReceiveOne()) {
+            receiveValue();
+            nfcnev++;
+          }
+
+          check = net->checkHostForSuspend();
+          if (check >= 0) {
+            hasSent = net->netDataNotSent();
+            while (hasSent != net->netSuccess()) {
+              hasSent = sendData();
+              if (net->probeForReceiveOne()) {
+                receiveValue();
+                nfcnev++;
+              }
+            }
+          }
+
+          // if too many function evaluations occur, terminate the algorithm
+          if (nfcnev > maxevl) {
+            cout << "\nSimulated Annealing optimisation completed after " << nfcnev
+              << " iterations (max " << maxevl << ")\nThe model terminated "
+              << "because the maximum number of iterations was reached\n";
+            if (!maxmin)
+              fopt = -fopt;
+
+            f = fopt;
+            i = net->receiveAll();
+            net->stopUsingDataGroup();
+            net->setBestX(x);
+            delete[] Id;
+            return nfcnev;
+          }
+        }
+      }
+
+      while (net->getNumNotAns() > 0) {
+        // get a function value and do any update that's necessary
+        check = net->checkHostForSuspend();
+        if (check >= 0) {
+          bool hasSent = false;
+          while (hasSent != net->netSuccess()) {
+            hasSent = sendData();
+            if (net->probeForReceiveOne()) {
+              receiveValue();
+              nfcnev++;
+            }
+          }
+        }
+
+        if (net->probeForReceiveOne()) {
+          receiveValue();
+          nfcnev++;
+        }
+
+        // if too many function evaluations occur, terminate the algorithm
+        if (nfcnev > maxevl) {
+          cout << "\nSimulated Annealing optimisation completed after " << nfcnev
+            << " iterations (max " << maxevl << ")\nThe model terminated "
+            << "because the maximum number of iterations was reached\n";
+          if (!maxmin)
+            fopt = -fopt;
+
+          f = fopt;
+          i = net->receiveAll();
+          // update net with best point found so far.
+          net->setBestX(x);
+          net->stopUsingDataGroup();
+          delete[] Id;
+          return nfcnev;
+        }
+      }
+
+      // adjust vm so that approximately half of all evaluations are accepted
+      updateVM();
+      for (i = 0; i < n; i++)
+        nacp[i] = 0;
+    }
+
+    // check termination criteria
+    quit = 0;
+    fstar[0] = f;
+    if ((fopt - fstar[0]) <= par.EPS)
+      quit = 1;
+
+    for (i = 0; i < par.NEPS; i++)
+      if (fabs(f - fstar[i]) > par.EPS)
+        quit = 0;
+
+    // terminate SA if appropriate
+    if (quit) {
+      if (!maxmin)
+        fopt = -fopt;
+      rock = 0;
+    }
+
+    // if termination criteria is not met, prepare for another loop
+    if (rock) {
+      t = par.RT * t;
+      for (i = par.NEPS - 1; i > 0; i--)
+        fstar[i] = fstar[i - 1];
+
+      f = fopt;
+      xstart = x;
+    }
+  }
+
+  net->stopUsingDataGroup();
+  delete[] Id;
   f = fopt;
   // update net with best x found so far.
   net->setBestX(x);
-  return(nfcnev);
+  return nfcnev;
 }
 
-// generate xp, the trial value of x - note use of vm to choose xp.
-vector simann::GetXP(int k) {
-  //net->getUpperScaleConstant and net->getLowerScaleConstant return a
-  //vector with all values equal to 1.0/-1.0 if scaling is defined else
-  //return upper and lower bound give initially from initvals file.
+int simann::sendData() {
+  int sendInfo = net->sendToIdleHostIfCan();
+  if (sendInfo == net->netSuccess())
+    return net->netSuccess();
+  else if (sendInfo == net->netNeedMoreData())
+    return net->netNeedMoreData();
+  else if (sendInfo == net->netNeedMoreHosts())
+    return net->netNeedMoreHosts();
+  else if (sendInfo == net->netWaitForBetterProcesses())
+    return net->netWaitForBetterProcesses();
+  else if (sendInfo == net->netDataNotSent())
+    return net->netDataNotSent();
+  else if (sendInfo == net->netError()) {
+    cerr << "Error in simulated annealing - cannot send data\n";
+    exit(EXIT_FAILURE);
+  } else {
+    cerr << "Error in simulated annealing - unrecognised return value\n";
+    exit(EXIT_FAILURE);
+  }
+}
+
+// generate xp, the trial value of x - note use of vm to choose xp
+vector simann::getXP(int k) {
+  // net->getUpperScaleConstant and net->getLowerScaleConstant return a
+  // vector with all values equal to 1.0/-1.0 if scaling is defined else
+  // return upper and lower bound give initially from initvals file
   vector lbd = net->getLowerScaleConstant();
   vector ubd = net->getUpperScaleConstant();
   int i, param = k;
   for (i = 0; i < n; i++) {
     if (i == param)
-      xp[i] = xstart[i] + (Random() * 2.0 - 1.0) * vm[i];
+      xp[i] = xstart[i] + (simannRandom() * 2.0 - 1.0) * vm[i];
     else
       xp[i] = xstart[i];
 
     if (xp[i] < lbd[i] || xp[i] > ubd[i]) {
-      xp[i] = lbd[i] + (ubd[i] - lbd[i]) * Random();
+      xp[i] = lbd[i] + (ubd[i] - lbd[i]) * simannRandom();
       lnobds++;
       nobds++;
     }
@@ -313,12 +545,12 @@ vector simann::GetXP(int k) {
   return xp;
 }
 
-void simann::AcceptPoint() {
+void simann::acceptPoint() {
   xstart = xp;
   f = fp;
   nacc++;
 
-  // if better than any other point record as new optimum.
+  // if better than any other point record as new optimum
   if (fp > fopt) {
     x = xp;
     cout << "\nAfter " << nfcnev << " function evaluations, f(x) = " << -fp << " at\n";
@@ -328,14 +560,14 @@ void simann::AcceptPoint() {
   }
 }
 
-void simann::UpdateVM() {
+void simann::updateVM() {
   int i;
   double ratio, na, ns;
   sacon par;
   par = readSAConstants();
   ns = par.NS;
 
-  // adjust vm so that approximately half of all evaluations are accepted.
+  // adjust vm so that approximately half of all evaluations are accepted
   for (i = 0; i < n; i++) {
     na = nacp[i];
     ratio =  na / ns;
@@ -348,22 +580,21 @@ void simann::UpdateVM() {
   }
 }
 
-double simann::ExpRep(double inn) {
-  double rdum, exprep;
-  rdum = inn;
-  if (rdum > 174.)
+double simann::expRep(double d) {
+  double exprep;
+  if (d > 174.0)
     exprep = 3.69e75;
-  else if (rdum < -180.)
+  else if (d < -180.0)
     exprep = 0.0;
   else
-    exprep = exp(rdum);
+    exprep = exp(d);
   return exprep;
 }
 
-double simann::Random() {
+double simann::simannRandom() {
   int r = random();
   double k = r % 32767;
-  return k/32767.;
+  return k / 32767.0;
 }
 
 int simann::IdContains(int q) {
@@ -375,13 +606,13 @@ int simann::IdContains(int q) {
   return ans;
 }
 
-// get a function value and do any updates that are necessary.
-void simann::ReceiveValue() {
+// get a function value and do any updates that are necessary
+void simann::receiveValue() {
   int receive = net->receiveOne();
   int returnId;
   double p, pp;
 
-  if (receive == net->NET_SUCCESS()) {
+  if (receive == net->netSuccess()) {
     returnId = net->getReceiveId();
     if (returnId >= 0) {
       // received data belonging to correct datagroup
@@ -391,28 +622,75 @@ void simann::ReceiveValue() {
       if (!maxmin)
         fp = -fp;
 
-      // accept the new point if the function value increases.
+      // accept the new point if the function value increases
       if (fp >= f) {
-        AcceptPoint();
+        acceptPoint();
         nup++;
         nacp[Id[returnId % n]] = nacp[Id[returnId % n]] + 1;
 
       } else {
-        p = ExpRep((fp - f) / t);
-        pp = Random();
+        p = expRep((fp - f) / t);
+        pp = simannRandom();
 
-        // accept the new point if Metropolis condition is satisfied.
+        // accept the new point if Metropolis condition is satisfied
         if (pp < p) {
-          AcceptPoint();
+          acceptPoint();
           ndown++;
           nacp[Id[returnId % n]] = nacp[Id[returnId % n]] + 1;
-        } else
+        } else {
           nrej++;
+        }
+      }
+    }
+  } else {
+    cerr << "Error in simulated annealing - network error\n";
+    exit(EXIT_FAILURE);
+  }
+}
+
+// Get a function value and do any update that's necessary
+void simann::receiveValueNonBlocking() {
+  double p, pp;
+  int returnId:
+
+  int receive = net->receiveOneNonBlocking();
+  if (receive == net->netSuccess()) {
+    returnId = net->getReceiveId();
+    if (returnId >= 0) {
+      // received data belonging to my datagroup in net
+      fp = net->getY(returnId);
+      xp = net->getX(returnId);
+      if (!maxmin)
+        fp = -fp;
+
+      // Accept the new point if the function value increases
+      if (fp >= f) {
+        acceptPoint();
+        nup++;
+        nacp[Id[returnId % n]] = nacp[Id[returnId % n]] + 1;
+      } else {
+        p = expRep((fp - f) / t);
+        pp = simannRandom();
+        // Accept the new point if Metropolis condition is satisfied
+        if (pp < p) {
+          acceptPoint();
+          ndown++;
+          nacp[Id[returnId % n]] = nacp[Id[returnId % n]] + 1;
+        } else {
+          nrej++;
+        }
       }
     }
 
-  } else
+  } else if (receive == net->netError()) {
+    cerr << "Error in simulated annealing - network error\n";
     exit(EXIT_FAILURE);
+  } else if (receive == net->netNoneToReceive()) {
+    cerr << "Error in simulated annealing - no data to receive\n";
+  } else {
+    cerr << "Error in simulated annealing - unrecognised return value\n";
+    exit(EXIT_FAILURE);
+  }
 }
 
 // ********************************************************
@@ -430,9 +708,9 @@ hjcon readHJConstants() {
   char text[MaxStrLength];
   hjcon tmp;
 
-  ifstream hjfile("hjconstants", ios::in|ios::binary|ios::nocreate);
+  ifstream hjfile("hjconstants", ios::in);
   if (!hjfile) {
-    cerr << "Unable to open inputfile hjconstants\n";
+    cerr << "Error in hooke - unable to open inputfile hjconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -466,19 +744,19 @@ hjcon readHJConstants() {
 
   hjfile.close();
   if (i != 3) {
-    cerr << "Error in reading from input file hjconstants\n";
+    cerr << "Error in hooke - failed to read from input file hjconstants\n";
     exit(EXIT_FAILURE);
   }
 
   if (tmp.rho < tmp.epsilon) {
-    cout << "Error in Hooke - the value for rho must be greater than epsilon\n";
+    cout << "Error in hooke - the value for rho must be greater than epsilon\n";
     exit(EXIT_FAILURE);
   }
 
-  return(tmp);
+  return tmp;
 }
 
-hooke::hooke(netInterface* netInt) {
+hooke::hooke(NetInterface* netInt) {
   hjcon val = readHJConstants();
   vector tempVec(val.maxiter + NUMVARS);
   fbefore = tempVec;
@@ -488,10 +766,10 @@ hooke::hooke(netInterface* netInt) {
 }
 
 hooke::~hooke() {
-  delete [] par;
+  delete[] par;
 }
 
-double hooke::best_nearby(const vector& delta, double prevbest) {
+double hooke::bestNearby(const vector& delta, double prevbest) {
   int receive;
   double fopt;
   double ftmp;
@@ -504,7 +782,7 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
   net->startNewDataGroup(10 * numvar);
 
   // randomize the order of the parameters once in a while, to avoid
-  // the order having an influence on which changes are accepted.
+  // the order having an influence on which changes are accepted
   int changes = 0;
   while (changes < numvar) {
     h = rand() % numvar;
@@ -526,9 +804,9 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
 
   h = 0;
   i = 0;
-  // sending as many points as there are processors.
+  // sending as many points as there are processors
   while ((i < NumberOfHosts) && (h < numvar)) {
-    j = SetPoint(param[h], fopt);
+    j = setPoint(param[h], fopt);
     if (j == 1) {
       change[param[h]]++;
       i++;
@@ -541,8 +819,8 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
   net->sendToAllIdleHosts();
   while (net->getNumNotAns() > 0) {
     receive = net->receiveOne();
-    if (receive == net->NET_ERROR()) {
-      cout << "Error in Hooke - failed to receive data in wolfe\n";
+    if (receive == net->netError()) {
+      cout << "Error in hooke - failed to receive data in wolfe\n";
       net->stopUsingDataGroup();
       exit(EXIT_FAILURE);
     }
@@ -567,18 +845,18 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
         fopt = ftmp;
         newx = net->getX(returnId);
 
-      // AJ feb. 2002 indexing error - change use p instead of param[p].
+      // AJ feb. 2002 indexing error - change use p instead of param[p]
       } else if (change[p] == 1) {
         if (ftmp < fbefore[returnId]) {
           // try the same change on the best point if improvement from last point
-          j = SetPoint(p, fopt);
+          j = setPoint(p, fopt);
           if (j == 1)
             net->sendOne();
 
         } else {
-          // worse than before, so try the opposite direction.
+          // worse than before, so try the opposite direction
           delta[p] = 0.0 - delta[p];
-          j = SetPoint(p, fopt);
+          j = setPoint(p, fopt);
           if (j == 1) {
             change[p]++;
             net->sendOne();
@@ -586,11 +864,11 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
         }
       }
 
-      // try new coordinate.
+      // try new coordinate
       if (j == 0) {
         k = 0;
         while ((h < numvar) && (k == 0)) {
-          j = SetPoint(param[h], fopt);
+          j = setPoint(param[h], fopt);
           if (j == 1) {
             change[param[h]]++;
             net->sendOne();
@@ -604,13 +882,249 @@ double hooke::best_nearby(const vector& delta, double prevbest) {
   }
 
   net->stopUsingDataGroup();
-  delete [] change;
+  delete[] change;
   return fopt;
 }
 
-int hooke::DoSearch() {
+//Added jongud 27.05.03
+double hooke::bestNearbyCondor(const vector& delta, double prevbest) {
+  int receive, check;
+  double fopt;
+  double ftmp;
+  int i, j, k, h, p;
+  int returnId;
+  int* change;
+  change = new int[numvar];
+  int hasSent;
+
   hjcon val = readHJConstants();
-  numvar = net->getNumOfVarsInDataGroup();
+  net->startNewDataGroup(10 * numvar);
+
+  // Randomize the order of the parameters once in a while, to avoid
+  // the order having an influence on which changes are accepted
+  int changes = 0;
+  while (changes < numvar) {
+    h = rand() % numvar;
+    k = 1;
+    for (i = 0; i < changes; i++)
+      if (param[i] == h)
+        k = 0;
+
+    if (k) {
+      param[changes] = h;
+      changes++;
+    }
+  }
+
+  nsent = 0;
+  fopt = prevbest;
+  for (i = 0; i < numvar; i++)
+    change[param[i]] = 0;
+
+  h = 0;
+  i = 0;
+  bool hasSetFirst = false;
+  while ((h < numvar) && (hasSetFirst == false)) {
+    j = setPoint(param[h], fopt);
+    if (j == 1) {
+      change[param[h]]++;
+      i++;
+      hasSetFirst = true;
+    }
+    h++;
+  }
+
+  hasSent = net->netDataNotSent();
+  while (hasSent != net->netSuccess())
+    hasSent = sendData();
+
+  // Receiving the points, one at a time, and sending new points instead
+  while (net->getNumNotAns() > 0) {
+    if (net->probeForReceiveOne()) {
+      receive = net->receiveOne();
+      if (receive == net->netError()) {
+        cerr << "Error in hooke - failed to receive data in wolfe\n";
+        net->stopUsingDataGroup();
+        exit(EXIT_FAILURE);
+
+      } else if (receive == net->netSuccess()) {
+        returnId = net->getReceiveId();
+        if (returnId >= 0) {
+          // Received data belonging to my datagroup
+          p = par[returnId];
+          ftmp = net->getY(returnId);
+          iters++;
+          if (iters % 1000 == 0)
+            cout << "\nAfter " << iters << " function evaluations, f(x) = " << fopt << " at\n" << newx;
+
+          if (iters > val.maxiter) {
+            i = net->receiveAll();
+            if (i == net->netError()) {
+              cerr << "Error in hooke - failed to receive data\n";
+              net->stopUsingDataGroup();
+              exit(EXIT_FAILURE);
+            }
+            break;
+          }
+
+          // Update the optimum if necessary
+          j = 0;
+          if (ftmp < fopt) {
+            fopt = ftmp;
+            newx = net->getX(returnId);
+
+          // AJ feb. 2002 Indexing error into change use p instead of param[p]
+          } else if (change[p] == 1) {
+            if (ftmp < fbefore[returnId]) {
+              // Try the same change on the best point if improvement from last point
+              j = setPoint(p, fopt);
+              if (j == 1) {
+                hasSent = net->netDataNotSent();
+                while (hasSent != net->netSuccess())
+                  hasSent = sendData();
+              }
+
+            } else {
+              // Worse than before, so try the opposite direction
+              delta[p] = 0.0 - delta[p];
+              j = setPoint(p, fopt);
+              if (j == 1) {
+                change[p]++;
+                hasSent = net->netDataNotSent();
+                while (hasSent != net->netSuccess())
+                  hasSent = sendData();
+              }
+            }
+          }
+
+          // try new coordinate
+          if (j == 0) {
+            k = 0;
+            while ((h < numvar) && (k == 0)) {
+              j = setPoint(param[h], fopt);
+              if (j == 1) {
+                change[param[h]]++;
+                hasSent = net->netDataNotSent();
+                while (hasSent != net->netSuccess())
+                  hasSent = sendData();
+                h++;
+                k = 1;
+              } else
+                h++;
+            }
+          }
+        }
+      }
+    }
+
+    hasSent = sendData();
+    if (hasSent == net->netNeedMoreData()) {
+      k = 0;
+      while ((h < numvar) && (k == 0)) {
+        j = setPoint(param[h], fopt);
+        if (j == 1) {
+          change[param[h]]++;
+          hasSent = sendData();
+          h++;
+          k = 1;
+        } else
+          h++;
+      }
+    }
+
+    check = net->checkHostForSuspend();
+    if (check >= 0) {
+      hasSent = net->netDataNotSent();
+      while (hasSent != net->netSuccess() && (hasSent !=net->netNeedMoreData())) {
+        hasSent = sendData();
+        if (net->probeForReceiveOne()) {
+          receive = net->receiveOne();
+          if (receive == net->netError()) {
+            cerr << "Error in hooke - failed to receive data in wolfe\n";
+            net->stopUsingDataGroup();
+            exit(EXIT_FAILURE);
+
+          } else if (receive == net->netSuccess()) {
+            returnId = net->getReceiveId();
+            if (returnId >= 0) {
+              // Received data belonging to my datagroup
+              p = par[returnId];
+              ftmp = net->getY(returnId);
+              iters++;
+              if (iters % 1000 == 0)
+                cout << "\nAfter " << iters << " function evaluations, f(x) = " << fopt << " at\n" << newx;
+
+              if (iters > val.maxiter) {
+                i = net->receiveAll();
+                if (i == net->netError()) {
+                  cerr << "Error in hooke - failed to receive data\n";
+                  net->stopUsingDataGroup();
+                  exit(EXIT_FAILURE);
+                }
+                break;
+              }
+
+              // Update the optimum if necessary
+              j = 0;
+              if (ftmp < fopt) {
+                fopt = ftmp;
+                newx = net->getX(returnId);
+
+              // AJ feb. 2002 Indexing error into change use p instead of param[p]
+              } else if (change[p] == 1) {
+                if (ftmp < fbefore[returnId]) {
+                  // Try the same change on the best point if improvement from last point
+                  j = setPoint(p, fopt);
+                  if (j == 1) {
+                    hasSent = net->netDataNotSent();
+                    while (hasSent != net->netSuccess() && (hasSent !=net->netNeedMoreData()))
+                      hasSent = sendData();
+                  }
+
+                } else {
+                  // Worse than before, so try the opposite direction
+                  delta[p] = 0.0 - delta[p];
+                  j = setPoint(p, fopt);
+                  if (j == 1) {
+                    change[p]++;
+                    hasSent = net->netDataNotSent();
+                    while (hasSent != net->netSuccess() && (hasSent !=net->netNeedMoreData()))
+                      hasSent = sendData();
+                  }
+                }
+              }
+
+              // try new coordinate
+              if (j == 0) {
+                k = 0;
+                while ((h < numvar) && (k == 0)) {
+                  j = setPoint(param[h], fopt);
+                  if (j == 1) {
+                    change[param[h]]++;
+                    hasSent = net->netDataNotSent();
+                    while ((hasSent != net->netSuccess()) && (hasSent !=net->netNeedMoreData()))
+                      hasSent = sendData();
+                    h++;
+                    k = 1;
+                  } else
+                      h++;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  net->stopUsingDataGroup();
+  delete[] change;
+  return fopt;
+}
+
+int hooke::doSearch() {
+  hjcon val = readHJConstants();
+  numvar = net->getNumVarsInDataGroup();
   double newf, fbefore, steplength;
   int i, keep;
   NumberOfHosts = net->getTotalNumProc();
@@ -623,7 +1137,7 @@ int hooke::DoSearch() {
   delta = tempVec;
 
   // The original definition of the delta array has not been changed, even
-  // though we're sometimes working with scaled x-values.
+  // though we're sometimes working with scaled x-values
   for (i = 0; i < numvar; i++) {
     delta[i] = fabs(newx[i] * val.rho);
     if (delta[i] == 0.0)
@@ -635,9 +1149,9 @@ int hooke::DoSearch() {
   net->startNewDataGroup(1);
   net->setX(newx);
 
-  int sendreceive = net->send_receiveAllData();
-  if (sendreceive == net->NET_ERROR()) {
-    cout << "Error in Hooke - failed to send/receive data in search\n";
+  int sendreceive = net->sendAndReceiveAllData();
+  if (sendreceive == net->netError()) {
+    cout << "Error in hooke - failed to send and receive data in search\n";
     net->stopUsingDataGroup();
     exit(EXIT_FAILURE);
   }
@@ -645,11 +1159,11 @@ int hooke::DoSearch() {
   fbefore = net->getY(0);
   newf = fbefore;
   net->stopUsingDataGroup();
+  iters = 0;
   lineS = new lineseeker();
-
   while ((iters < val.maxiter) && (steplength > val.epsilon)) {
     newx = xbefore;
-    newf = best_nearby(delta, fbefore);
+    newf = bestNearby(delta, fbefore);
     /* if we made some improvements, pursue that direction */
     keep = 1;
     while ((newf < fbefore) && (keep == 1)) {
@@ -661,11 +1175,11 @@ int hooke::DoSearch() {
           delta[i] = fabs(delta[i]);
       }
 
-      lineS->DoLineseek(xbefore, newx, newf, net);
+      lineS->doLineseek(xbefore, newx, newf, net);
       xbefore = newx;
       fbefore = newf;
-      newf = lineS->GetBestF();
-      newx = lineS->GetBestX();
+      newf = lineS->getBestF();
+      newx = lineS->getBestX();
 
       /* if the further (optimistic) move was bad */
       if (newf >= fbefore)
@@ -674,7 +1188,7 @@ int hooke::DoSearch() {
       /* else, look around from that point */
       xbefore = newx;
       fbefore = newf;
-      newf = best_nearby(delta, fbefore);
+      newf = bestNearby(delta, fbefore);
 
       /* if the further (optimistic) move was bad */
       if (newf >= fbefore)
@@ -713,11 +1227,119 @@ int hooke::DoSearch() {
   f = newf;
   x = newx;
   net->setBestX(x);
-  return (iters);
+  return iters;
 }
 
-int hooke::SetPoint(int n, double flast) {
-  // return 0 and do nothing if the changes goes out of bounds.
+//Added jongud 27.05.03 .
+int hooke::doSearchCondor() {
+  hjcon val = readHJConstants();
+  numvar = net->getNumVarsInDataGroup();
+  double newf, fbefore, steplength;
+  int i, keep;
+  NumberOfHosts = net->getTotalNumProc();
+
+  ubd = net->getUpperScaleConstant();
+  lbd = net->getLowerScaleConstant();
+  newx = net->getInitialX();
+  xbefore = newx;
+  vector tempVec(numvar);
+  delta = tempVec;
+  // The original definition of the delta array has not been changed, even
+  // though we're sometimes working with scaled x-values
+  for (i = 0; i < numvar; i++) {
+    delta[i] = fabs(newx[i] * val.rho);
+    if (delta[i] == 0.0)
+      delta[i] = val.rho;
+    param[i] = i;
+  }
+
+  steplength = val.rho;
+  net->startNewDataGroup(1);
+  net->setX(newx);
+
+  int sendreceive = net->sendAndReceiveAllData();
+  if (sendreceive == net->netError()) {
+    cout << "Error in hooke - failed to send and receive data in search\n";
+    net->stopUsingDataGroup();
+    exit(EXIT_FAILURE);
+  }
+
+  fbefore = net->getY(0);
+  newf = fbefore;
+  net->stopUsingDataGroup();
+  iters = 0;
+  lineS = new lineseeker();
+  while ((iters < val.maxiter) && (steplength > val.epsilon)) {
+    newx = xbefore;
+    newf = bestNearbyCondor(delta, fbefore);
+    /* if we made some improvements, pursue that direction */
+    keep = 1;
+    while ((newf < fbefore) && (keep == 1)) {
+      for (i = 0; i < numvar; i++) {
+        /* firstly, arrange the sign of delta[] */
+        if (newx[i] <= xbefore[i])
+          delta[i] = 0.0 - fabs(delta[i]);
+        else
+          delta[i] = fabs(delta[i]);
+      }
+
+      lineS->doLineseekCondor(xbefore, newx, newf, net);
+      xbefore = newx;
+      fbefore = newf;
+      newf = lineS->getBestF();
+      newx = lineS->getBestX();
+
+      /* if the further (optimistic) move was bad */
+      if (newf >= fbefore)
+        break;
+
+      /* else, look around from that point */
+      xbefore = newx;
+      fbefore = newf;
+      newf = bestNearbyCondor(delta, fbefore);
+
+      /* if the further (optimistic) move was bad */
+      if (newf >= fbefore)
+        break;
+
+      /* make sure that the differences between the new and the old */
+      /* points are due to actual displacements - beware of roundoff */
+      /* errors that might cause newf < fbefore */
+      keep = 0;
+      for (i = 0; i < numvar; i++) {
+        keep = 1;
+        if (fabs(newx[i] - xbefore[i]) > (0.5 * fabs(delta[i])))
+          break;
+        else
+          keep = 0;
+      }
+    }
+
+    if ((steplength >= val.epsilon) && (newf >= fbefore)) {
+      steplength = steplength * val.rho;
+      for (i = 0; i < numvar; i++)
+        delta[i] *= val.rho;
+    }
+  }
+
+  if (iters >= val.maxiter)
+    cout << "\nHooke and Jeeves optimisation completed after " << iters
+      << " iterations (max " << val.maxiter << ")\nThe model terminated "
+      << "because the maximum number of iterations was reached\n";
+
+  if (newf > fbefore) {
+    newx = xbefore;
+    newf = fbefore;
+  }
+  delete lineS;
+  f = newf;
+  x = newx;
+  net->setBestX(x);
+  return iters;
+}
+
+int hooke::setPoint(int n, double flast) {
+  // return 0 and do nothing if the changes goes out of bounds
   z = newx;
   double next = newx[n] + delta[n];
 
@@ -734,6 +1356,29 @@ int hooke::SetPoint(int n, double flast) {
     return 1;
   }
 }
+
+int hooke::sendData() {
+  int sendInfo = net->sendToIdleHostIfCan();
+
+  if (sendInfo == net->netSuccess())
+    return net->netSuccess();
+  else if (sendInfo == net->netNeedMoreData())
+    return net->netNeedMoreData();
+  else if (sendInfo == net->netNeedMoreHosts())
+    return net->netNeedMoreHosts();
+  else if (sendInfo == net->netWaitForBetterProcesses())
+    return net->netWaitForBetterProcesses();
+  else if (sendInfo == net->netDataNotSent())
+    return net->netDataNotSent();
+  else if (sendInfo == net->netError()) {
+    cerr << "Error in hooke - cannot send data\n";
+    exit(EXIT_FAILURE);
+  } else {
+    cerr << "Error in hooke - unrecognised return value\n";
+    exit(EXIT_FAILURE);
+  }
+}
+
 
 // ********************************************************
 // functions for class bfgs
@@ -758,9 +1403,9 @@ bfgscon readbfgsConstants() {
   char text[MaxStrLength];
   bfgscon tmp;
 
-  ifstream bffile("bfgsconstants", ios::in|ios::binary|ios::nocreate);
+  ifstream bffile("bfgsconstants", ios::in);
   if (!bffile) {
-    cerr << "Unable to open inputfile bfgsconstants\n";
+    cerr << "Error in bfgs - unable to open inputfile bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -794,10 +1439,10 @@ bfgscon readbfgsConstants() {
 
   bffile.close();
   if (i != 3) {
-    cerr << "Error in reading from input file bfgsconstants\n";
+    cerr << "Error in bfgs - failed to read from input file bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
-  return(tmp);
+  return tmp;
 }
 
 mainbfgscon getMainbfgsConstants() {
@@ -806,9 +1451,9 @@ mainbfgscon getMainbfgsConstants() {
   char text[MaxStrLength];
   mainbfgscon tmp;
 
-  ifstream bfgsfile("bfgsconstants", ios::in|ios::binary|ios::nocreate);
+  ifstream bfgsfile("bfgsconstants", ios::in);
   if (!bfgsfile) {
-    cerr << "Unable to open inputfile bfgsconstants\n";
+    cerr << "Error in bfgs - unable to open inputfile bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -849,15 +1494,15 @@ mainbfgscon getMainbfgsConstants() {
 
   bfgsfile.close();
   if (i != 5) {
-    cerr << "Error in reading from input file bfgsconstants\n";
+    cerr << "Error in bfgs - failed to read from input file bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
-  return(tmp);
+  return tmp;
 }
 
-bfgs::bfgs(netInterface* netC, gradient* g, armijo* lineseek) {
+bfgs::bfgs(NetInterface* netC, gradient* g, armijo* lineseek) {
   net = netC;
-  numberOfVariables = net->getNumOfVarsInDataGroup();
+  numberOfVariables = net->getNumVarsInDataGroup();
   vector temp(numberOfVariables);
   x = net->getInitialX();
   lineS = lineseek;                       // use lineS to do linesearch
@@ -876,8 +1521,8 @@ bfgs::bfgs(netInterface* netC, gradient* g, armijo* lineseek) {
 bfgs::~bfgs() {
   int i;
   for (i = 0; i < numberOfVariables; i++)
-    delete [] invhess[i];
-  delete [] invhess;
+    delete[] invhess[i];
+  delete[] invhess;
 }
 
 int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
@@ -886,33 +1531,30 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
   int i;
   alpha = 0.0;                 // distance in line search and derivative
   double prevy = 1e69;         // previous function value
-  double error = 2*errortol;   // scaled gradient norm, to be compared with tolerance
+  double error = 2 * errortol; // scaled gradient norm, to be compared with tolerance
   double relchng = 1.0;        // relative change in function valuedouble
   normdeltax = 1.0;
 
   if (iter == 0) {
-    // For the first iteration, define the parameters
-    // and the Hessian matrix, the gradient and the direction vector
-
     bfgscon par;
     par = readbfgsConstants();
     ShannonScaling = par.SHANNONSCALING;
     difficultgrad = par.DIFFICULTGRAD;
     bfgs_constant = par.BFGSPAR;
     armijoproblem = 0;
-    grad->initializeDiaghess();
-    ComputeGradient();
-    y = grad->getBaseF_x();
+    grad->initializeDiagonalHessian();
+    computeGradient();
+    y = grad->getBaseFX();
     normgrad = grad->getNormGrad();
 
     if (difficultgrad >= 1)
-      diaghess = grad->getDiagonalHess();
+      diaghess = grad->getDiagonalHessian();
 
     gi = grad->getGradient();
     normx = norm();
 
-    DefineHessian();
-    ComputeDirectionVector();
+    defineHessian();
+    computeDirectionVector();
     dery = 0.0;
     normh = 0.0;
     for (i = 0; i < numberOfVariables; i++) {
@@ -921,18 +1563,13 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
     }
 
     if (dery > 0) {
-      cout << "Error in BFGS - the derivative is positive\n";
+      cout << "Error in bfgs - the derivative is positive\n";
       ifail = 4;
     }
-    error = normgrad / (1.0 + absolute(y));
+    error= normgrad / (1.0 + ABS(y));
 
   } else {
-    // Loop over BFGS iterations
-    // continue until tolerance criterion is satisfied
-    // or give up because x's do not move -- only valid if function does not
-    // change either and must do one iteration
-
-    ComputeDirectionVector();
+    computeDirectionVector();
     dery = 0.0;
     normh = 0.0;
     for (i = 0; i < numberOfVariables; i++) {
@@ -940,44 +1577,42 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
       dery += gi[i] * h[i];
     }
 
-    // if scaling of direction vector is to be done, then do it here.
     if (iter <= numberOfVariables && ShannonScaling == 1)
-      ScaleDirectionVector();
+      scaleDirectionVector();
 
     if (dery > 0) {
-      cout << "Error in BFGS - the derivative is positive\n";
+      cerr << "Error in bfgs - the derivative is positive\n";
       ifail = 4;
     }
-    error = normgrad / (1.0 + absolute(y));
+    error= normgrad / (1.0 + ABS(y));
   }
 
   doLineseek();
-  if (lineS->GetPower() != -1)
-    alpha = min(s, 1.0) * pow(lineS->GetBeta(), lineS->GetPower());
+  if (lineS->getPower() != -1)
+    alpha = min(s, 1.0) * pow(lineS->getBeta(), lineS->getPower());
 
   //JMB - changed to check if a double is very close to zero
-  if (absolute(alpha) < 1e-100) {
-    armijoproblem += 1;
-    difficultgrad += 1;
+  if (ABS(alpha) < 1e-100) {
+    armijoproblem++;
+    difficultgrad++;
     ifail = -2;
     if (armijoproblem > 1)
      ifail = 6;
   }
 
   if (alpha < 0.0) {
-    // negative alpha indicates wrong derivative - Hessian wrong
     ifail = 1;
   } else {
-    UpdateXandGrad();
+    updateXandGrad();
     prevy = y;
-    ComputeGradient();
-    y = grad->getBaseF_x();
+    computeGradient();
+    y = grad->getBaseFX();
     normgrad = grad->getNormGrad();
     gi = grad->getGradient();
     if (difficultgrad >= 1)
-      diaghess = grad->getDiagonalHess();
+      diaghess = grad->getDiagonalHessian();
 
-    error = normgrad / (1.0 + absolute(y));
+    error = normgrad / (1.0 + ABS(y));
     if (ifail != 6 && ifail != -2) {
       if (bfgs_constant == 1) {
         int update = bfgsUpdate();
@@ -986,13 +1621,13 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
       }
     }
     normx = sqrt(normx);
-    relchng = (prevy - y) / (1.0 + absolute(prevy));
+    relchng = (prevy - y) / (1.0 + ABS(prevy));
   }
   net->setBestX(x);
 
   f = y;
   if (ifail > 0)
-    return(ifail);
+    return ifail;
 
   if (error <= errortol)
     ifail= 0;
@@ -1000,18 +1635,141 @@ int bfgs::iteration(int maxit, double errortol, double xtol, int iterno) {
     ifail= 2;
   else
     ifail= -1;
-
-  return(ifail);
+  return ifail;
 }
 
-void bfgs::ComputeGradient() {
+int bfgs::iterationCondor(int maxit,double errortol, double xtol, int iterno) {
+  iter = iterno;
+  int ifail = 0;
   int i;
-  i = grad->computeGradient(net, x, difficultgrad);
+  alpha = 0.0;
+  double prevy = 1e69;
+  double error = 2 * errortol;
+  double relchng=1.0;
+  normdeltax = 1.0;
+
+  if (iter==0) {
+    bfgscon par;
+    par = readbfgsConstants();
+    ShannonScaling = par.SHANNONSCALING;
+    difficultgrad = par.DIFFICULTGRAD;
+    bfgs_constant = par.BFGSPAR;
+    armijoproblem = 0;
+    grad->initializeDiagonalHessian();
+    computeGradientCondor();
+    y = grad->getBaseFX();
+    normgrad = grad->getNormGrad();
+    if (difficultgrad >= 1)
+      diaghess = grad->getDiagonalHessian();
+
+    gi = grad->getGradient();
+    normx=norm();
+    defineHessian();
+    computeDirectionVector();
+    dery = 0.0;
+    normh = 0.0;
+    for (i = 0; i < numberOfVariables; i++) {
+      normh += h[i] * h[i];
+      dery += gi[i] * h[i];           /* to use as derivative in line search */
+    }
+
+    if (dery > 0) {
+      cerr << "Error in bfgs - the derivative is positive\n";
+      ifail = 4;
+    }
+    error = normgrad / (1.0 + ABS(y));
+
+  } else {
+    computeDirectionVector();
+    dery = 0.0;
+    normh = 0.0;
+    for (i = 0; i < numberOfVariables; i++) {
+      normh += h[i] * h[i];
+      dery += gi[i] * h[i];           // to use as derivative in line search
+    }
+
+    if (iter <= numberOfVariables && ShannonScaling == 1)
+      scaleDirectionVector();
+
+    if (dery > 0) {
+      cerr << "Error in bfgs - the derivative is positive\n";
+      ifail = 4;
+    }
+    error= normgrad/(1.+ABS(y));
+  }
+
+  doLineseekCondor();
+  if (lineS->getPower() != -1)
+    alpha = min(s, 1.0) * pow(lineS->getBeta(), lineS->getPower());
+
+  //JMB - changed to check if a double is very close to zero
+  if (ABS(alpha) < 1e-100) {
+    armijoproblem++;
+    difficultgrad++;
+    ifail = -2;
+    if (armijoproblem > 1)
+     ifail = 6;
+  }
+
+  if (alpha < 0.0) {
+    ifail = 1;
+  } else {
+    updateXandGrad();
+    prevy = y;
+    computeGradientCondor();
+    y = grad->getBaseFX();
+    normgrad = grad->getNormGrad();
+    gi = grad->getGradient();
+    if (difficultgrad >= 1)
+      diaghess = grad->getDiagonalHessian();
+
+    error = normgrad / (1.0 + ABS(y));
+    if (ifail != 6 && ifail != -2) {
+      if (bfgs_constant == 1) {
+        int update = bfgsUpdate();
+        if (update == 5)
+          ifail = update;
+      }
+    }
+
+    normx = sqrt(normx);
+    relchng = (prevy - y) / (1.0 + ABS(prevy));
+  }
+
+  net->setBestX(x);
+  f = y;
+  if (ifail > 0)
+    return ifail;
+
+  if (error <= errortol)
+    ifail= 0;
+  else if (normdeltax < xtol && ifail != -2)
+    ifail= 2;
+  else
+    ifail= -1;
+  return ifail;
+}
+
+void bfgs::computeGradient() {
+  int i = grad->computeGradient(net, x, difficultgrad);
   int tmp = grad->getDifficultGrad();
   difficultgrad = tmp;
-  if (i == net->NET_ERROR()) {
-    cerr << "Error in BFGS - did not receive gradient data\n";
-    cout << "Error in BFGS - stop netcommunication - last x was\n";
+  if (i == net->netError()) {
+    cerr << "Error in bfgs - did not receive gradient data\n";
+    cout << "Error in bfgs - stop netcommunication - last x was\n";
+    cout << net->unscaleX(x);
+    net->stopNetComm();
+    exit(EXIT_FAILURE);
+  }
+}
+
+void bfgs::computeGradientCondor() {
+  int i = grad->computeGradientCondor(net, x, difficultgrad);
+  int tmp = grad->getDifficultGrad();
+  difficultgrad = tmp;
+  if (i == net->netError()) {
+    cerr << "Error in bfgs - did not receive gradient data\n";
+    cout << "Error in bfgs - stop netcommunication - last x was\n";
     cout << net->unscaleX(x);
     net->stopNetComm();
     exit(EXIT_FAILURE);
@@ -1020,10 +1778,10 @@ void bfgs::ComputeGradient() {
 
 void bfgs::doLineseek() {
   s = -1e10;
-  double low = GetS(0);
-  double upp = GetS(1);
+  double low = getS(0);
+  double upp = getS(1);
   if (upp <= 0.0) {
-    cout << "Warning in BFGS - upperbound for alpha is negative\n";
+    cout << "Warning in bfgs - upperbound for alpha is negative\n";
     upp = 1.0;
   }
   s = upp;
@@ -1033,17 +1791,35 @@ void bfgs::doLineseek() {
     else
       s = 1.0;
   }
-  lineS->DoArmijo(x, y, dery, h, net, min(s, 1.0));
+  lineS->doArmijo(x, y, dery, h, net, min(s, 1.0));
 }
 
-void bfgs::ScaleDirectionVector() {
+void bfgs::doLineseekCondor() {
+  s = -1e10;
+  double low = getS(0);
+  double upp = getS(1);
+  if (upp <= 0.0) {
+    cout << "Warning in bfgs - upperbound for alpha is negative\n";
+    upp = 1.0;
+  }
+  s = upp;
+  if (ShannonScaling == 1) {
+    if (iter == 0 || upp < 1.0)
+      s = upp;
+    else
+      s = 1.0;
+  }
+  lineS->doArmijoCondor(x, y, dery, h, net, min(s, 1.0));
+}
+
+void bfgs::scaleDirectionVector() {
   int i;
   dery *= normdeltax / normh;
   for (i = 0; i < numberOfVariables; i++)
     h[i] *= normdeltax / normh;
 }
 
-void bfgs::ComputeDirectionVector() {
+void bfgs::computeDirectionVector() {
   int i, j;
   for (i = 0; i < numberOfVariables; i++) {
     h[i] = 0;
@@ -1052,7 +1828,7 @@ void bfgs::ComputeDirectionVector() {
   }
 }
 
-void bfgs::DefineHessian() {
+void bfgs::defineHessian() {
   int i, j;
 
   for (i = 0; i < numberOfVariables; i++) {
@@ -1071,13 +1847,13 @@ void bfgs::DefineHessian() {
       invhess[i][i] = 1.0;
 
     if (invhess[i][i] < 0.0) {
-      cout << "Error in BFGS - negative inverse hessian\n";
+      cerr << "Error in bfgs - negative inverse hessian\n";
       break;
     }
   }
 }
 
-void bfgs::UpdateXandGrad() {
+void bfgs::updateXandGrad() {
   int i;
   double xi;
   normdeltax = 0.0;
@@ -1109,7 +1885,7 @@ int bfgs::bfgsUpdate() {
   }
 
   if (deltaxg <= 0.0)
-    cout << "Warning in BFGS - instability error\n";
+    cout << "Warning in bfgs - instability error\n";
 
   for (i = 0; i < numberOfVariables; i++) {
     for (j = 0; j < numberOfVariables; j++)
@@ -1128,9 +1904,9 @@ int bfgs::bfgsUpdate() {
   }
 
   if (deltaxg <= 0)
-    return(5);
+    return 5;
   else
-    return(-999);
+    return -999;
 }
 
 double bfgs::norm() {
@@ -1140,15 +1916,16 @@ double bfgs::norm() {
   for (i = 0; i < numberOfVariables; i++)
     normx += x[i] * x[i];
   normx = sqrt(normx);
-  return(normx);
+  return normx;
 }
 
 void bfgs::printResult() {
   ofstream outputfile;
   outputfile.open("finalvals");
   if (!outputfile) {
-    cerr << "Error in BFGS - could not print finalvals\n";
-    cout << "Stop netcommunication. Last x was:\n" << (net->unscaleX(x));
+    cerr << "Error in bfgs - could not print finalvals\n";
+    cout << "Error in bfgs - stop netcommunication - last x was:\n";
+    cout << (net->unscaleX(x));
     net->stopNetComm();
     exit(EXIT_FAILURE);
   }
@@ -1160,8 +1937,9 @@ void bfgs::printGradient() {
   ofstream outputfile;
   outputfile.open("gradient");
   if (!outputfile) {
-    cerr << "Error in BFGS - could not print gradient\n";
-    cout << "Stop netcommunication.  The gradient was: " << gi;
+    cerr << "Error in bfgs - could not print gradient\n";
+    cout << "Error in bfgs - stop netcommunication - gradient was:\n";
+    cout << gi;
     net->stopNetComm();
     exit(EXIT_FAILURE);
   }
@@ -1175,7 +1953,7 @@ void bfgs::printInverseHessian() {
   ofstream outputfile;
   outputfile.open("hessian");
   if (!outputfile) {
-    cerr << "Error in BFGS - could not print hessian\n";
+    cerr << "Error in bfgs - could not print hessian\n";
     exit(EXIT_FAILURE);
   }
   for (i = 0; i < numberOfVariables; i++) {
@@ -1186,7 +1964,7 @@ void bfgs::printInverseHessian() {
   outputfile.close();
 }
 
-double bfgs::GetS(int get) {
+double bfgs::getS(int get) {
   double b = 1.e69;
   double a = -1.e69;
 
@@ -1218,16 +1996,30 @@ double bfgs::GetS(int get) {
   else if (get == 1)
     return b;
   else {
-    cout << "Error in BFGS - unrecognised return value\n";
+    cerr << "Error in bfgs - unrecognised return value\n";
     exit(EXIT_FAILURE);
   }
 }
 
-vector bfgs::GetBestX() {
+double bfgs::max(double a, double b) {
+  if (a < b)
+    return b;
+  else
+    return a;
+}
+
+double bfgs::min(double a, double b) {
+  if (a < b)
+    return a;
+  else
+    return b;
+}
+
+vector bfgs::getBestX() {
   return x;
 }
 
-double bfgs::GetBestF() {
+double bfgs::getBestF() {
   return f;
 }
 
@@ -1235,15 +2027,14 @@ void bfgs::printX() {
   cout << net->unscaleX(x);
 }
 
-
-minimizer::minimizer(netInterface* netInt) {
+minimizer::minimizer(NetInterface* netInt) {
   net = netInt;
 }
 
 minimizer::~minimizer() {
 }
 
-int minimizer::DoSearch() {
+int minimizer::doSearch() {
   mainbfgscon par;
   par = getMainbfgsConstants();
   int maxiter = par.MAXBFGSITER;
@@ -1255,7 +2046,7 @@ int minimizer::DoSearch() {
   int i, counter, bfgsFail;
   int rounds = 0;
 
-  gradient* grad = new netGradient(net->getNumOfVarsInDataGroup());
+  gradient* grad = new NetGradient(net->getNumVarsInDataGroup());
   armijo* lines = new armijo();
   min = new bfgs(net, grad, lines);
   for (rounds = 0; rounds < maxrounds; rounds++) {
@@ -1271,18 +2062,63 @@ int minimizer::DoSearch() {
     if (bfgsFail == 0)
       rounds = maxrounds;
 
-    cout << min->GetBestX();
-    cout << "f is: " << min->GetBestF() << endl;
-    net->setBestX(min->GetBestX());
+    cout << min->getBestX();
+    cout << "f is: " << min->getBestF() << endl;
+    net->setBestX(min->getBestX());
   }
 
   if (par.PRINTING) {
     min->printGradient();
-    //min->printResult();
     min->printInverseHessian();
   }
 
-  f = min->GetBestF();
+  f = min->getBestF();
+  delete min;
+  delete grad;
+  delete lines;
+  return 1;
+}
+
+//Added jongud 13.08.02
+int minimizer::doSearchCondor() {
+  mainbfgscon par;
+  par = getMainbfgsConstants();
+  int maxiter = par.MAXBFGSITER;
+  double errortol = par.ERRORTOL;
+  double xtol = par.XTOL;
+  int maxrounds = par.MAXROUNDS;
+
+  vector lausn;
+  int i, counter, bfgsFail;
+  int rounds = 0;
+
+  gradient* grad = new NetGradient(net->getNumVarsInDataGroup());
+  armijo* lines = new armijo();
+  min = new bfgs(net, grad, lines);
+  for (rounds = 0; rounds < maxrounds; rounds++) {
+    i = 0;
+    bfgsFail = -1;
+    counter = 0;
+
+    vector temp = net->getInitialX();
+    while ((i < maxiter) && (bfgsFail < 0)) {
+      bfgsFail = min->iterationCondor(1, errortol, xtol, i);
+      i++;
+    }
+    if (bfgsFail == 0)
+      rounds = maxrounds;
+
+    cout << min->getBestX();
+    cout << "f is: " << min->getBestF() << endl;
+    net ->setBestX(min->getBestX());
+  }
+
+  if (par.PRINTING) {
+    min->printGradient();
+    min->printInverseHessian();
+  }
+
+  f = min->getBestF();
   delete min;
   delete grad;
   delete lines;

@@ -1,8 +1,8 @@
 #include "netcommunication.h"
 
-netCommunication::netCommunication(char* progN, char** progA, int nh) {
+NetCommunication::NetCommunication(char* progN, char** progA, int nh) {
   // pvmConst contains information about which tags and dataencoding to use
-  pvmConst = new pvmconstants();
+  pvmConst = new PVMConstants();
   nHostInn = nh;
   slaveProgram = progN;
   slaveArguments = progA;
@@ -17,13 +17,26 @@ netCommunication::netCommunication(char* progN, char** progA, int nh) {
   status = NULL;
   ERROR = -1;
   SUCCESS = 1;
+
+  //For condor
+  NONTORECEIVE = 0;
+  tidsCounter = 0;
+  maxNumHosts = 500;
+  NEEDMOREHOSTS = 2;
+  NEEDMOREDATA = 3;
+  WAITFORPROCESS = 4;
+  DATANOTSENT = 5;
 }
 
-netCommunication::~netCommunication() {
+NetCommunication::~NetCommunication() {
   if (tids != NULL)
-    delete [] tids;
+    delete[] tids;
   if (status != NULL)
-    delete [] status;
+    delete[] status;
+  if (hostTids != NULL)
+    delete[] hostTids;
+  if (dataIds != NULL)
+    delete[] dataIds;
   if (NETSTARTED == 1)
     stopNetCommunication();
 }
@@ -31,30 +44,31 @@ netCommunication::~netCommunication() {
 // ********************************************************
 // Functions for starting and stopping netcommunication
 // ********************************************************
-int netCommunication::startPVM() {
+int NetCommunication::startPVM() {
   int info;
 
   if (mytid < 0) {
     // have not yet enrolled in PVM
     mytid = pvm_mytid();
     if (mytid < 0) {
-      printErrorMsg("Error in netCommunication - PVM not started");
+      printErrorMsg("Error in netcommunication - PVM not started");
       return ERROR;
     }
 
     info  = pvm_config(&nhost, &narch, &hostp);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - PVM not responding");
+      printErrorMsg("Error in netcommunication - PVM not responding");
       return ERROR;
     }
 
-    assert(nHostInn >= 0);
+    assert(nhost > 0);
+    tids = new int[maxNumHosts];
+    status = new int[maxNumHosts];
+    hostTids = new int[maxNumHosts];  //Added jongud
+    dataIds = new int[maxNumHosts];   //Added jongud
+
     if (nHostInn > 0)
       nhost = nHostInn;
-
-    assert(nhost > 0);
-    tids = new int[nhost];
-    status = new int[nhost];
 
     // export PWD to all processes spawned
     char* tempString;
@@ -62,26 +76,27 @@ int netCommunication::startPVM() {
     strcpy(tempString, "PWD");
     // Take out for multiprocessor maybe also Norway??
     info = pvm_export(tempString);
-    delete [] tempString;
+    delete[] tempString;
     return SUCCESS;
 
   } else {
-    cout << "Already enrolled in PVM\n";
+    cout << "Warning in netcommunication - already enrolled in PVM\n";
     return SUCCESS;
   }
 }
 
-int netCommunication::startNetCommunication() {
+#ifndef CONDOR
+int NetCommunication::startNetCommunication() {
   int OK;
 
   if (NETSTARTED == 1 && mytid >= 0) {
     // have alredy enrolled in pvm and spawned program on slaves
-    cout << "Already enrolled in PVM and running " << slaveProgram << " on slaves\n";
+    cout << "Warning in netcommunication - already enrolled in PVM and running " << slaveProgram << " on slaves\n";
     return SUCCESS;
 
   } else {
     if (numVar <= 0) {
-      cerr << "Error in netCommunication - number of variables must be positive\n";
+      cerr << "Error in netcommunication - number of variables must be positive\n";
       return ERROR;
     }
 
@@ -100,7 +115,7 @@ int netCommunication::startNetCommunication() {
         } else if (OK == -1) {
           return ERROR;
         } else {
-          cerr << "Error in netCommunication - unrecognised return value\n";
+          cerr << "Error in netcommunication - unrecognised return value\n";
           stopNetCommunication();
           return ERROR;
         }
@@ -110,7 +125,7 @@ int netCommunication::startNetCommunication() {
         stopNetCommunication();
         return ERROR;
       } else {
-        cerr << "Error in netCommunication - unrecognised return value\n";
+        cerr << "Error in netcommunication - unrecognised return value\n";
         stopNetCommunication();
         return ERROR;
       }
@@ -120,14 +135,113 @@ int netCommunication::startNetCommunication() {
       stopNetCommunication();
       return ERROR;
     } else {
-      cerr << "Error in netCommunication - unrecognised return value\n";
+      cerr << "Error in netcommunication - unrecognised return value\n";
       stopNetCommunication();
       return ERROR;
     }
   }
 }
+#endif
 
-void netCommunication::stopNetCommunication() {
+#ifdef CONDOR
+int NetCommunication::startNetCommunication() {
+  int i, OK, info;
+
+  if (NETSTARTED == 1 && mytid >= 0) {
+    // have alredy enrolled in pvm and spawned program on slaves
+    cout << "Warning in netcommunication - already enrolled in PVM and running " << slaveProgram << " on slaves\n";
+    return SUCCESS;
+
+  } else {
+    if (numVar <= 0) {
+      cerr << "Error in netcommunication - number of variables must be positive\n";
+      return ERROR;
+    }
+
+    OK = startPVM();
+    if (OK == 1) {
+      for (i = 0; i < nhost; i++) {
+        tidsCounter = i;
+        OK = spawnOneProgram(tidsCounter);
+        if (OK == ERROR) {
+          cerr << "Error in netcommunication - spawnoneprogram failed\n";
+          return ERROR;
+        }
+      }
+    }
+
+    pvm_config(&nhost, &narch, &hostp);
+    for (i = 0; i < nhost; i++) {
+      /* hosts to be monitored for deletion, suspension and resumption*/
+      hostTids[i] = hostp[i].hi_tid;
+    }
+
+    //jongud added pvm_notify for if host get suspended
+    info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), nhost, hostTids);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - pvmnotify failed");
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    //jongud added pvm_notify for if host is deleted
+    info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), nhost, hostTids);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - pvmnotify failed");
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    //jongud added pvm_notify for if host resumes
+    info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), nhost, hostTids);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - pvmnotify failed");
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    //jongud added pvm_notify for if host is added
+    info = pvm_notify(PvmHostAdd, pvmConst->getAddHostTag(), -1, 0);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - pvmnotify failed");
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    char* nullString = "0";
+    int infos;
+    if (OK == 1) {
+      // Have started slaveProgram slaveArguments  on all nhost hosts.
+      // send initial info to all slave processes
+      OK = startProcesses();
+      if (OK == 1) {
+        NETSTARTED = 1;
+        //Ask condor for another host jongud
+        pvm_addhosts(&nullString, 1, &infos);
+        return SUCCESS;
+      } else if (OK == -1) {
+        return ERROR;
+      } else {
+        cerr << "Error in netcommunication - unrecognised return value\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+    } else if (OK == 0) {
+      // could not spawn all nhost processes
+      stopNetCommunication();
+      return ERROR;
+    } else {
+      cerr << "Error in netcommunication - unrecognised return value\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+  }
+}
+#endif
+
+#ifndef CONDOR
+void NetCommunication::stopNetCommunication() {
   int tid, info;
   int stopparam = -1;
 
@@ -138,21 +252,66 @@ void netCommunication::stopNetCommunication() {
       // have successfully spawned slaves and sent initial message to them
       info = pvm_initsend(pvmConst->getDataEncode());
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - unable to stop communication");
-        cerr << "Error in netCommunication - unable to stop communication\n";
+        printErrorMsg("Error in netcommunication - unable to stop communication");
+        cerr << "Error in netcommunication - unable to stop communication\n";
 
       } else {
         info = pvm_pkint(&stopparam, 1, 1);
         if (info < 0) {
-          printErrorMsg("Error in netCommunication - unable to stop communication");
-          cerr << "Error in netCommunication - unable to stop communication\n";
+          printErrorMsg("Error in netcommunication - unable to stop communication");
+          cerr << "Error in netcommunication - unable to stop communication\n";
 
         } else {
           // maybe update tid according to status before broadcasting??
           info = pvm_mcast(tids, nhost, pvmConst->getStopTag());
           if (info < 0) {
-            printErrorMsg("Error in netCommunication - unable to stop communication");
-            cerr << "Error in netCommunication - unable to stop communication\n";
+            printErrorMsg("Error in netcommunication - unable to stop communication");
+            cerr << "Error in netcommunication - unable to stop communication\n";
+          }
+        }
+      }
+    }
+    pvm_exit();
+  }
+  mytid = -1;
+  NETSTARTED = 0;
+}
+#endif
+
+#ifdef CONDOR
+void NetCommunication::stopNetCommunication() {
+  int i, tid, info;
+  int stopparam = -1;
+
+  tid = pvm_mytid();
+  if (tid > 0) {
+    // pvmd is up and running and have joined pvm
+    if (NETSTARTED == 1) {
+      // have successfully spawned slaves and sent initial message to them
+      info = pvm_initsend(pvmConst->getDataEncode());
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - unable to stop communication");
+        cerr << "Error in netcommunication - unable to stop communication\n";
+
+      } else {
+        info = pvm_pkint(&stopparam, 1, 1);
+        if (info < 0) {
+          printErrorMsg("Error in netcommunication - unable to stop communication");
+          cerr << "Error in netcommunication - unable to stop communication\n";
+
+        } else {
+          //Checking the status of processes and shutting them down.
+          //jongud. PVM is checked to see id of processes
+          int numberOfTasks;
+          int* tidsArray = new int[maxNumHosts];
+          info = pvm_tasks(0, &numberOfTasks, &taskp);
+          for (i = 0; i < numberOfTasks; i++)
+            tidsArray[i] = taskp[i].ti_tid;
+
+          info = pvm_mcast(tidsArray, numberOfTasks, pvmConst->getStopTag());
+          if (info < 0) {
+            printErrorMsg("Error in netcommunication - unable to stop communication");
+            cerr << "Error in netcommunication - unable to stop communication\n";
           }
         }
       }
@@ -163,7 +322,7 @@ void netCommunication::stopNetCommunication() {
   NETSTARTED = 0;
 }
 
-int netCommunication::spawnProgram() {
+int NetCommunication::spawnProgram() {
   int i, nspawn;
   char* emptyString;
   emptyString = new char[strlen("" + 1)];
@@ -178,20 +337,19 @@ int netCommunication::spawnProgram() {
   i = pvm_catchout(stdout);
   nspawn = pvm_spawn(slaveProgram, slaveArguments, 0, emptyString, nhost, tids);
   //nspawn = pvm_spawn(slaveProgram, slaveArguments, 1024 + 1, "ask.ii.uib.no", nhost, tids);
-  delete [] emptyString;
+  delete[] emptyString;
 
   if (nspawn < 0) {
-    printErrorMsg("Error in netCommunication - unable to spawn process");
+    printErrorMsg("Error in netcommunication - unable to spawn process");
     stopNetCommunication();
     exit(EXIT_FAILURE);
 
   } else if (nspawn < nhost) {
-    printErrorMsg("Error in netCommunication - unable to spawn process");
-    cerr << "Error in netCommunication - unable to start " << slaveProgram << " on all hosts\n";
-    cerr << "The following hosts were not able to start:\n";
+    printErrorMsg("Error in netcommunication - unable to spawn process");
+    cerr << "Error in netcommunication - unable to start " << slaveProgram << " on all hosts\n"
+      << "The following hosts were not able to start:\n";
     for (i = nspawn; i < nhost; i++)
-      cout << tids[i] << endl;
-
+      cerr << tids[i] << endl;
     return ERROR;
 
   } else {
@@ -199,20 +357,70 @@ int netCommunication::spawnProgram() {
     numGoodProcesses = nhost;
     for (i = 0; i < numProcesses; i++)
       status[i] = 1;
+    return SUCCESS;
+  }
+}
+#endif
 
+int NetCommunication::spawnOneProgram(int vectorNumber) {
+  int i, nspawn;
+
+  i = pvm_catchout(stdout);
+  nspawn = pvm_spawn(slaveProgram, slaveArguments, PvmTaskArch, "0", 1, &tids[vectorNumber]);
+  if (nspawn < 0) {
+    printErrorMsg("Error in netcommunication - unable to spawn process");
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+
+  } else if (tids[vectorNumber] < 0) {
+    printErrorMsg("Error in netcommunication - unable to spawn process");
+    cerr << "Error in netcommunication - unable to start " << slaveProgram << " on all hosts\n"
+      << "The following host was not able to start: " << tids[vectorNumber] << endl;
+    return ERROR;
+
+  } else {
+    numProcesses++;
+    numGoodProcesses++;
+    status[vectorNumber] = 1;
     return SUCCESS;
   }
 }
 
-int netCommunication::startProcesses() {
+int NetCommunication::spawnOneMoreProgram(int& newTid, int vectorNumber) {
+  int i, nspawn;
+  int* newTidVector = new int[1];
+
+  i = pvm_catchout(stdout);
+  //pvm_spawn to start machines in condor
+  nspawn = pvm_spawn(slaveProgram, slaveArguments, PvmTaskArch, "0", 1, newTidVector);
+  newTid = newTidVector[0];
+  if (nspawn < 0) {
+    printErrorMsg("Error in netcommunication - unable to spawn process");
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+
+  } else if (newTid < 0) {
+    printErrorMsg("Error in netcommunication - unable to spawn process");
+    cerr << "Error in netcommunication - unable to start " << slaveProgram << " on all hosts\n"
+      << "The following host was not able to start: " << newTid << endl;
+    return ERROR;
+
+  } else {
+    numProcesses++;
+    numGoodProcesses++;
+    status[vectorNumber] = 1;
+    return SUCCESS;
+  }
+}
+
+int NetCommunication::startProcesses() {
   //Send number of variables, group name and number of processes to spawned processes
   int cansend = 1;
-  int info;
-  int i;
+  int i, info;
 
   info = pvm_notify(PvmTaskExit, pvmConst->getDiedTag(), nhost, tids);
   if (info < 0) {
-    printErrorMsg("Error in netCommunication - unable to notify");
+    printErrorMsg("Error in netcommunication - unable to notify");
     stopNetCommunication();
     return ERROR;
   }
@@ -222,17 +430,19 @@ int netCommunication::startProcesses() {
     cansend = sendInitialMessage(i);
     if (cansend == -1) {
       // Error occured in sending inital message to process with id = i
+      cerr << "Error in netcommunication - unable to send message\n";
       return ERROR;
 
     } else if (cansend == 0) {
-      cout << "Error in netCommunication - unable to send message\n";
+      cerr << "Error in netcommunication - unable to send message\n";
       status[i] = -1;
+      return ERROR;
 
     } else if (cansend == 1) {
       status[i] = 1;
 
     } else {
-      cerr << "Error in netCommunication - unrecognised return value\n";
+      cerr << "Error in netcommunication - unrecognised return value\n";
       stopNetCommunication();
       return ERROR;
     }
@@ -240,11 +450,68 @@ int netCommunication::startProcesses() {
   return SUCCESS;
 }
 
-int netCommunication::sendInitialMessage(int id) {
+int NetCommunication::startOneProcess(int processNum, int processTid) {
+  int info, cansend;
+  int tidToNotify[] = {processTid};
+  int hostTidToNotify[] = {hostTids[processNum]};
+
+  //jongud. pvm_notify for 1 process.
+  info = pvm_notify(PvmTaskExit, pvmConst->getDiedTag(), 1, tidToNotify);
+  if (info < 0) {
+    printErrorMsg("Error in netcommunication - unable to notify");
+    stopNetCommunication();
+    return ERROR;
+  }
+
+  //jongud added pvm_notify for if host get suspended
+  info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
+  if (info < 0) {
+    printErrorMsg("Error in netcommunication - unable to notify");
+    stopNetCommunication();
+    return ERROR;
+  }
+
+  //jongud added pvm_notify for if host is deleted
+  info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), 1, hostTidToNotify);
+  if (info < 0) {
+    printErrorMsg("Error in netcommunication - unable to notify");
+    stopNetCommunication();
+    return ERROR;
+  }
+
+  //jongud added pvm_notify for if host resumes
+  info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), 1, hostTidToNotify);
+  if (info < 0) {
+    printErrorMsg("Error in netcommunication - unable to notify");
+    stopNetCommunication();
+    return ERROR;
+  }
+
+  //Send initial message to the last spawned process, nhost == number of processes
+  cansend = sendInitialMessageToTid(processTid, processNum);
+  if (cansend == -1) {
+    cerr << "Error in netcommunication - unable to send message\n";
+    return ERROR;
+  } else if (cansend == 0) {
+    status[processNum] = -1;
+  } else if (cansend == 1) {
+    status[processNum] = 1;
+  } else {
+    cerr << "Error in netcommunication - unrecognised return value\n";
+    stopNetCommunication();
+    return ERROR;
+  }
+
+  // Have successfully sent starting message to slave
+  tids[processNum] = processTid;
+  return SUCCESS;
+}
+
+int NetCommunication::sendInitialMessage(int id) {
   int OK, info;
 
   if (id < 0 || id >= nhost) {
-    cerr << "Error in netCommunication - illegal id for slave\n";
+    cerr << "Error in netcommunication - illegal id for slave\n";
     return 0;
   }
 
@@ -253,58 +520,118 @@ int netCommunication::sendInitialMessage(int id) {
   if (OK == 1) {
     info = pvm_initsend(pvmConst->getDataEncode());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending message");
-      cerr << "Error in netCommunication - unable to send initial message\n";
+      printErrorMsg("Error in netcommunication - not sending message");
+      cerr << "Error in netcommunication - unable to send initial message\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_pkint(&numVar, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending message");
-      cerr << "Error in netCommunication - unable to send initial message\n";
+      printErrorMsg("Error in netcommunication - not sending message");
+      cerr << "Error in netcommunication - unable to send initial message\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_pkint(&id, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending message");
-      cerr << "Error in netCommunication - unable to send initial message\n";
+      printErrorMsg("Error in netcommunication - not sending message");
+      cerr << "Error in netcommunication - unable to send initial message\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_send(tids[id], pvmConst->getStartTag());
+
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending message");
-      cerr << "Error in netCommunication - unable to send initial message\n";
+      printErrorMsg("Error in netcommunication - not sending message");
+      cerr << "Error in netcommunication - unable to send initial message\n";
       stopNetCommunication();
       return ERROR;
     }
     return SUCCESS;
 
   } else if (OK == -1) {
-    cerr << "Error in netCommunication - unable to check status of process\n";
+    cerr << "Error in netcommunication - unable to check status of process\n";
     stopNetCommunication();
     return ERROR;
 
   } else if (OK == 0) {
-    cerr << "Error in netCommunication - unable to send initial message\n";
+    cerr << "Error in netcommunication - unable to send initial message\n";
     return OK;
 
   } else {
-    cerr << "Error in netCommunication - unrecognised return value\n";
+    cerr << "Error in netcommunication - unrecognised return value\n";
     stopNetCommunication();
     return ERROR;
   }
 }
 
-int netCommunication::sendNumberOfVariables() {
+int NetCommunication::sendInitialMessageToTid(int tid, int processNum) {
+  int OK;
+  int info;
+
+  if ((processNum < 0)|| (processNum >= numProcesses)) {
+    cerr << "Error in netcommunication - unknown process number\n";
+    return 0;
+  }
+
+  // check if process with identity = id is up and running
+  OK = checkProcessByTid(tid, processNum);
+  if (OK == 1) {
+    info = pvm_initsend(pvmConst->getDataEncode());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not starting process");
+      cerr << "Error in netcommunication - unable to start process\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_pkint(&numVar, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not starting process");
+      cerr << "Error in netcommunication - unable to start process\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_pkint(&processNum, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not starting process");
+      cerr << "Error in netcommunication - unable to start process\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_send(tid, pvmConst->getStartTag());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not starting process");
+      cerr << "Error in netcommunication - unable to start process\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+    // sent successfully to slave with tids[id] numVar and id
+    return SUCCESS;
+
+  } else if (OK == -1) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    return ERROR;
+  } else if (OK == 0) {
+    return OK;
+  } else {
+    cerr << "Error in netcommunication - unrecognised return value\n";
+    stopNetCommunication();
+    return ERROR;
+  }
+}
+
+int NetCommunication::sendNumberOfVariables() {
   int info;
 
   if (numVar <= 0) {
-    cerr << "Error in netCommunication - number of variables must be positive\n";
+    cerr << "Error in netcommunication - number of variables must be positive\n";
     stopNetCommunication();
     return ERROR;
   }
@@ -312,33 +639,32 @@ int netCommunication::sendNumberOfVariables() {
   // tell slave program how many variables to expect in vector sent
   info = pvm_initsend(pvmConst->getDataEncode());
   if (info < 0) {
-    printErrorMsg("Error in netCommunication - not sending variables");
-    cerr << "Error in netCommunication - unable to send number of variables\n";
+    printErrorMsg("Error in netcommunication - not sending variables");
+    cerr << "Error in netcommunication - unable to send number of variables\n";
     stopNetCommunication();
     return ERROR;
   }
 
   info = pvm_pkint(&numVar, 1, 1);
   if (info < 0) {
-    printErrorMsg("Error in netCommunication - not sending variables");
-    cerr << "Error in netCommunication - unable to send number of variables\n";
+    printErrorMsg("Error in netcommunication - not sending variables");
+    cerr << "Error in netcommunication - unable to send number of variables\n";
     stopNetCommunication();
     return ERROR;
   }
 
   info = pvm_mcast(tids, nhost, pvmConst->getStartTag());
   if (info < 0) {
-    printErrorMsg("Error in netCommunication - not sending variables");
-    cerr << "Error in netCommunication - unable to send number of variables\n";
+    printErrorMsg("Error in netcommunication - not sending variables");
+    cerr << "Error in netcommunication - unable to send number of variables\n";
     stopNetCommunication();
     return ERROR;
   }
   return SUCCESS;
 }
 
-int netCommunication::checkProcess(int id) {
+int NetCommunication::checkProcess(int id) {
   int info, bufId, recvTid;
-
   assert (id >= 0);
   assert (id < numProcesses);
 
@@ -347,13 +673,13 @@ int netCommunication::checkProcess(int id) {
     // message has arrived from tids[id] that has halted
     info = pvm_recv(tids[id], pvmConst->getDiedTag());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - unable to check process");
+      printErrorMsg("Error in netcommunication - unable to check process");
       return ERROR;
     }
 
     info = pvm_upkint(&recvTid, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - unable to check process");
+      printErrorMsg("Error in netcommunication - unable to check process");
       return ERROR;
     }
 
@@ -365,27 +691,68 @@ int netCommunication::checkProcess(int id) {
     return 0;
 
   } else if (bufId < 0) {
-    cerr << "Error in netCommunication - unable to check process\n";
+    cerr << "Error in netcommunication - unable to check process\n";
     return ERROR;
-
   } else {
     return SUCCESS;
   }
 }
 
-void netCommunication::getHealthOfProcesses(int* procTids) {
+int NetCommunication::checkProcessByTid(int tidToCheck,int processNum) {
+  int info, recvTid, bufId;
+
+  bufId = pvm_probe(tidToCheck, pvmConst->getDiedTag());
+  if (bufId > 0) {
+    // message has arrived from tids[id] that has halted
+    info = pvm_recv(tidToCheck, pvmConst->getDiedTag());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - unable to check process");
+      return ERROR;
+    }
+
+    info = pvm_upkint(&recvTid, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - unable to check process");
+      return ERROR;
+    }
+
+    if (recvTid != tidToCheck)
+      return ERROR;
+
+    status[processNum] = -1;
+    numGoodProcesses--;
+    return 0;
+
+  } else if (bufId < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    return ERROR;
+  } else {
+    return SUCCESS;
+  }
+}
+
+void NetCommunication::getHealthOfProcesses(int* procTids) {
   checkProcesses();
   int i;
   for (i = 0; i < numProcesses; i++)
     procTids[i] = status[i];
 }
 
-void netCommunication::checkProcesses() {
-  int i;
-  int info;
-  int tidDown;
-  int received = pvm_nrecv(-1, pvmConst->getDiedTag());
+int NetCommunication::getHealthOfProcessesAndHostAdded(int* procTids) {
+  int i, newProcess = -1;
+  checkProcesses();
+  checkHostsForDelete();
+  checkHostsForResume();
+  newProcess = checkHostsForAdded();
+  for (i = 0; i < numProcesses; i++)
+    procTids[i] = status[i];
+  return newProcess;
+}
 
+void NetCommunication::checkProcesses() {
+  int i, info, tidDown;
+
+  int received = pvm_nrecv(-1, pvmConst->getDiedTag());
   while (received > 0) {
     // got message that task is down, receive it
     info = pvm_upkint(&tidDown, 1, 1);
@@ -400,23 +767,319 @@ void netCommunication::checkProcesses() {
   }
 
   if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
     stopNetCommunication();
     exit(EXIT_FAILURE);
   }
+}
+
+void  NetCommunication::checkHostsForSuspend() {
+  int i, j, info;
+  int taskSuspended = 0;
+  int hostSuspended;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
+  while (received > 0) {
+    // got message that task is suspended, receive it
+    info = pvm_upkint(&hostSuspended, 1, 1);
+    // find id of hostSuspended
+    i = 0;
+    while ((hostTids[i] != hostSuspended) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    j = 0;
+    while ((taskp[j].ti_host != hostSuspended) && (i < numProcesses))
+      j++;
+
+    assert((j >= 0) && (j < numProcesses));
+    taskSuspended = taskp[j].ti_tid;
+    status[j] = -1;
+    numGoodProcesses--;
+    received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
+  }
+
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+}
+
+void NetCommunication::checkHostsForDelete() {
+  int i, info, tidDelete;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
+  while (received > 0) {
+    // got message that task is down, receive it
+    info = pvm_upkint(&tidDelete, 1, 1);
+    // find id of tidDown
+    i = 0;
+    while ((hostTids[i] != tidDelete) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    status[i] = -1;
+    numGoodProcesses--;
+    received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
+  }
+
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+}
+
+int NetCommunication::spawnAndStartOneProcess(int processNumber) {
+  int check;
+  int newTid = 0;
+
+  check = spawnOneMoreProgram(newTid, processNumber);
+  if (!(check == SUCCESS)) {
+    cerr << "Error in netcommunication - unable to spawn one more program\n";
+    return ERROR;
+  }
+
+  check = startOneProcess(processNumber, newTid);
+  if (!(check == SUCCESS)) {
+    cerr << "Error in netcommunication - unable to spawn one more program\n";
+    return ERROR;
+  }
+  return SUCCESS;
+}
+
+int NetCommunication::checkHostsForAdded() {
+  int i, check, info, infos, tidAdded;
+  int numOfProcessAdded = -1;
+  char* nullString = "0";
+  bool checkIfNew = true;
+
+  int received = pvm_nrecv(-1, pvmConst->getAddHostTag());
+  if (received > 0) {
+    // got message that host is added, receive it
+    info = pvm_upkint(&tidAdded, 1, 1);
+    // find id of tidDown
+    for (i = 0; i < (tidsCounter + 1); i++) {
+      if (tids[i] == tidAdded) {
+        checkIfNew = false;
+        numOfProcessAdded = i;
+      }
+    }
+
+    if (checkIfNew) {
+      nhost++;
+      numOfProcessAdded = tidsCounter + 1;
+      hostTids[numOfProcessAdded] = tidAdded;
+      check = spawnAndStartOneProcess(numOfProcessAdded);
+
+    } else {
+      check = spawnAndStartOneProcess(numOfProcessAdded);
+    }
+
+    if (check == SUCCESS) {
+      pvm_addhosts(&nullString, 1, &infos);
+      tidsCounter++;
+      return numOfProcessAdded;
+    } else if (check == ERROR) {
+      cerr << "Error in netcommunication - unable to spawn process\n";
+      return ERROR;
+    } else {
+      cerr << "Error in netcommunication - unable to spawn process\n";
+      return ERROR;
+    }
+
+  } else if (received == 0) {
+    return ERROR;
+  } else {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    return ERROR;
+  }
+}
+
+void NetCommunication::checkHostsForResume() {
+  int i, info, tidResume;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
+  while (received > 0) {
+    // got message that task is down, receive it
+    info = pvm_upkint(&tidResume, 1, 1);
+    // find id of tidDown
+    i = 0;
+    while ((hostTids[i] != tidResume) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    status[i] = 1;
+    numGoodProcesses++;
+    received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
+  }
+
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+}
+
+int NetCommunication::checkHostForSuspendReturnsDataid(int* procTids) {
+  int processId = -1;
+  int dataId = -1;
+  int i, info;
+  int taskSuspended = 0;
+  int hostSuspended;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
+  if (received > 0) {
+    // got message that task is suspended, receive it
+    info = pvm_upkint(&hostSuspended, 1, 1);
+    // find id of hostSuspended
+    i = 0;
+    while ((hostTids[i] != hostSuspended) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    taskSuspended = tids[i];
+    status[i] = -1;
+    numGoodProcesses--;
+    for (i = 0; i < numProcesses; i++)
+      procTids[i] = status[i];
+
+    for (i = 0; (i < numProcesses) && (processId == -1); i++)
+      if (tids[i] == taskSuspended)
+        processId = i;
+
+    if (processId == -1) {
+      cerr << "Error in netcommunication - unable to find process id\n";
+      exit(EXIT_FAILURE);
+    }
+
+    dataId = dataIds[processId];
+    return dataId;
+
+  }
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+  return -2;
+}
+
+int NetCommunication::checkHostForDeleteReturnsDataid(int* procTids) {
+  int processId = -1;
+  int dataId = -1;
+  int i, j, info;
+  int taskDeleted = 0;
+  int hostDeleted;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
+  if (received > 0) {
+    // got message that task is deleted, receive it
+    info = pvm_upkint(&hostDeleted, 1, 1);
+    // find id of hostDeleted
+    i = 0;
+    while ((hostTids[i] != hostDeleted) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    j = 0;
+    while ((taskp[j].ti_host != hostDeleted) && (i < numProcesses))
+      j++;
+
+    assert((j >= 0) && (j < numProcesses));
+    taskDeleted = taskp[j].ti_tid;
+    status[j] = -1;
+    numGoodProcesses--;
+    for (i = 0; i < numProcesses; i++)
+      procTids[i] = status[i];
+
+    for (i = 0; (i < numProcesses) && (processId == -1); i++)
+      if (tids[i] == taskDeleted)
+        processId = i;
+
+    if (processId == -1) {
+      cerr << "Error in netcommunication - unable to find process id\n";
+      exit(EXIT_FAILURE);
+    }
+
+    dataId = dataIds[processId];
+    return dataId;
+  }
+
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+  return -2;
+}
+
+int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
+  int processId = -1;
+  int dataId = -1;
+  int i, j, info;
+  int taskResumed = 0;
+  int hostResumed;
+
+  int received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
+  if (received > 0) {
+    // got message that task is resumed, receive it
+    info = pvm_upkint(&hostResumed, 1, 1);
+    // find id of hostResumed
+    i = 0;
+    while ((hostTids[i] != hostResumed) && (i < numProcesses))
+      i++;
+
+    assert((i >= 0) && (i < numProcesses));
+    j = 0;
+    while ((taskp[j].ti_host != hostResumed) && (i < numProcesses))
+      j++;
+
+    assert((j >= 0) && (j < numProcesses));
+    taskResumed = taskp[j].ti_tid;
+    status[j] = 1;
+    numGoodProcesses++;
+    for (i = 0; i < numProcesses; i++)
+      procTids[i] = status[i];
+
+    int hostTidToNotify[] = {hostResumed};
+
+    info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
+    for (i = 0; (i < numProcesses) && (processId == -1); i++)
+      if (tids[i] == taskResumed)
+        processId = i;
+
+    if (processId == -1) {
+      cerr << "Error in netcommunication - unable to find process id\n";
+      exit(EXIT_FAILURE);
+    }
+
+    dataId = dataIds[processId];
+    return dataId;
+  }
+
+  if (received < 0) {
+    cerr << "Error in netcommunication - unable to check process\n";
+    stopNetCommunication();
+    exit(EXIT_FAILURE);
+  }
+  return -2;
 }
 
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
 #ifdef GADGET_NETWORK
-int netCommunication::sendData(vectorofcharptr sendP) {
+int NetCommunication::sendData(VectorOfCharPtr sendP) {
   int i, info;
 
   if (NETSTARTED == 1) {
     info = pvm_initsend(pvmConst->getDataEncode());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending data");
-      cerr << "Error in netCommunication - unable to send data\n";
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
       stopNetCommunication();
       return ERROR;
     }
@@ -425,8 +1088,8 @@ int netCommunication::sendData(vectorofcharptr sendP) {
     for (i = 0; i < numVar; i++) {
       info = pvm_pkstr(sendP[i]);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to pack data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to pack data\n";
         stopNetCommunication();
         return ERROR;
       }
@@ -434,28 +1097,67 @@ int netCommunication::sendData(vectorofcharptr sendP) {
 
     info = pvm_mcast(tids, nhost, pvmConst->getMasterSendStringTag());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending data");
-      cerr << "Error in netCommunication - unable to send data\n";
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
       stopNetCommunication();
       return ERROR;
     } else
       return SUCCESS;
 
   } else {
-    cerr << "Error in netCommunication - unable to send data\n";
+    cerr << "Error in netcommunication - unable to send data\n";
     return ERROR;
   }
 }
 
-int netCommunication::sendBoundData(vector sendP) {
+int NetCommunication::sendData(VectorOfCharPtr sendP, int processId) {
+  int i, info;
+
+  if (NETSTARTED == 1) {
+    info = pvm_initsend(pvmConst->getDataEncode());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    assert(sendP.Size() >= numVar);
+    for (i = 0; i < numVar; i++) {
+      info = pvm_pkstr(sendP[i]);
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to pack data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+    }
+
+    info = pvm_send(tids[processId], pvmConst->getMasterSendStringTag());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
+      stopNetCommunication();
+      return ERROR;
+    } else {
+      return SUCCESS;
+    }
+
+  } else {
+    cerr << "Error in netcommunication - unable to send data\n";
+    return ERROR;
+  }
+}
+
+int NetCommunication::sendBoundData(vector sendP) {
   int i, info;
   double* temp;
 
   if (NETSTARTED == 1) {
     info = pvm_initsend(pvmConst->getDataEncode());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending data");
-      cerr << "Error in netCommunication - unable to send data\n";
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
       stopNetCommunication();
       return ERROR;
     }
@@ -466,29 +1168,69 @@ int netCommunication::sendBoundData(vector sendP) {
 
     info = pvm_pkdouble(temp, numVar, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending data");
-      cerr << "Error in netCommunication - unable to pack data\n";
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to pack data\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_mcast(tids, nhost, pvmConst->getMasterSendBoundTag());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not sending data");
-      cerr << "Error in netCommunication - unable to send data\n";
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
       stopNetCommunication();
       return ERROR;
     } else
       return SUCCESS;
 
   } else {
-    cerr << "Error in netCommunication - unable to send data\n";
+    cerr << "Error in netcommunication - unable to send data\n";
+    return ERROR;
+  }
+}
+
+int NetCommunication::sendBoundData(vector sendP, int processId) {
+  int i, info;
+  double* temp;
+
+  if (NETSTARTED == 1) {
+    info = pvm_initsend(pvmConst->getDataEncode());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    temp = new double[numVar];
+    for (i = 0; i < numVar; i++)
+      temp[i] = sendP[i];
+
+    info = pvm_pkdouble(temp, numVar, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to pack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_send(tids[processId], pvmConst->getMasterSendBoundTag());
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not sending data");
+      cerr << "Error in netcommunication - unable to send data\n";
+      stopNetCommunication();
+      return ERROR;
+    } else
+      return SUCCESS;
+
+  } else {
+    cerr << "Error in netcommunication - unable to send data\n";
     return ERROR;
   }
 }
 #endif
 
-int netCommunication::sendData(netDataVariables* sendP, int processId) {
+int NetCommunication::sendData(NetDataVariables* sendP, int processId) {
   int info;
   int cansend = 1;
   assert(processId >= 0);
@@ -498,7 +1240,7 @@ int netCommunication::sendData(netDataVariables* sendP, int processId) {
     // check is process with id = processId is up and running
     cansend = checkProcess(processId);
     if (cansend == -1) {
-      cerr << "Error in netCommunication - invalid process id " << processId << endl;
+      cerr << "Error in netcommunication - invalid process id " << processId << endl;
       stopNetCommunication();
       return ERROR;
 
@@ -507,100 +1249,174 @@ int netCommunication::sendData(netDataVariables* sendP, int processId) {
       return cansend;
 
     } else if (cansend == 1) {
-      info = pvm_initsend(pvmConst->getDataEncode());         // assume no data coding needed
+      info = pvm_initsend(pvmConst->getDataEncode());
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to send data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_pkint(&sendP->tag, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to send data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_pkint(&sendP->x_id, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to send data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_pkdouble(sendP->x, numVar, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to send data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_send(tids[processId], pvmConst->getMasterSendVarTag());
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not sending data");
-        cerr << "Error in netCommunication - unable to send data\n";
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
         stopNetCommunication();
         return ERROR;
       }
       return SUCCESS;
 
     } else {
-      cerr << "Error in netCommunication - invalid response\n";
+      cerr << "Error in netcommunication - invalid response\n";
       stopNetCommunication();
       return ERROR;
     }
 
   } else {
-    cerr << "Error in netCommunication - cannot send data\n";
+    cerr << "Error in netcommunication - cannot send data\n";
     return ERROR;
   }
 }
 
-int netCommunication::receiveData(netDataResult* rp) {
+int NetCommunication::sendData(NetDataVariables* sendP, int processId, int dataId) {
+  int info;
+  int cansend = 1;
+  assert(processId >= 0);
+  assert(processId < numProcesses);
+
+  if (NETSTARTED == 1) {
+    // check is process with id = processId is up and running
+    cansend = checkProcess(processId);
+    if (cansend == -1) {
+      cerr << "Error in netcommunication - invalid process id " << processId << endl;
+      stopNetCommunication();
+      return ERROR;
+
+    } else if (cansend == 0) {
+      //process with id = processId is not up and running
+      return cansend;
+
+    } else if (cansend == 1) {
+      info = pvm_initsend(pvmConst->getDataEncode());
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+      info = pvm_pkint(&sendP->tag, 1, 1);
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+      info = pvm_pkint(&sendP->x_id, 1, 1);
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+      info = pvm_pkdouble(sendP->x, numVar, 1);
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+      info = pvm_send(tids[processId], pvmConst->getMasterSendVarTag());
+      if (info < 0) {
+        printErrorMsg("Error in netcommunication - not sending data");
+        cerr << "Error in netcommunication - unable to send data\n";
+        stopNetCommunication();
+        return ERROR;
+      }
+
+      dataIds[processId] = dataId;
+      return SUCCESS;
+
+    } else {
+      cerr << "Error in netcommunication - invalid response\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+  } else {
+    cerr << "Error in netcommunication - cannot send data\n";
+    return ERROR;
+  }
+}
+
+int NetCommunication::receiveData(NetDataResult* rp) {
   int info;
 
   if (NETSTARTED == 1) {
     // receive data from any process which sends data with msgtag = receiveTag
     info = pvm_recv(-1, pvmConst->getMasterReceiveDataTag());
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not receiving data");
-      cerr << "Error in netCommunication - PVM not responding\n";
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - PVM not responding\n";
       stopNetCommunication();
       return ERROR;
 
     } else {
       info = pvm_upkint(&rp->tag, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not receiving data");
-        cerr << "Error in netCommunication - unable to unpack data\n";
+        printErrorMsg("Error in netcommunication - not receiving data");
+        cerr << "Error in netcommunication - unable to unpack data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_upkdouble(&rp->result, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not receiving data");
-        cerr << "Error in netCommunication - unable to unpack data\n";
+        printErrorMsg("Error in netcommunication - not receiving data");
+        cerr << "Error in netcommunication - unable to unpack data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_upkint(&rp->who, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not receiving data");
-        cerr << "Error in netCommunication - unable to unpack data\n";
+        printErrorMsg("Error in netcommunication - not receiving data");
+        cerr << "Error in netcommunication - unable to unpack data\n";
         stopNetCommunication();
         return ERROR;
       }
 
       info = pvm_upkint(&rp->x_id, 1, 1);
       if (info < 0) {
-        printErrorMsg("Error in netCommunication - not receiving data");
-        cerr << "Error in netCommunication - unable to unpack data\n";
+        printErrorMsg("Error in netcommunication - not receiving data");
+        cerr << "Error in netcommunication - unable to unpack data\n";
         stopNetCommunication();
         return ERROR;
       }
@@ -608,7 +1424,74 @@ int netCommunication::receiveData(netDataResult* rp) {
     }
 
   } else {
-    cerr << "Error in netCommunication - cannot receive data\n";
+    cerr << "Error in netcommunication - cannot receive data\n";
+    return ERROR;
+  }
+}
+
+//Added jongud
+int NetCommunication::probeForReceiveData() {
+  int bufid;
+  bufid = pvm_probe(-1, pvmConst->getMasterReceiveDataTag());
+  if (bufid > 0)
+    return SUCCESS;
+  else if (bufid == 0)
+    return NONTORECEIVE;
+  else {
+    printErrorMsg("Error in netcommunication - not receiving data");
+    cerr << "Error in netcommunication - unable to receive data\n";
+    stopNetCommunication();
+    return ERROR;
+  }
+}
+
+int NetCommunication::receiveDataNonBlocking(NetDataResult* rp) {
+  int info;
+
+  info = pvm_nrecv(-1, pvmConst->getMasterReceiveDataTag());
+  if (info == 0) {
+    return NONTORECEIVE;
+
+  } else if (info > 0) {
+    // received information from process
+    info = pvm_upkint(&rp->tag, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkdouble(&rp->result, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkint(&rp->who, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkint(&rp->x_id, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+    dataIds[rp->who] = -1;
+    return SUCCESS;
+
+  } else {
+    printErrorMsg("Error in netcommunication - not receiving data");
+    cerr << "Error in netcommunication - unable to unpack data\n";
+    stopNetCommunication();
     return ERROR;
   }
 }
@@ -616,66 +1499,86 @@ int netCommunication::receiveData(netDataResult* rp) {
 // ********************************************************
 // Functions which set/return information about netcommunication
 // ********************************************************
-int netCommunication::getNumberOfHosts() {
+int NetCommunication::getNumHosts() {
   return nhost;
 }
 
-int netCommunication::getNumProcesses() {
+int NetCommunication::getNumProcesses() {
   return numProcesses;
 }
 
-int netCommunication::getNumVar() {
+int NetCommunication::getNumVar() {
   return numVar;
 }
 
-int netCommunication::getNumRunningProcesses() {
+int NetCommunication::getNumRunningProcesses() {
   return numGoodProcesses;
 }
 
-int netCommunication::netCommStarted() {
+int NetCommunication::netCommStarted() {
   return NETSTARTED;
 }
 
-void netCommunication::setNumInSendVar(int nVar) {
+void NetCommunication::setNumInSendVar(int nVar) {
   if (nVar <= 0) {
-    cerr << "Error in netCommunication - number of variables must be positive\n";
+    cerr << "Error in netcommunication - number of variables must be positive\n";
     exit(EXIT_FAILURE);
   }
   numVar = nVar;
 }
 
-void netCommunication::printErrorMsg(const char* errorMsg) {
+void NetCommunication::printErrorMsg(const char* errorMsg) {
   char* msg;
   msg = new char[strlen(errorMsg) + 1];
   strcpy(msg, errorMsg);
   pvm_perror(msg);
-  delete [] msg;
+  delete[] msg;
 }
 
-int netCommunication::NET_ERROR() {
+int NetCommunication::netError() {
   return ERROR;
 }
 
-int netCommunication::NET_SUCCESS() {
+int NetCommunication::netSuccess() {
   return SUCCESS;
 }
 
-masterCommunication::masterCommunication(char* progN, char** progA, int nh, int waitSec)
-  : netCommunication(progN, progA, nh) {
+int NetCommunication::netDataNotSent() {
+  return DATANOTSENT;
+}
+
+int NetCommunication::netNoneToReceive() {
+  return NONTORECEIVE;
+}
+
+int NetCommunication::netNeedMoreHosts() {
+  return NEEDMOREHOSTS;
+}
+
+int NetCommunication::netNeedMoreData() {
+  return NEEDMOREDATA;
+}
+
+int NetCommunication::netWaitForBetterProcesses() {
+  return WAITFORPROCESS;
+}
+
+MasterCommunication::MasterCommunication(char* progN, char** progA, int nh, int waitSec)
+  : NetCommunication(progN, progA, nh) {
 
   tmout.tv_sec = waitSec;
   tmout.tv_usec = 0;
 }
 
-masterCommunication::~masterCommunication() {
+MasterCommunication::~MasterCommunication() {
 }
 
-int masterCommunication::receiveData(netDataResult* rp) {
+int MasterCommunication::receiveData(NetDataResult* rp) {
   int info, timeout;
   timeout = pvm_trecv(-1, pvmConst->getMasterReceiveDataTag(), &tmout);
   if (timeout < 0) {
-    printErrorMsg("Error in netCommunication - not receiving data");
-    cerr << "Error in netCommunication - PVM not responding\n";
+    printErrorMsg("Error in netcommunication - not receiving data");
+    cerr << "Error in netcommunication - PVM not responding\n";
     stopNetCommunication();
     return ERROR;
 
@@ -683,32 +1586,32 @@ int masterCommunication::receiveData(netDataResult* rp) {
     // received information from process within tmout.
     info = pvm_upkint(&rp->tag, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not receiving data");
-      cerr << "Error in netCommunication - unable to unpack data\n";
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_upkdouble(&rp->result, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not receiving data");
-      cerr << "Error in netCommunication - unable to unpack data\n";
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_upkint(&rp->who, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not receiving data");
-      cerr << "Error in netCommunication - unable to unpack data\n";
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
       stopNetCommunication();
       return ERROR;
     }
 
     info = pvm_upkint(&rp->x_id, 1, 1);
     if (info < 0) {
-      printErrorMsg("Error in netCommunication - not receiving data");
-      cerr << "Error in netCommunication - unable to unpack data\n";
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
       stopNetCommunication();
       return ERROR;
     }
@@ -717,5 +1620,57 @@ int masterCommunication::receiveData(netDataResult* rp) {
   } else {
     rp->who = -1;
     return SUCCESS;
+  }
+}
+
+//Added method jongud. 17.07.02 . Not finished.
+int MasterCommunication::receiveDataNonBlocking(NetDataResult* rp) {
+  int info;
+  info = pvm_nrecv(-1, pvmConst->getMasterReceiveDataTag());
+
+  if (info == 0)
+    return NONTORECEIVE;
+
+  else if (info > 0) {
+   // received information from process
+    info = pvm_upkint(&rp->tag, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkdouble(&rp->result, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkint(&rp->who, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+
+    info = pvm_upkint(&rp->x_id, 1, 1);
+    if (info < 0) {
+      printErrorMsg("Error in netcommunication - not receiving data");
+      cerr << "Error in netcommunication - unable to unpack data\n";
+      stopNetCommunication();
+      return ERROR;
+    }
+    dataIds[rp->who] = -1;
+    return SUCCESS;
+
+  } else {
+    printErrorMsg("Error in netcommunication - not receiving data");
+    cerr << "Error in netcommunication - PVM not responding\n";
+    stopNetCommunication();
+    return ERROR;
   }
 }

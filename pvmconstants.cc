@@ -6,7 +6,7 @@
 #include "paramin.h"
 #endif
 
-pvmconstants::pvmconstants() {
+PVMConstants::PVMConstants() {
   endType = 1;
   startType = 2;
   taskDied = 3;
@@ -14,49 +14,74 @@ pvmconstants::pvmconstants() {
   masterSendString = 5;
   masterReceiveNetDataResult = 6;
   masterSendBound = 7;
+  addHost = 8;
+  hostSuspend = 9;
+  hostResume = 10;
+  hostDelete = 11;
+  taskExit = 12;
   dataencode = 1;
 }
 
-pvmconstants::~pvmconstants() {
+PVMConstants::~PVMConstants() {
 }
 
-const void pvmconstants::setDataEncode(int dc) {
+const void PVMConstants::setDataEncode(int dc) {
   if (dc == 0 || dc == 1 || dc == 2)
     dataencode = dc;
   else {
-    cerr << "Illegal value for dataencode\n";
+    cerr << "Error in pvmconstants - illegal value for dataencode\n";
     exit(EXIT_FAILURE);
   }
 }
 
-const int pvmconstants::getDiedTag() const {
+const int PVMConstants::getDiedTag() const {
   return taskDied;
 }
 
-const int pvmconstants::getStopTag() const {
+const int PVMConstants::getStopTag() const {
   return endType;
 }
 
-const int pvmconstants::getStartTag() const {
+const int PVMConstants::getStartTag() const {
   return startType;
 }
 
-const int pvmconstants::getMasterSendVarTag() const {
+const int PVMConstants::getMasterSendVarTag() const {
   return masterSendNetDataVar;
 }
 
-const int pvmconstants::getMasterSendStringTag() const {
+const int PVMConstants::getMasterSendStringTag() const {
   return masterSendString;
 }
 
-const int pvmconstants::getMasterSendBoundTag() const {
+const int PVMConstants::getMasterSendBoundTag() const {
   return masterSendBound;
 }
 
-const int pvmconstants::getMasterReceiveDataTag() const {
+const int PVMConstants::getMasterReceiveDataTag() const {
   return masterReceiveNetDataResult;
 }
 
-const int pvmconstants::getDataEncode() const {
+const int PVMConstants::getDataEncode() const {
   return dataencode;
+}
+
+const int PVMConstants::getAddHostTag() const {
+  return addHost;
+}
+
+const int PVMConstants::getHostSuspendTag() const {
+  return hostSuspend;
+}
+
+const int PVMConstants::getHostResumeTag() const {
+  return hostResume;
+}
+
+const int PVMConstants::getHostDeleteTag() const {
+  return hostDelete;
+}
+
+const int PVMConstants::getTaskExitTag() const {
+  return taskExit;
 }

@@ -10,6 +10,7 @@ runtime::~runtime() {
 
 void runtime::startRun() {
   startExec = time(NULL);
+
 }
 
 void runtime::stopRun(double a) {
@@ -19,10 +20,8 @@ void runtime::stopRun(double a) {
   newTime = difftime(stopExec, startExec);
   if (execTime == -1.0)
     execTime = newTime;
-  else {
-    // Use last recorded run time and new time to estimate new run time
+  else
     execTime = (execTime * a) + (newTime * (1 - a));
-  }
   startExec = -1;
 }
 
@@ -42,7 +41,8 @@ int runtime::isRunning() {
   return !(startExec == -1);
 }
 
-processManager::processManager() {
+ProcessManager::ProcessManager() {
+  maxNumHosts = 500;
   // Return value if no processes available.
   NO_PROCESSES = -1;
   // Return value if should wait for processes.
@@ -52,23 +52,29 @@ processManager::processManager() {
   procStat = NULL;
 }
 
-processManager::~processManager() {
+ProcessManager::~ProcessManager() {
   delete freeProcesses;
   freeProcesses = NULL;
   if (procStat != NULL) {
-    delete [] procStat;
+    delete[] procStat;
     procStat = NULL;
   }
 }
 
-void processManager::initializePM(int numProc) {
+void ProcessManager::initializePM(int numProc) {
   int i;
   if (numProc <= 0) {
-    cerr << "Error in processManager - number of processes must be positive\n";
+    cerr << "Error in processmanager - number of processes must be positive\n";
     exit(EXIT_FAILURE);
   }
   totalNumProc = numProc;
+
+#ifndef CONDOR
   procStat = new int[totalNumProc];
+#else
+  procStat = new int[maxNumHosts];
+#endif
+
   for (i = 0; i < totalNumProc; i++) {
     procStat[i] = -1;
     addProc(i);
@@ -76,33 +82,45 @@ void processManager::initializePM(int numProc) {
   }
 }
 
-void processManager::addProc(int id) {
+void ProcessManager::addProc(int id) {
   if (id < 0 || id >= totalNumProc) {
-    cerr << "Error in processManager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - illegal process id " << id << endl;
     exit(EXIT_FAILURE);
   }
-  if (freeProcesses->contains(id))
-    cout << "Warning in processManager - process with id " << id << " already exists\n";
-  else
+  if (!(freeProcesses->contains(id)))
     freeProcesses->put(id);
+  else
+    cout << "Warning in processmanager - process with id " << id << " already exists\n";
 }
 
-int processManager::allReceived() {
+//jongud Added method to add more processes than to begin with
+void ProcessManager::addMoreProc(int id) {
+  if (id < 0 || id >= (totalNumProc + 1)) {
+    cerr << "Error in processmanager - illegal process id " << id << endl;
+    exit(EXIT_FAILURE);
+  }
+  if (!(freeProcesses->contains(id))) {
+    freeProcesses->put(id);
+    totalNumProc++;
+  } else
+    cout << "Warning in processmanager - process with id " << id << " already freed\n";
+}
+
+
+int ProcessManager::allReceived() {
   int numGoodProc = getNumGoodProc();
-  return (freeProcesses->getNumberOfItems() >= numGoodProc);
+  return (freeProcesses->getNumItems() >= numGoodProc);
 }
 
-int processManager::getNumFreeProc() {
-  int numFree;
+int ProcessManager::getNumFreeProc() {
   removeBadProc();
-  numFree = freeProcesses->getNumberOfItems();
-  return numFree;
+  return (freeProcesses->getNumItems());
 }
 
-void processManager::removeBadProc() {
+void ProcessManager::removeBadProc() {
   int id;
   int counter = 0;
-  int numFreeProc = freeProcesses->getNumberOfItems();
+  int numFreeProc = freeProcesses->getNumItems();
   while (counter < numFreeProc) {
     id = freeProcesses->get();
     assert ((id >= 0) && (id < totalNumProc));
@@ -112,35 +130,35 @@ void processManager::removeBadProc() {
   }
 }
 
-int processManager::isFreeProc() {
-  int freeProc;
+int ProcessManager::isFreeProc() {
   removeBadProc();
-  freeProc = !(freeProcesses->isEmpty());
-  return freeProc;
+  return (!(freeProcesses->isEmpty()));
 }
 
-int processManager::getNumGoodProc() {
+int ProcessManager::getNumGoodProc() {
   int i;
   int numGoodProc = 0;
   for (i = 0; i < totalNumProc; i++) {
-    if(procStat[i] == 1)
+    if (procStat[i] == 1)
       numGoodProc++;
   }
   return numGoodProc;
 }
 
-void processManager::setFreeProc(int id) {
+void ProcessManager::setFreeProc(int id) {
   if (id < 0 || id >= totalNumProc) {
-    cerr << "Error in processManager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - illegal process id " << id << endl;
     exit(EXIT_FAILURE);
   }
-  if (freeProcesses->contains(id))
-    cout << "Warning in processManager - when setting process id " << id << endl;
-  else
+  if (!(freeProcesses->contains(id)))
     freeProcesses->put(id);
+  else
+    cout << "Warning in processmanager - process with id " << id << " already freed\n";
 }
 
-int processManager::getNextTidToSend(netCommunication* n) {
+
+#ifndef CONDOR
+int ProcessManager::getNextTidToSend(NetCommunication* n) {
   int tid;
   n->getHealthOfProcesses(procStat);
   removeBadProc();
@@ -151,8 +169,31 @@ int processManager::getNextTidToSend(netCommunication* n) {
     return tid;
   }
 }
+#endif
 
-int processManager::getNextTidToSend(int numLeftToSend, netCommunication* n) {
+#ifdef CONDOR
+int ProcessManager::getNextTidToSend(NetCommunication* n) {
+  int nextTid;
+  if (freeProcesses->isEmpty())
+    return NO_PROCESSES;
+  else {
+    nextTid = freeProcesses->get();
+    return nextTid;
+  }
+}
+
+int ProcessManager::checkForNewProcess(NetCommunication* n) {
+  int newProcess;
+  newProcess = n->getHealthOfProcessesAndHostAdded(procStat);
+  removeBadProc();
+  if (newProcess > -1)
+    addMoreProc(newProcess);
+  return newProcess;
+}
+#endif
+
+#ifndef CONDOR
+int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;
   n->getHealthOfProcesses(procStat);
   removeBadProc();
@@ -163,39 +204,57 @@ int processManager::getNextTidToSend(int numLeftToSend, netCommunication* n) {
     return tid;
   }
 }
+#endif
 
-void processManager::sent(int processId) {
+#ifdef CONDOR
+int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
+  int tid;
+  int newProcess;
+  newProcess = n->getHealthOfProcessesAndHostAdded(procStat);
+  removeBadProc();
+  if (newProcess > -1)
+    addMoreProc(newProcess);
+  if (freeProcesses->isEmpty())
+    return NO_PROCESSES;
+  else {
+    tid = freeProcesses->get();
+    return tid;
+  }
+}
+#endif
+
+void ProcessManager::sent(int processId) {
 }
 
-int* processManager::getStatus() {
+int* ProcessManager::getStatus() {
   return procStat;
 }
 
-int processManager::getStatus(int id) {
+int ProcessManager::getStatus(int id) {
   if ((id < 0) || (id >= totalNumProc)) {
-    cerr << "Error in processManager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - illegal process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   return procStat[id];
 }
 
-void processManager::setStatus(int id, int stat) {
+void ProcessManager::setStatus(int id, int stat) {
   if ((id < 0) || (id >= totalNumProc)) {
-    cerr << "Error in processManager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - illegal process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   if ((stat != 1) && (stat != -1)) {
-    cerr << "Error in processManager - illegal status " << stat << endl;
+    cerr << "Error in processmanager - illegal status " << stat << endl;
     exit(EXIT_FAILURE);
   }
   procStat[id] = stat;
 }
 
-void processManager::processDown(int id) {
+void ProcessManager::processDown(int id) {
   setStatus(id, -1);
 }
 
-void processManager::noProcessesRunning() {
+void ProcessManager::noProcessesRunning() {
   int i;
   for (i = 0; i < totalNumProc; i++)
     procStat[i] = -1;
@@ -203,54 +262,59 @@ void processManager::noProcessesRunning() {
     freeProcesses->get();
 }
 
-int processManager::NO_AVAILABLE_PROCESSES() {
+int ProcessManager::noAvailableProcesses() {
   return NO_PROCESSES;
 }
 
-int processManager::WAIT_FOR_BETTER_PROCESSES() {
+int ProcessManager::waitForBetterProcesses() {
   return WAIT_FOR_PROCESSES;
 }
 
-workLoadScheduler::workLoadScheduler(double a) {
+WorkLoadScheduler::WorkLoadScheduler(double a) {
   alpha = a;
   runInfo = NULL;
   bestTime = 360000.0;
 }
 
-workLoadScheduler::~workLoadScheduler() {
+WorkLoadScheduler::~WorkLoadScheduler() {
   int i;
   if (runInfo != NULL) {
     for (i = 0; i < totalNumProc; i++)
       delete runInfo[i];
-    delete runInfo;
+    delete[]  runInfo;
   }
 }
 
-void workLoadScheduler::initializePM(int totalNumProc) {
+void WorkLoadScheduler::initializePM(int totalNumProc) {
   runInfo = new runtime*[totalNumProc];
-  processManager::initializePM(totalNumProc);
+  ProcessManager::initializePM(totalNumProc);
 }
 
-void workLoadScheduler::addProc(int id) {
-  processManager::addProc(id);
+void WorkLoadScheduler::addProc(int id) {
+  ProcessManager::addProc(id);
   runInfo[id] = new runtime();
 }
 
-void workLoadScheduler::setFreeProc(int tid) {
+void WorkLoadScheduler::addMoreProc(int id) {
+  ProcessManager::addMoreProc(id);
+  runInfo[id] = new runtime();
+}
+
+void WorkLoadScheduler::setFreeProc(int tid) {
   runInfo[tid]->stopRun(alpha);
   if (bestTime > runInfo[tid]->getRunTime())
     bestTime = runInfo[tid]->getRunTime();
-  processManager::setFreeProc(tid);
+  ProcessManager::setFreeProc(tid);
 }
 
-int workLoadScheduler::getNextTidToSend(int numLeftToSend, netCommunication* n) {
+int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int id, q;
   int nextTid = -1;
   n->getHealthOfProcesses(procStat);
-  processManager::removeBadProc();
+  ProcessManager::removeBadProc();
   if (freeProcesses->isEmpty()) {
     return NO_PROCESSES;
-  } else if (numLeftToSend >= 2*totalNumProc) {
+  } else if (numLeftToSend >= 2 * totalNumProc) {
     nextTid = freeProcesses->get();
     return nextTid;
   } else {
@@ -267,15 +331,15 @@ int workLoadScheduler::getNextTidToSend(int numLeftToSend, netCommunication* n) 
   }
 }
 
-void workLoadScheduler::sent(int procId) {
+void WorkLoadScheduler::sent(int procId) {
   if (procId < 0 || procId >= totalNumProc) {
-    cerr << "Error in workLoadScheduler - illegal process id " << procId << endl;
+    cerr << "Error in workloadscheduler - illegal process id " << procId << endl;
     exit(EXIT_FAILURE);
   }
   runInfo[procId]->startRun();
 }
 
-int workLoadScheduler::quickHostsAvailable() {
+int WorkLoadScheduler::quickHostsAvailable() {
   int available = 0, counter = 0;
   while (!(available) && counter < totalNumProc) {
     if ((!runInfo[counter]->isRunning()) && (procStat[counter] == 1))
@@ -294,7 +358,7 @@ int workLoadScheduler::quickHostsAvailable() {
     return -1;
 }
 
-int workLoadScheduler::quickBusyProcesses() {
+int WorkLoadScheduler::quickBusyProcesses() {
   int available = 0, counter = 0;
   while ((available == 0) && (counter < totalNumProc)) {
     if ((runInfo[counter]->isRunning() == 1) && (procStat[counter] == 1))
@@ -303,7 +367,7 @@ int workLoadScheduler::quickBusyProcesses() {
   }
 
   if (available == 1)
-    return available;
+    return 1;
   else
     return -1;
 }

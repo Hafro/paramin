@@ -1,29 +1,29 @@
 #include "netdatacontrol.h"
 
-netInfo::netInfo() {
+NetInfo::NetInfo() {
   set = 0;
   sent = 0;
   received = 0;
-  numberOfPendingAnswers = 0;
+  numPendingAnswers = 0;
 }
 
-netInfo::~netInfo() {
+NetInfo::~NetInfo() {
 }
 
-int netInfo::hasSet() {
+int NetInfo::hasSet() {
   return set;
 }
 
-int netInfo::hasReceived() {
+int NetInfo::hasReceived() {
   return (sent && received);
 }
 
-int netInfo::hasSent() {
+int NetInfo::hasSent() {
   return sent;
 }
 
-int netInfo::numberOfCopiesSent() {
-  return numberOfPendingAnswers;
+int NetInfo::numCopiesSent() {
+  return numPendingAnswers;
 }
 
 coordinates::coordinates() {
@@ -70,7 +70,7 @@ int coordinates::getNumParameters() {
   return x.dimension();
 }
 
-netDataControl::netDataControl(int numx, int numberOfParameters, int t) {
+NetDataControl::NetDataControl(int numx, int numberOfParameters, int t) {
   numberOfx = 0;
   totalNumx = numx;
   numberSent = 0;
@@ -79,15 +79,15 @@ netDataControl::netDataControl(int numx, int numberOfParameters, int t) {
   tag = t;
   numPar = numberOfParameters;
   xyCoord = new coordinates*[numx];
-  nInfo = new netInfo*[numx];
+  nInfo = new NetInfo*[numx];
   int i;
   for (i = 0; i < numx; i++) {
     xyCoord[i] = new coordinates();
-    nInfo[i] = new netInfo;
+    nInfo[i] = new NetInfo;
   }
 }
 
-netDataControl::~netDataControl() {
+NetDataControl::~NetDataControl() {
   int i;
   for (i = 0; i < totalNumx; i++) {
     delete xyCoord[i];
@@ -101,13 +101,13 @@ netDataControl::~netDataControl() {
 
 // ----------------------------------------------------------------------------
 // Functions for setting data
-void netDataControl::setX(const vector& x1) {
+void NetDataControl::setX(const vector& x1) {
   if (numberOfx < 0 || numberOfx >= totalNumx) {
-    cerr << "Error in dataControl - cannot store vector\n";
+    cerr << "Error in netdatacontrol - cannot store vector\n";
     exit(EXIT_FAILURE);
   }
   if ((x1.dimension()) != numPar) {
-    cerr << "Error in dataControl - wrong number of parameters\n";
+    cerr << "Error in netdatacontrol - wrong number of parameters\n";
     exit(EXIT_FAILURE);
   }
   xyCoord[numberOfx]->setX(x1);
@@ -115,7 +115,7 @@ void netDataControl::setX(const vector& x1) {
   numberOfx++;
 }
 
-int netDataControl::getIdToSetNext() {
+int NetDataControl::getIdToSetNext() {
   // might change
   if (numberOfx == totalNumx)
     return -1;
@@ -123,9 +123,9 @@ int netDataControl::getIdToSetNext() {
     return numberOfx;
 }
 
-void netDataControl::setY(int id, double fx) {
+void NetDataControl::setY(int id, double fx) {
   if (id < 0 || id >= totalNumx) {
-    cerr << "Error in dataControl - illegal id\n";
+    cerr << "Error in netdatacontrol - illegal id\n";
     exit(EXIT_FAILURE);
   }
   if (!nInfo[id]->hasReceived()) {
@@ -134,13 +134,13 @@ void netDataControl::setY(int id, double fx) {
     nInfo[id]->received = 1;
     numberAnswers++;
   }
-  nInfo[id]->numberOfPendingAnswers--;
+  nInfo[id]->numPendingAnswers--;
 
   if (nInfo[id]->sent == 0)
-    cout << "Warning - setting f(x) but have not sent x with identity: " << id << endl;
+    cout << "Warning in netdatacontrol - setting f(x) but have not sent x with identity: " << id << endl;
 }
 
-void netDataControl::setDataPair(const vector& x1, double fx) {
+void NetDataControl::setDataPair(const vector& x1, double fx) {
   setX(x1);
   sentOne(numberOfx-1);
   setY(numberOfx-1, fx);
@@ -148,26 +148,26 @@ void netDataControl::setDataPair(const vector& x1, double fx) {
 
 // ----------------------------------------------------------------------------
 // Functions for getting data
-vector netDataControl::getX(int id) {
+vector NetDataControl::getX(int id) {
   if (id < 0 || id >= numberOfx) {
-    cerr << "Error in dataControl - have not set vector with id " << id << endl;
+    cerr << "Error in netdatacontrol - have not set vector with id " << id << endl;
     exit(EXIT_FAILURE);
   }
   vector vec = xyCoord[id]->getX();
   return vec;
 }
 
-vector netDataControl::getNextXToSend() {
+vector NetDataControl::getNextXToSend() {
   int i = 0;
   int FOUND = 0;
   vector vec;
 
   if (allSent()) {
-    cerr << "Error in dataControl - no vector to send\n";
+    cerr << "Error in netdatacontrol - no vector to send\n";
     exit(EXIT_FAILURE);
   }
   if (numberSent < 0 || numberSent >= numberOfx) {
-    cerr << "Error in dataControl - number ot send out of bounds\n";
+    cerr << "Error in netdatacontrol - number ot send out of bounds\n";
     exit(EXIT_FAILURE);
   }
   while (i < totalNumx && FOUND == 0) {
@@ -179,25 +179,25 @@ vector netDataControl::getNextXToSend() {
   return vec;
 }
 
-double netDataControl::getY(int id) {
+double NetDataControl::getY(int id) {
   if (id < 0 || id >= totalNumx) {
-    cerr << "Error in dataControl - illegal id\n";
+    cerr << "Error in netdatacontrol - illegal id\n";
     exit(EXIT_FAILURE);
   }
   if (!nInfo[id]->hasSet())
-    cout << "Warning in dataControl - x has not been set yet\n";
+    cout << "Warning in netdatacontrol - x has not been set yet\n";
   if (!nInfo[id]->hasReceived())
-    cout << "Warning in dataControl - y has not been set yet\n";
+    cout << "Warning in netdatacontrol - y has not been set yet\n";
   return xyCoord[id]->getY();
 }
 
-vector netDataControl::getNextAnsweredX() {
+vector NetDataControl::getNextAnsweredX() {
   if (numberAnswers == 0) {
-    cerr << "Error in dataControl - no answers received\n";
+    cerr << "Error in netdatacontrol - no answers received\n";
     exit(EXIT_FAILURE);
   }
   if (nextAns >= numberOfx) {
-    cerr << "Error in dataControl - illegal answer received\n";
+    cerr << "Error in netdatacontrol - illegal answer received\n";
     exit(EXIT_FAILURE);
   }
 
@@ -209,13 +209,12 @@ vector netDataControl::getNextAnsweredX() {
   vector vec;
   vec = xyCoord[temp]->getX();
   return vec;
-
 }
 
-double netDataControl::getNextAnsweredY() {
+double NetDataControl::getNextAnsweredY() {
   int temp = nextAns - 1;
   if (temp < 0 || temp >= numberOfx) {
-    cerr << "Error in dataControl - illegal answer received\n";
+    cerr << "Error in netdatacontrol - illegal answer received\n";
     exit(EXIT_FAILURE);
   }
   return xyCoord[temp]->getY();
@@ -223,11 +222,11 @@ double netDataControl::getNextAnsweredY() {
 
 // ----------------------------------------------------------------------------
 // Functions concerning sending data
-int netDataControl::getNextSendId() {
+int NetDataControl::getNextSendId() {
   int i = 0;
   int FOUND = 0;
   if (allSent()) {
-    cerr << "Error in dataControl - no more vectors to send\n";
+    cerr << "Error in netdatacontrol - no more vectors to send\n";
     exit(EXIT_FAILURE);
   }
   while (i < numberOfx && FOUND == 0) {
@@ -238,18 +237,18 @@ int netDataControl::getNextSendId() {
   return (i - 1);
 }
 
-int netDataControl::getNextXToResend() {
+int NetDataControl::getNextXToResend() {
   int numPending = 1;
   int counter = 0;
   if (allReceived()) {
-    cerr << "Error in dataControl - no data to resend\n";
+    cerr << "Error in netdatacontrol - no data to resend\n";
     exit(EXIT_FAILURE);
   }
   resendId++;
   if (resendId == totalNumx)
     resendId = 0;
   while ((nInfo[resendId]->hasReceived() || !nInfo[resendId]->hasSent()
-      || nInfo[resendId]->numberOfPendingAnswers > numPending)) {
+      || nInfo[resendId]->numPendingAnswers > numPending)) {
     counter++;
     resendId++;
     if (resendId == totalNumx)
@@ -260,85 +259,83 @@ int netDataControl::getNextXToResend() {
   return resendId;
 }
 
-void netDataControl::sentOne(int id) {
+void NetDataControl::sentOne(int id) {
   if ((id < 0) || (id >= numberOfx)) {
-    cerr << "Error in dataControl - illegal id\n";
+    cerr << "Error in netdatacontrol - illegal id\n";
     exit(EXIT_FAILURE);
   }
   if (nInfo[id]->sent == 1)
-    cout << "Warning in dataControl - already sent data with identity: " << id << endl;
+    cout << "Warning in netdatacontrol - already sent data with identity: " << id << endl;
   else {
     nInfo[id]->sent = 1;
-    nInfo[id]->numberOfPendingAnswers++;
+    nInfo[id]->numPendingAnswers++;
     numberSent++;
   }
 }
 
-void netDataControl::resentOne(int id) {
+void NetDataControl::resentOne(int id) {
   if ((id < 0) || (id >= numberOfx)) {
-    cerr << "Error in dataControl - illegal id\n";
+    cerr << "Error in netdatacontrol - illegal id\n";
     exit(EXIT_FAILURE);
   }
-  nInfo[id]->numberOfPendingAnswers++;
+  nInfo[id]->numPendingAnswers++;
 }
 
 // ----------------------------------------------------------------------------
 // Functions for getting general information about state of datagroup
-int netDataControl::allSent() {
+int NetDataControl::allSent() {
   assert(numberOfx >= numberSent);
   return (numberOfx == numberSent);
 }
 
-int netDataControl:: getNumNotAnswered() {
+int NetDataControl:: getNumNotAnswered() {
   return (numberSent - numberAnswers);
 }
 
-int netDataControl::getTotalReceived() {
+int NetDataControl::getTotalReceived() {
   return numberAnswers;
 }
 
-int netDataControl::getTotalSet() {
+int NetDataControl::getTotalSet() {
   return numberOfx;
 }
 
-void netDataControl::setFirstAnswered() {
+void NetDataControl::setFirstAnswered() {
   nextAns = 0;
 }
 
-int netDataControl::allReceived() {
+int NetDataControl::allReceived() {
   return (numberSent == numberAnswers);
 }
 
-int netDataControl::getNumAnswered() {
+int NetDataControl::getNumAnswered() {
   return numberAnswers;
 }
 
-int netDataControl::getNumberLeftToSend() {
+int NetDataControl::getNumLeftToSend() {
   return (numberOfx - numberSent);
 }
 
-int netDataControl::getTag() {
+int NetDataControl::getTag() {
   return tag;
 }
 
-int netDataControl::getLastSetId() {
-  int temp = numberOfx - 1;
-  return temp;
+int NetDataControl::getLastSetId() {
+  return numberOfx - 1;
 }
 
-int netDataControl::getMaxNumberOfData() {
+int NetDataControl::getMaxNumData() {
   return totalNumx;
 }
 
-int netDataControl::hasAnswer(int id) {
+int NetDataControl::hasAnswer(int id) {
   if (id < 0 || id >= totalNumx) {
-    cerr << "Error in dataControl - id out of bounds\n";
+    cerr << "Error in netdatacontrol - id out of bounds\n";
     exit(EXIT_FAILURE);
   }
   return nInfo[id]->hasReceived();
 }
 
-int netDataControl::isFull() {
-  int FULL = (getMaxNumberOfData() == getTotalSet());
-  return FULL;
+int NetDataControl::isFull() {
+  return (getMaxNumData() == getTotalSet());
 }

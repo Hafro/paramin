@@ -10,7 +10,7 @@ class bfgs {
 private:
   armijo* lineS;
   gradient* grad;     // grad computes the gradient of x.
-  netInterface* net;  // used for netcommunication by grad and lines.
+  NetInterface* net;  // used for netcommunication by grad and lines.
   int numberOfVariables;
   int iter;
   vector diaghess;    // stores the diagonal entry of the hessian matrix.
@@ -34,24 +34,29 @@ private:
   vector xopt;
   int bfgs_constant;
 public:
-  bfgs(netInterface* netInt, gradient* g, armijo* lineseek);
+  bfgs(NetInterface* netInt, gradient* g, armijo* lineseek);
   ~bfgs();
-  void ComputeGradient();
+  void computeGradient();
+  void computeGradientCondor();
   void doLineseek();
+  void doLineseekCondor();
   int iteration(int maxit, double errortol, double xtol, int iteration);
-  void ScaleDirectionVector();
-  void ComputeDirectionVector();
-  void DefineHessian();
-  void UpdateXandGrad();
+  int iterationCondor(int maxit,double errortol, double xtol, int iteration);
+  void scaleDirectionVector();
+  void computeDirectionVector();
+  void defineHessian();
+  void updateXandGrad();
   int bfgsUpdate();
   double norm();
   void printResult();
   void printGradient();
   void printInverseHessian();
-  double GetS(int get);
-  vector GetBestX();
+  double getS(int get);
+  double max(double a, double b);
+  double min(double a, double b);
+  vector getBestX();
   void printX();
-  double GetBestF();
+  double getBestF();
   // About termination criteria:
   // bfgsfail = -1 iff minimization will be continued.
   // bfgsfail = 0 iff error <= errortol
@@ -68,19 +73,21 @@ public:
   vector x;
   double f;
   virtual ~search();
-  virtual int DoSearch() = 0;
-  vector GetBestX(netInterface *net);
-  double GetBestF();
+  virtual int doSearch() = 0;
+  virtual int doSearchCondor() = 0;
+  vector getBestX(NetInterface *net);
+  double getBestF();
 };
 
 class minimizer : public search {
 private:
   bfgs* min;
-  netInterface* net;
+  NetInterface* net;
 public:
-  minimizer(netInterface* netInt);
+  int doSearchCondor();
+  minimizer(NetInterface* netInt);
   virtual ~minimizer();
-  int DoSearch();
+  int doSearch();
 };
 
 class simann : public search {
@@ -107,40 +114,41 @@ private:
   int nobds;          // total number out of bound
   int lnobds;
   int nfcnev;         // total number of function evaluations.
-  int iseed1;         // the first seed for the random number generator
-  int iseed2;         // the second seed for the random number generator
   int maxmin;         // 1 = maximization, 0 = minimization.
   int *Id;            // denotes in what order the points were sent
   int returnId;
   int nup, nrej, ndown;
-  netInterface* net;  // used for parallel computations.
+  NetInterface* net;  // used for parallel computations.
   int NumberOfHosts;  // number of hosts available.
 public:
-  simann(netInterface* netInt, int MAXIM, int SIM_ITER,
+  simann(NetInterface* netInt, int MAXIM, int SIM_ITER,
     const vector& c, int T, const vector& vm);
   virtual ~simann();
-  int DoSearch();
-  double ExpRep(double inn);
-  double Random();
-  vector GetXP(int k);
-  void AcceptPoint();
-  void UpdateVM();
-  int IdContains( int q );
-  void ReceiveValue();
+  int doSearch();
+  int doSearchCondor();
+  int sendData();
+  double expRep(double d);
+  double simannRandom();
+  vector getXP(int k);
+  void acceptPoint();
+  void updateVM();
+  int IdContains(int q);
+  void receiveValue();
+  void receiveValueNonBlocking();
 };
 
 class hooke : public search {
 private:
   vector z;           // dummy variable.
   vector xbefore;     // last best point.
-  vector newx;        // next point to search from in best_nearby.
+  vector newx;        // next point to search from in bestNearby.
   int *par;           // which parameter was changed at point the i-th point sent.
   int nevl;
   int nsent;          // number of points sent to pvm
   int numvar;         // number of variables.
-  vector delta;       // the changes tried in best_nearby.
+  vector delta;       // the changes tried in bestNearby.
   vector fbefore;     // the value at previous point.
-  netInterface* net;  // used for parallel computations.
+  NetInterface* net;  // used for parallel computations.
   int NumberOfHosts;  // number of hosts available.
   int iters;          // number of iterations
   int param[NUMVARS];
@@ -148,11 +156,14 @@ private:
   vector lbd;
   vector ubd;
 public:
-  hooke(netInterface* netInt);
+  hooke(NetInterface* netInt);
   virtual ~hooke();
-  int DoSearch();
-  double best_nearby(const vector& delta, double prevbest);
-  int SetPoint( int n, double flast );
+  int doSearch();
+  int doSearchCondor();
+  double bestNearby(const vector& delta, double prevbest);
+  double bestNearbyCondor(const vector& delta, double prevbest);
+  int setPoint(int n, double flast);
+  int sendData();
 };
 
 #endif

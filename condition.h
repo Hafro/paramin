@@ -7,22 +7,22 @@
 class linesearch;
 
 /* class condition is an abstract class containing
- * only pure virtual functions except for the desturctor */
+ * only pure virtual functions except for the destructor */
 
 class condition {
 public:
-  virtual ~condition();
-  virtual int computeCond() = 0;
+  virtual ~condition() {};
+  virtual int computeCondition() = 0;
 };
 
-/* class lineSeekerCondition can be used to compute a condition function
+/* class LineSeekerCondition can be used to compute a condition function
  * belonging to class lineSeeker which must return an interger value 0 or 1 */
 
-class lineSeekerCondition : public condition {
+class LineSeekerCondition : public condition {
 public:
-  lineSeekerCondition(linesearch* lin);
-  virtual ~lineSeekerCondition();
-  int computeCond();
+  LineSeekerCondition(linesearch* lin);
+  virtual ~LineSeekerCondition() {};
+  int computeCondition();
 private:
   linesearch* lines;
 };

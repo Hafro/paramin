@@ -3,22 +3,22 @@
 // ********************************************************
 // Functions for starting/stopping using a new data group
 // ********************************************************
-void netInterface::startNewDataGroup() {
+void NetInterface::startNewDataGroup() {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new netDataControl(MAXNUMX, numVarInDataGroup, newTag);
+  dctrl = new NetDataControl(MAXNUMX, numVarInDataGroup, newTag);
   if (scaler != NULL)
     scaler->setPenalty(MAXNUMX);
   dataSet = new queue();
   ISALPHA = 0;
 }
 
-void netInterface::startNewDataGroup(const vector& x1, const vector& h1) {
+void NetInterface::startNewDataGroup(const vector& x1, const vector& h1) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new netDataControl(MAXNUMX, 1, newTag);
+  dctrl = new NetDataControl(MAXNUMX, 1, newTag);
   if (scaler != NULL)
     scaler->setPenalty(MAXNUMX);
   dataSet = new queue();
@@ -27,22 +27,22 @@ void netInterface::startNewDataGroup(const vector& x1, const vector& h1) {
   ISALPHA = 1;
 }
 
-void netInterface::startNewDataGroup(int numInGroup) {
+void NetInterface::startNewDataGroup(int numInGroup) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new netDataControl(numInGroup, numVarInDataGroup, newTag);
+  dctrl = new NetDataControl(numInGroup, numVarInDataGroup, newTag);
   if (scaler != NULL)
     scaler->setPenalty(numInGroup);
   dataSet = new queue();
   ISALPHA = 0;
 }
 
-void netInterface::startNewDataGroup(int numInGroup, const vector& x1, const vector& h1) {
+void NetInterface::startNewDataGroup(int numInGroup, const vector& x1, const vector& h1) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
-  dctrl = new netDataControl(numInGroup, 1, newTag);
+  dctrl = new NetDataControl(numInGroup, 1, newTag);
   if (scaler != NULL)
     scaler->setPenalty(numInGroup);
   dataSet = new queue();
@@ -51,7 +51,7 @@ void netInterface::startNewDataGroup(int numInGroup, const vector& x1, const vec
   ISALPHA = 1;
 }
 
-void netInterface::stopUsingDataGroup() {
+void NetInterface::stopUsingDataGroup() {
   if (dctrl != NULL) {
     delete dctrl;
     dctrl = NULL;
@@ -67,13 +67,13 @@ void netInterface::stopUsingDataGroup() {
 // ********************************************************
 // Functions for setting/getting netdata
 // ********************************************************
-void netInterface::setX(const vector& x1) {
+void NetInterface::setX(const vector& x1) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   if (dataGroupFull()) {
-    cerr << "Error in netInterface - datagroup is full\n";
+    cerr << "Error in netinterface - datagroup is full\n";
     exit(EXIT_FAILURE);
   }
   dctrl->setX(x1);
@@ -81,13 +81,13 @@ void netInterface::setX(const vector& x1) {
   dataSet->put(id);
 }
 
-void netInterface::setXFirstToSend(const vector& x1) {
+void NetInterface::setXFirstToSend(const vector& x1) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   if (dataGroupFull()) {
-    cerr << "Error in netInterface - datagroup is full\n";
+    cerr << "Error in netinterface - datagroup is full\n";
     exit(EXIT_FAILURE);
   }
   dctrl->setX(x1);
@@ -95,65 +95,65 @@ void netInterface::setXFirstToSend(const vector& x1) {
   dataSet->putFirst(id);
 }
 
-void netInterface::setDataPair(const vector& x1, double fx) {
+void NetInterface::setDataPair(const vector& x1, double fx) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   if (dataGroupFull()) {
-    cerr << "Error in netInterface - datagroup is full\n";
+    cerr << "Error in netinterface - datagroup is full\n";
     exit(EXIT_FAILURE);
   }
   dctrl->setDataPair(x1, fx);
 }
 
-vector netInterface::getX(int id) {
- if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+vector NetInterface::getX(int id) {
+  if (dctrl == NULL) {
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->getX(id);
 }
 
-double netInterface::getY(int id) {
+double NetInterface::getY(int id) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->getY(id);
 }
 
-vector netInterface::getNextAnswerX() {
+vector NetInterface::getNextAnswerX() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->getNextAnsweredX();
 }
 
-double netInterface::getNextAnswerY() {
- if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+double NetInterface::getNextAnswerY() {
+  if (dctrl == NULL) {
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
- }
- return dctrl->getNextAnsweredY();
+  }
+  return dctrl->getNextAnsweredY();
 }
 
-vector netInterface::getUpperScaleConstant() {
+vector NetInterface::getUpperScaleConstant() {
   return upperScale;
 }
 
-vector netInterface::getLowerScaleConstant() {
+vector NetInterface::getLowerScaleConstant() {
   return lowerScale;
 }
 
-vector netInterface::getInitialX() {
+vector NetInterface::getInitialX() {
   return initialX;
 }
 
-void netInterface::setBestX(const vector& x) {
+void NetInterface::setBestX(const vector& x) {
   if (x.dimension() != initialX.dimension()) {
-    cerr << "Error in netInterface - vectors different size\n";
+    cerr << "Error in netinterface - vectors different size\n";
     exit(EXIT_FAILURE);
   }
   initialX = x;
@@ -162,61 +162,61 @@ void netInterface::setBestX(const vector& x) {
 // ********************************************************
 // Functions for getting/setting information about datagroup
 // ********************************************************
-int netInterface::getReceiveId() {
+int NetInterface::getReceiveId() {
   return receiveId;
 }
 
-void netInterface::sentDataItem(int id) {
+void NetInterface::sentDataItem(int id) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   dctrl->sentOne(id);
 }
 
-int netInterface::getNumNotAns() {
+int NetInterface::getNumNotAns() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->getNumNotAnswered();
 }
 
-int netInterface::getNumDataItemsSet() {
+int NetInterface::getNumDataItemsSet() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
  return dctrl->getTotalSet();
 }
 
-int netInterface::getNumDataItemsAnswered() {
+int NetInterface::getNumDataItemsAnswered() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->getNumAnswered();
 }
 
-void netInterface::setFirstAnsweredData() {
+void NetInterface::setFirstAnsweredData() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   dctrl->setFirstAnswered();
 }
 
-int netInterface::getNumOfVarsInDataGroup() {
+int NetInterface::getNumVarsInDataGroup() {
   return numVarInDataGroup;
 }
 
-int netInterface::getNumOfVarsInSendData() {
+int NetInterface::getNumVarsInSendData() {
   return numVarToSend;
 }
 
-int netInterface::dataGroupFull() {
+int NetInterface::dataGroupFull() {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   return dctrl->isFull();
@@ -225,15 +225,15 @@ int netInterface::dataGroupFull() {
 // ********************************************************
 // Input and output functions for data
 // ********************************************************
-void netInterface::printResult(char* outputFileName) {
+void NetInterface::printResult(char* outputFileName) {
   ofstream outputfile;
   outputfile.open(outputFileName);
   if (!outputfile) {
-    cerr << "Error in netInterface - cannot open " << outputFileName << endl;
+    cerr << "Error in netinterface - cannot open " << outputFileName << endl;
     exit(EXIT_FAILURE);
   }
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   int numAnswers = dctrl->getTotalReceived();
@@ -248,17 +248,17 @@ void netInterface::printResult(char* outputFileName) {
   outputfile.close();
 }
 
-void netInterface::printX(int id) {
+void NetInterface::printX(int id) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   cout << dctrl->getX(id);
 }
 
-void netInterface::printXUnscaled(int id) {
+void NetInterface::printXUnscaled(int id) {
   if (dctrl == NULL) {
-    cerr << "Error in netInterface - no valid datagroup\n";
+    cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
   vector vec = dctrl->getX(id);
@@ -272,7 +272,7 @@ void netInterface::printXUnscaled(int id) {
 // ********************************************************
 // Functions for data converting and data scaling vectors
 // ********************************************************
-vector netInterface::makeVector(const vector& vec) {
+vector NetInterface::makeVector(const vector& vec) {
   vector x1;
   if (ISALPHA == 1) {
     x1 = (alphaX + (vec[0] * h));
@@ -281,7 +281,7 @@ vector netInterface::makeVector(const vector& vec) {
     return vec;
 }
 
-vector netInterface::unscaleX(const vector& vec) {
+vector NetInterface::unscaleX(const vector& vec) {
   vector xUnScaled;
   if (scaler != NULL) {
     xUnScaled = scaler->unscaleX(vec);
@@ -290,7 +290,7 @@ vector netInterface::unscaleX(const vector& vec) {
     return vec;
 }
 
-vector netInterface::convertX(const vector& vec) {
+vector NetInterface::convertX(const vector& vec) {
   vector vCon;
   if (dataConvert != NULL) {
     vCon = dataConvert->convertX(vec);
@@ -299,7 +299,7 @@ vector netInterface::convertX(const vector& vec) {
     return vec;
 }
 
-vector netInterface::prepareVectorToSend(const vector& vec) {
+vector NetInterface::prepareVectorToSend(const vector& vec) {
   vector v;
   vector vUnscaled;
   vector vConverted;
@@ -310,7 +310,7 @@ vector netInterface::prepareVectorToSend(const vector& vec) {
   return vConverted;
 }
 
-vector netInterface::getLowerbound() {
+vector NetInterface::getLowerbound() {
 #ifdef GADGET_NETWORK
   assert(lowerBound.dimension() != 0);
   return lowerBound;
@@ -320,7 +320,7 @@ vector netInterface::getLowerbound() {
 #endif
 }
 
-vector netInterface::getUpperbound() {
+vector NetInterface::getUpperbound() {
 #ifdef GADGET_NETWORK
   assert(upperBound.dimension() != 0);
   return upperBound;
@@ -331,13 +331,13 @@ vector netInterface::getUpperbound() {
 }
 
 #ifdef GADGET_NETWORK
-vectorofcharptr netInterface::getSwitches() {
+VectorOfCharPtr NetInterface::getSwitches() {
   assert(switches.Size() != 0);
   return switches;
 }
 #endif
 
-vector netInterface::getOptInfo() {
+vector NetInterface::getOptInfo() {
   int i;
   vector vec(numVarToSend);
   if (dataConvert != NULL)
@@ -347,6 +347,5 @@ vector netInterface::getOptInfo() {
     for (i = 0; i < numVarToSend; i++)
       vec[i] = 1;
   }
-
   return vec;
 }

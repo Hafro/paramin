@@ -1,25 +1,18 @@
 #ifndef paramin_h
 #define paramin_h
 
-/* A list of the standard header files that are needed for Paramin*/
-/* Older compilers need these to be declared in the old format    */
-#include <cassert>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <iomanip>
-#include <cmath>
-#include <ctime>
-
-/* This is a nasty hack to use the functions in the std namespace */
-/* it would be much better to explicitly state the std namespace  */
-/* when using the functions - eg std::strcmp() not just strcmp()  */
-/* Older compilers will reject this so it needs to be removed     */
-using namespace std;
+/* A list of the standard header files that are needed */
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stream.h>
+#include <strstream.h>
+#include <iostream.h>
+#include <fstream.h>
+#include <time.h>
+#include <math.h>
+#include <ctype.h>
 
 /* Some compilers define the values for EXIT_SUCCESS and EXIT_FAILURE */
 /* but to be sure that they are defined, they are also included here. */
@@ -31,11 +24,9 @@ using namespace std;
 #endif
 
 /* Also defined are some macros used by Paramin */
-#ifndef GADGET_NETWORK
-#define min(x, y) ((x) > (y) ? (x) : (y))
-#define max(x, y) ((x) < (y) ? (x) : (y))
-#define absolute(x) ((x) > 0 ? (x) : -(x))
-#endif
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define ABS(x) ((x) > 0 ? (x) : -(x))
 
 /* Also defined are some of the constants used by Paramin */
 const int SCALE = 1;
@@ -52,6 +43,6 @@ const char sep = ' ';
 #endif
 
 /* Update the following line each time upgrades are implemented */
-#define paramin_version "2.0.02-BETA"
+#define paraminversion "2.0.02-BETA"
 
 #endif

@@ -2,18 +2,18 @@
 #define pvmconstants_h
 
 /* AJ 14.02.02
- * Class pvmconstants contains information about different tags which
+ * Class PVMConstants contains information about different tags which
  * can be used while sending/receiving data using PVM. It also contains
  * information about which dataencoding to use while sending/receiving
  * data using PVM. Dataencoding can have values 0, 1 or 2 and can be
  * set and accessed. If dataencode is not set then dataencoding equals
- * to 0. But the different tags can not be changed. The class pvmconstants
+ * to 0. But the different tags can not be changed. The class PVMConstants
  * only provides functions for accessing different tags */
 
-class pvmconstants {
+class PVMConstants {
 public:
-  pvmconstants();
-  ~pvmconstants();
+  PVMConstants();
+  ~PVMConstants();
   const void setDataEncode(const int dc);
   const int getStopTag() const;
   const int getStartTag() const;
@@ -23,6 +23,11 @@ public:
   const int getMasterReceiveDataTag() const;
   const int getDiedTag() const;
   const int getDataEncode() const;
+  const int getAddHostTag()const;
+  const int getHostSuspendTag() const;
+  const int getHostResumeTag() const;
+  const int getHostDeleteTag() const;
+  const int getTaskExitTag() const;
 private:
   // tags for messages send/received using pvm
   int endType;                // indicate halting of netcommunication
@@ -37,6 +42,12 @@ private:
   //dataencode = 0 then use XDR encoding for receiving/sending data
   //dataencode = 1 then no encoding of data
   //dataencode = 2 then data is left in place when sending/reciving
+  //For condor
+  int addHost;     // indicate that host has been added to virtual machine
+  int hostSuspend; // indicate that host has been suspended
+  int hostResume;  // indicate that host has resumed
+  int hostDelete;  // indicate that host has been deleted
+  int taskExit;    // indicate that host task has exited
 };
 
 #endif

@@ -31,31 +31,34 @@ public:
   void setRunTime(double t);
 };
 
-/* The class processManager is a manager for a group of processes were
+/* The class ProcessManager is a manager for a group of processes were
  * each process has a unique task id (tid).
  * It provides functions to get information about the general state of
  * the processes and how many processes are available.
- * The processManager dispatches processes by FIFO order (The first free
+ * The ProcessManager dispatches processes by FIFO order (The first free
  * process to arrive is dispatched first) */
 
-class processManager {
+class ProcessManager {
 protected:
   int NO_PROCESSES;
   int WAIT_FOR_PROCESSES;
   queue* freeProcesses;
   int totalNumProc;
   int* procStat;
+  int maxNumHosts;
 public:
   int* getStatus();
-  processManager();
-  virtual ~processManager();
+  ProcessManager();
+  virtual ~ProcessManager();
   virtual void initializePM(int numProc);
   virtual void addProc(int id);
+  virtual void addMoreProc(int id);
   int getNumFreeProc();
   int isFreeProc();
   virtual void setFreeProc(int id);
-  int getNextTidToSend(netCommunication* n);
-  virtual int getNextTidToSend(int numLeftToSend, netCommunication* n);
+  int getNextTidToSend(NetCommunication* n);
+  int checkForNewProcess(NetCommunication* n);
+  virtual int getNextTidToSend(int numLeftToSend, NetCommunication* n);
   virtual void sent(int procId);
   int allReceived();
   int getStatus(int id);
@@ -64,28 +67,29 @@ public:
   int getNumGoodProc();
   void noProcessesRunning();
   void removeBadProc();
-  int NO_AVAILABLE_PROCESSES();
-  int WAIT_FOR_BETTER_PROCESSES();
+  int noAvailableProcesses();
+  int waitForBetterProcesses();
 };
 
-/* The class workLoadScheduler is a derived class of processManager. It
+/* The class WorkLoadScheduler is a derived class of ProcessManager. It
  * keeps track of running time of processes and dispatches processes
  * based on workload and running time of processes.
  * Runtime is measured from: when master sends data until master receives
  * it not actual runtime of process.*/
 
-class workLoadScheduler : public processManager {
+class WorkLoadScheduler : public ProcessManager {
 private:
   double bestTime;
   double alpha;
   runtime** runInfo;
 public:
-  workLoadScheduler(double a);
-  ~workLoadScheduler();
+  WorkLoadScheduler(double a);
+  ~WorkLoadScheduler();
   virtual void initializePM(int totalNumProc);
   virtual void addProc(int id);
+  virtual void addMoreProc(int id);
   virtual void setFreeProc(int tid);
-  virtual int getNextTidToSend(int numLeftToSend, netCommunication* n);
+  virtual int getNextTidToSend(int numLeftToSend, NetCommunication* n);
   virtual void sent(int procId);
   int quickHostsAvailable();
   int quickBusyProcesses();

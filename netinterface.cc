@@ -1,10 +1,10 @@
 #include "netinterface.h"
 
 // ********************************************************
-// Constructors and destructor for class netInterface
+// Constructors and destructor for class NetInterface
 // ********************************************************
-netInterface::netInterface(char* initvalsFileName,
-  netCommunication* netComm, processManager* pm, int to_scale) {
+NetInterface::NetInterface(char* initvalsFileName,
+  NetCommunication* netComm, ProcessManager* pm, int to_scale) {
 
   MAXNUMX = 500;
   NUM_TRIES_TO_RECEIVE = 4;
@@ -16,16 +16,16 @@ netInterface::netInterface(char* initvalsFileName,
   numVarToSend = 0;
   TOSCALE = to_scale;
   net = netComm;
-  #ifdef GADGET_NETWORK
-    readInputFile(initvalsFileName);
-  #else
-    readInitVals(initvalsFileName);
-  #endif
+#ifdef GADGET_NETWORK
+  readInputFile(initvalsFileName);
+#else
+  readInitVals(initvalsFileName);
+#endif
   initiateNetComm(pm);
 }
 
-netInterface::netInterface(char* initvalsFileName,
-  netCommunication* netComm, processManager* pm) {
+NetInterface::NetInterface(char* initvalsFileName,
+  NetCommunication* netComm, ProcessManager* pm) {
 
   MAXNUMX = 500;
   NUM_TRIES_TO_RECEIVE = 4;
@@ -40,7 +40,7 @@ netInterface::netInterface(char* initvalsFileName,
   initiateNetComm(pm);
 }
 
-netInterface::~netInterface() {
+NetInterface::~NetInterface() {
   stopNetComm();
   stopUsingDataGroup();
   if (TOSCALE == 1) {
@@ -54,14 +54,13 @@ netInterface::~netInterface() {
 }
 
 #ifdef GADGET_NETWORK
-void netInterface::setSwitches(InitialInputFile* data) {
+void NetInterface::setSwitches(InitialInputFile* data) {
   int i;
-  int numSwitches = data->NoVariables();
-  for (i = 0; i < numSwitches; i++)
+  for (i = 0; i < data->NoVariables(); i++)
      switches.resize(1, data->Switches(i).getValue());
 }
 
-void netInterface::setVector(InitialInputFile* data) {
+void NetInterface::setVector(InitialInputFile* data) {
   int i, j;
   assert(numVarInDataGroup > 0);
   assert(data->NoVariables() == numVarToSend);
@@ -84,17 +83,17 @@ void netInterface::setVector(InitialInputFile* data) {
   }
 
   if (dataGroupFull()) {
-    cerr << "Error in netInterface - datagroup is full\n";
+    cerr << "Error in netinterface - datagroup is full\n";
     exit(EXIT_FAILURE);
   }
   setX(tempVector);
 }
 
-void netInterface::setNumVars(InitialInputFile* data) {
+void NetInterface::setNumVars(InitialInputFile* data) {
   int i;
   numVarToSend = data->NoVariables();
   if (numVarToSend <= 0) {
-    cerr << "Error in netInterface - could not read vectors from file\n";
+    cerr << "Error in netinterface - could not read vectors from file\n";
     exit(EXIT_FAILURE);
   }
   assert(numVarInDataGroup == 0);
@@ -104,12 +103,12 @@ void netInterface::setNumVars(InitialInputFile* data) {
   }
 
   if (numVarInDataGroup == 0) {
-    cerr << "Error in netInterface - no variables to optimise\n";
+    cerr << "Error in netinterface - no variables to optimise\n";
     exit(EXIT_FAILURE);
   }
 }
 
-void netInterface::setOptInfo(InitialInputFile* data) {
+void NetInterface::setOptInfo(InitialInputFile* data) {
   int i, j;
   setNumVars(data);
   vector xvec(numVarInDataGroup);
@@ -146,7 +145,7 @@ void netInterface::setOptInfo(InitialInputFile* data) {
       }
     }
     assert(j == numVarInDataGroup);
-    dataConvert = new dataConverter();
+    dataConvert = new DataConverter();
     dataConvert->setInitialData(xind, xfull);
   }
 
@@ -154,13 +153,13 @@ void netInterface::setOptInfo(InitialInputFile* data) {
   upperBound = uppfull;
   lowerBound = lowfull;
 
-  delete [] xind;
+  delete[] xind;
   if (!TOSCALE) {
     lowerScale = low;
     upperScale = upp;
     initialX = xvec;
   } else {
-    scaler = new dataScaler();
+    scaler = new DataScaler();
     vector temp(numVarInDataGroup);
     temp.setValue(1.0);
     upperScale = temp;
@@ -171,11 +170,9 @@ void netInterface::setOptInfo(InitialInputFile* data) {
   }
 }
 
-void netInterface::readInputFile(char* initvalsFileName) {
+void NetInterface::readInputFile(char* initvalsFileName) {
   InitialInputFile* readInput = new InitialInputFile(initvalsFileName);
-
   readInput->readFromFile();
-  // could check if the switches are the same??
 
   if (readInput->readSwitches())
     setSwitches(readInput);
@@ -201,7 +198,7 @@ void netInterface::readInputFile(char* initvalsFileName) {
 // ********************************************************
 // Functions for reading input values from file
 // ********************************************************
-void netInterface::readAllInitVals(char* fileName) {
+void NetInterface::readAllInitVals(char* fileName) {
   int i, j;
   double inputVector[NUMVARS];
   ifstream inputFile;
@@ -210,13 +207,13 @@ void netInterface::readAllInitVals(char* fileName) {
   // try to open file
   inputFile.open(fileName);
   if (!inputFile) {
-    cerr << "Error in netInterface - could not open file " << fileName << endl;
+    cerr << "Error in netinterface - could not open file " << fileName << endl;
     exit(EXIT_FAILURE);
   }
 
   i = 0;
   inputFile >> inputVector[i];
-  while(inputFile) {
+  while (inputFile) {
     i++;
     inputVector[i] = inputFile.peek();
     if (inputVector[i] == '\n') {
@@ -232,7 +229,7 @@ void netInterface::readAllInitVals(char* fileName) {
         tempVector[j] = inputVector[j];
 
       if (dataGroupFull()) {
-        cerr << "Error in netInterface - datagroup is full\n";
+        cerr << "Error in netinterface - datagroup is full\n";
         exit(EXIT_FAILURE);
       }
 
@@ -243,16 +240,16 @@ void netInterface::readAllInitVals(char* fileName) {
   }
 
   if (i >= numVarInDataGroup) {
-    cerr << "Error in netInterface - last vector invalid\n";
+    cerr << "Error in netinterface - last vector invalid\n";
     exit(EXIT_FAILURE);
   }
   if (numVarInDataGroup <= 0) {
-    cerr << "Error in netInterface - no valid data read from " << fileName << endl;
+    cerr << "Error in netinterface - no valid data read from " << fileName << endl;
     exit(EXIT_FAILURE);
   }
 }
 
-void netInterface::readInitVals(char* fileName) {
+void NetInterface::readInitVals(char* fileName) {
   double x[NUMVARS];         // the vector of parameter values
   double xfullraw[NUMVARS];  // initial values of x, on original scale
   int xind[NUMVARS];
@@ -267,11 +264,11 @@ void netInterface::readInitVals(char* fileName) {
 
   fp = fopen(fileName, "r");
   if (fp == NULL) {
-    cerr << "Error in netInterface - could not open file " << fileName << endl;
+    cerr << "Error in netinterface - could not open file " << fileName << endl;
     exit(EXIT_FAILURE);
   }
 
-  while(fscanf(fp, "%lf %lf %lf %d", &w, &l, &u, &c) == 4) {
+  while (fscanf(fp, "%lf %lf %lf %d", &w, &l, &u, &c) == 4) {
     assert(numVarToSend < NUMVARS);
     xind[numVarToSend] = c;
     xfullraw[numVarToSend] = w;
@@ -288,14 +285,14 @@ void netInterface::readInitVals(char* fileName) {
 
   fclose(fp);
   if (numVarInDataGroup == 0) {
-    cerr << "Error in netInterface - no variables to optimise\n";
+    cerr << "Error in netinterface - no variables to optimise\n";
     exit(EXIT_FAILURE);
   }
 
   if (numVarInDataGroup != numVarToSend) {
     // need to convert data
     vector tempfull(xfullraw, numVarToSend);
-    dataConvert = new dataConverter();
+    dataConvert = new DataConverter();
     dataConvert->setInitialData(xind, tempfull);
   }
 
@@ -307,7 +304,7 @@ void netInterface::readInitVals(char* fileName) {
     lowerScale = low;
     initialX = vec;
   } else {
-    scaler = new dataScaler();
+    scaler = new DataScaler();
     vector temp(numVarInDataGroup);
     temp.setValue(1.0);
     upperScale = temp;
@@ -319,21 +316,21 @@ void netInterface::readInitVals(char* fileName) {
 }
 
 // ********************************************************
-// Function for initiating values before start using class netInterface
+// Function for initiating values before start using class NetInterface
 // ********************************************************
-void netInterface::initiateNetComm(processManager* pm) {
+void NetInterface::initiateNetComm(ProcessManager* pm) {
   int netStarted, numProc;
   ISALPHA = -1;
   pManager = pm;
   net->setNumInSendVar(numVarToSend);
   netStarted = startNetComm();
   if (netStarted != 1) {
-    cerr << "Error in netInterface - could not start netcommunication\n";
+    cerr << "Error in netinterface - could not start netcommunication\n";
     exit(EXIT_FAILURE);
   } else {
     numProc = net->getNumProcesses();
     if (numProc <=0) {
-      cerr << "Error in netInterface - no processes\n";
+      cerr << "Error in netinterface - no processes\n";
       exit(EXIT_FAILURE);
     }
     pManager->initializePM(numProc);

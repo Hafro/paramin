@@ -1,17 +1,17 @@
 #include "dataconverter.h"
 
-dataConverter::dataConverter() {
+DataConverter::DataConverter() {
   xind = NULL;
   numVarTotal = -1;
 }
 
-void dataConverter::setInitialData(int* xi, const vector& xr) {
+void DataConverter::setInitialData(int* xi, const vector& xr) {
   assert(xr.dimension() > 0);
   int i;
   numVarTotal = xr.dimension();
 
   if (xind != NULL) {
-    delete [] xind;
+    delete[] xind;
     xind = NULL;
   }
   xind = new int[numVarTotal];
@@ -20,14 +20,14 @@ void dataConverter::setInitialData(int* xi, const vector& xr) {
   xfullraw = xr;
 }
 
-dataConverter::~dataConverter() {
+DataConverter::~DataConverter() {
   if (xind != NULL) {
-    delete [] xind;
+    delete[] xind;
     xind = NULL;
   }
 }
 
-vector dataConverter::convertX(const vector& v1) {
+vector DataConverter::convertX(const vector& v1) {
   assert(numVarTotal > 0);
   int i, j = 0;
   int numVar = v1.dimension();
@@ -35,8 +35,7 @@ vector dataConverter::convertX(const vector& v1) {
   for (i = 0; i < numVarTotal; i++) {
     if (xind[i] == 1) {
       if (j >= numVar) {
-        cerr << "Error in dataConverter - trying to access v1[" << j
-          << "], but v1 only has " << numVar << " variables\n";
+        cerr << "Error in dataconverter - trying to access illegal parameter\n";
         exit(EXIT_FAILURE);
       }
       vec[i] = v1[j];
@@ -47,15 +46,15 @@ vector dataConverter::convertX(const vector& v1) {
   return vec;
 }
 
-int dataConverter::getNumVarTotal() {
+int DataConverter::getNumVarTotal() {
   return numVarTotal;
 }
 
-vector dataConverter::getXFull() {
+vector DataConverter::getXFull() {
   return xfullraw;
 }
 
-vector dataConverter::getOptInfo() {
+vector DataConverter::getOptInfo() {
   int i;
   vector vec(numVarTotal);
   if (numVarTotal > 0) {

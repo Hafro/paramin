@@ -10,11 +10,11 @@ linesearch::linesearch() {
 linesearch::~linesearch() {
 }
 
-double linesearch::GetBestF() {
+double linesearch::getBestF() {
   return f;
 }
 
-vector linesearch::GetBestX() {
+vector linesearch::getBestX() {
   return x;
 }
 
@@ -29,9 +29,9 @@ linecon readlineConstants() {
   char text[MaxStrLength];
   linecon tmp;
 
-  ifstream bfgsfile( "bfgsconstants", ios::in|ios::binary|ios::nocreate );
+  ifstream bfgsfile("bfgsconstants", ios::in);
   if (!bfgsfile) {
-    cerr << "Unable to open inputfile bfgsconstants\n";
+    cerr << "Error in linesearch - unable to open inputfile bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -61,17 +61,17 @@ linecon readlineConstants() {
 
   bfgsfile.close();
   if (i != 2) {
-    cerr << "Error in reading from input file bfgsconstants\n";
+    cerr << "Error in linesearch - unable to read from input file bfgsconstants\n";
     exit(EXIT_FAILURE);
   }
-  return(tmp);
+  return tmp;
 }
 
 // ********************************************************
 // Functions for class armijo
 // ********************************************************
 armijo::armijo() {
-  cond = new lineSeekerCondition(this);
+  cond = new LineSeekerCondition(this);
   vector tempVec(50);
   inixvec = tempVec;
 }
@@ -80,20 +80,20 @@ armijo::~armijo() {
   delete cond;
 }
 
-double armijo::GetAlpha() {
+double armijo::getAlpha() {
   return pow(opt.beta, opt.power) * s;
 }
 
-int armijo::CondSatisfied( double y ) {
+int armijo::conditionSatisfied(double y) {
   int returnId = net->getReceiveId();
   if ((fcn-y) >= -sigma * pow(beta, returnId) * s * df)
-    return(1);
+    return 1;
   else
-    return(0);
+    return 0;
 }
 
-void armijo::DoArmijo(const vector& v1, double fx, double dery,
-  const vector& h, netInterface *netI, double s1) {
+void armijo::doArmijo(const vector& v1, double fx, double dery,
+  const vector& h, NetInterface *netI, double s1) {
 
   int cond_satisfied;
   linecon par;
@@ -105,8 +105,7 @@ void armijo::DoArmijo(const vector& v1, double fx, double dery,
   opt.value = fx;
   opt.power = -1;
   opt.beta = beta;
-
-  numberOfVariables = netI->getNumOfVarsInDataGroup();
+  numberOfVariables = netI->getNumVarsInDataGroup();
 
   x = v1;
   s = s1;
@@ -117,8 +116,48 @@ void armijo::DoArmijo(const vector& v1, double fx, double dery,
   fail = -1;
 
   prepareNewLineSearch();
-  InitateAlphas();
-  cond_satisfied = net->send_receive_setData(cond);
+  initiateAlphas();
+  cond_satisfied = net->sendAndReceiveSetData(cond);
+  if (cond_satisfied == -1) {
+    cerr << "Error in linesearch - cannot receive or send data\n";
+    net->stopUsingDataGroup();
+    exit(EXIT_FAILURE);
+  } else if (cond_satisfied == 1) {
+    // check this better should be working???
+  } else {
+    net->stopNetComm();
+    exit(EXIT_FAILURE);
+  }
+  net->stopUsingDataGroup();
+}
+
+
+void armijo::doArmijoCondor(const vector & v1, double fx, double dery,
+  const vector & h, NetInterface *netI, double s1) {
+
+  int cond_satisfied;
+  linecon par;
+  par = readlineConstants();
+
+  beta = par.BETA;
+  sigma = par.SIGMA;
+
+  opt.value = fx;
+  opt.power = -1;
+  opt.beta = beta;
+  numberOfVariables = netI->getNumVarsInDataGroup();
+
+  x = v1;
+  s = s1;
+  hvec = h;
+  net = netI;
+  fcn = fx;
+  df = dery;
+  fail = -1;
+
+  prepareNewLineSearch();
+  initiateAlphas();
+  cond_satisfied = net->sendAndReceiveSetDataCondor(cond);
   if (cond_satisfied == -1) {
     cerr << "Error in linesearch - cannot receive or send data\n";
     net->stopUsingDataGroup();
@@ -142,7 +181,7 @@ int armijo::computeConditionFunction() {
   returnId = net->getReceiveId();
   if (returnId >= 0) {
     y = net->getY(returnId);
-    cond_satisfied = ((CondSatisfied(y) == 1) && (opt.value > y));
+    cond_satisfied = ((conditionSatisfied(y) == 1) && (opt.value > y));
     if (cond_satisfied) {
       cout << "New optimum value f(x) = " << y << endl;
       opt.value = y;
@@ -164,7 +203,7 @@ int armijo::computeConditionFunction() {
 
     } else {
       // dataGroup not full
-      i = SetData();
+      i = setData();
       return cond_satisfied;
     }
 
@@ -197,36 +236,35 @@ void armijo::prepareNewLineSearch() {
   net->setDataPair(tempx, fcn);
 }
 
-void armijo::InitateAlphas() {
+void armijo::initiateAlphas() {
   int i = net->getTotalNumProc();
   int j;
   vector tempx(1);
   assert(beta > 0.0);
   assert(beta <= 0.5);
-    for (j = 0; j < i ; j++) {
+    for (j = 0; j < i; j++) {
     inixvec[j] = pow(beta, j) * s;
     tempx[0] = inixvec[j];
     net->setX(tempx);
   }
 }
 
-double armijo::GetBeta() {
+double armijo::getBeta() {
   return opt.beta;
 }
 
-int armijo::GetPower() {
+int armijo::getPower() {
   return opt.power;
 }
 
-int armijo::OutstandingRequests() {
+int armijo::outstandingRequests() {
   int out;
   int pending = net->getNumNotAns();
   out = (pending > 0);
   return out;
 }
 
-int armijo::SetData() {
-
+int armijo::setData() {
   vector tempx(1);
   int counter = net->getNumDataItemsSet();
   double a = pow(beta,counter) * s;
@@ -246,7 +284,7 @@ int armijo::SetData() {
 // ********************************************************
 wolfe::wolfe() {
   // this has to change..
-  con = new lineSeekerCondition(this);
+  con = new LineSeekerCondition(this);
   newreturns = 0;       // number of function values returned
   askedfor = 0;         // number of function values requested
   wolfecond = 0;        // --> =1 when Wolfe condition is satisfied
@@ -265,15 +303,15 @@ wolfe::~wolfe() {
   delete con;
 }
 
-void wolfe::DoWolfe(const vector& v1, double fx, double dery, const vector& hess, netInterface* netInt) {
+void wolfe::doWolfe(const vector& v1, double fx, double dery, const vector& hess, NetInterface* netInt) {
   int i = 0;
 
   if (v1.dimension() != hess.dimension()) {
-    cout << "Error in linesearch - different number of parameters\n";
+    cerr << "Error in linesearch - different number of parameters\n";
     exit(EXIT_FAILURE);
   }
   if (v1.dimension() <= 0) {
-    cout << "Error in linesearch - no parameters\n";
+    cerr << "Error in linesearch - no parameters\n";
     exit(EXIT_FAILURE);
   }
 
@@ -288,9 +326,9 @@ void wolfe::DoWolfe(const vector& v1, double fx, double dery, const vector& hess
 
   while (!linesearchCondSatisfied()) {
     seekNewLimits(i);
-    wolfecond = net->send_receiveTillCondition(con);
+    wolfecond = net->sendAndReceiveTillCondition(con);
     if (wolfecond == -1) {
-      cout << "Error in linesearch - netcommunication has been halted\n";
+      cerr << "Error in linesearch - netcommunication has been halted\n";
       net->stopUsingDataGroup();
       exit(EXIT_FAILURE);
     }
@@ -342,7 +380,7 @@ void wolfe::prepareNewLineSearch(const vector& v1, double fx, double dery) {
   xu = -1.0;
 
   if (dy0 > 0) {
-    cout << "Error in linesearch - wrong sign of derivative\n";
+    cout << "Warning in linesearch - wrong sign of derivative\n";
     resultAlpha = -2.0;
   }
 
@@ -391,22 +429,22 @@ void wolfe::setNewLinesearchResults(double fx) {
 
   if (xl == 0.0 && xu - xl < MACHEPS && yu > yl && (yc > yl || xc < 0.0) && wolfecond == 0) {
     xc = -1.0;
-    cout << "Error in linesearch - algorithm converges to zero\n";
+    cout << "Warning in linesearch - algorithm converges to zero\n";
   }
 
   if (xc < 0 && xwolfe > 0 && xwolfe <= xu && xwolfe >= xl)
     xc = xwolfe;
   else if (xc < 0 && xl > 0 && yl < fx) {
     xc = xl;
-    cout << "Error in linesearch - no center so selected lower point\n";
+    cout << "Warning in linesearch - no center so selected lower point\n";
   } else if (xc < 0 && xu > 0 && yu < yl) {
     xc = xu;
-    cout << "Error in linesearch - no center so selected upper point\n";
+    cout << "Warning in linesearch - no center so selected upper point\n";
   }
   resultAlpha = xc;
 }
 
-double wolfe::GetAlpha() {
+double wolfe::getAlpha() {
   return resultAlpha;
 }
 
@@ -415,7 +453,7 @@ void wolfe::initiateAlphas() {
   assert(rho != 0.0);
   assert(sigma != 0.0);
 
-  double tmpM = (1.0 + absolute(yl)) / dy0;
+  double tmpM = (1.0 + ABS(yl)) / dy0;
   inixvec[1] = -0.00001 * tmpM;
   inixvec[2] = 2.0;
   inixvec[3] = 0.5;
@@ -433,7 +471,7 @@ void wolfe::initiateAlphas() {
   vector tempx(1);
   for (i = 0; inixvec[i] > 0.0; i++) {
     if (inixvec[i] > 2.0)
-      inixvec[i] = 2.0 * rand() / 32767.;
+      inixvec[i] = 2.0 * rand() / 32767.0;
 
     tempx[0] = inixvec[i];
     net->setX(tempx);
@@ -548,18 +586,17 @@ void wolfe::finishSweep() {
   vector xtmp(1);
   double tmpdelta;
   int i;
-  int maxreq = max(numberOfProcesses - askedfor, 3);
 
   if (xu < 0.0 && xl == 0.0)
-    tmpdelta = 2.0 / maxreq;
+    tmpdelta = 2.0 / MAX(numberOfProcesses - askedfor, 3.0);
   else if (xu > 0.0)
-    tmpdelta = (xu - xl) / maxreq;
+    tmpdelta = (xu - xl) / MAX(numberOfProcesses - askedfor, 3.0);
   else if (xl < 0.001)
-    tmpdelta = (0.01 - xl) / maxreq;
+    tmpdelta = (0.01 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
   else if (xl < 0.01)
-    tmpdelta = (0.1 - xl) / maxreq;
+    tmpdelta = (0.1 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
   else
-    tmpdelta = (1.0 - xl) / maxreq;
+    tmpdelta = (1.0 - xl) / MAX(numberOfProcesses - askedfor, 3.0);
 
   for (i = askedfor, xtmp[0] = xl + tmpdelta;
       i < numberOfProcesses; xtmp[0] += tmpdelta, i++) {
@@ -574,7 +611,7 @@ void wolfe::finishSweep() {
   }
 }
 
-int wolfe::OutstandingRequests() {
+int wolfe::outstandingRequests() {
   int pending = net->getNumNotAns();
   return pending;
 }
@@ -612,7 +649,7 @@ void wolfe::updateCenterAndBounds() {
   int returnId = net->getReceiveId();
   double ytmp = net->getY(returnId);
   xtmp = net->getX(returnId);
-  swapstuff(xtmp[0], ytmp);
+  swapStuff(xtmp[0], ytmp);
 }
 
 int wolfe::tabu(double x) {
@@ -622,7 +659,7 @@ int wolfe::tabu(double x) {
 
   for (i=0;i<n;i++) {
     alpha = net->getX(i);
-    if ((absolute(x - alpha[0])) < (acc / 100.0)) {
+    if ((ABS(x - alpha[0])) < (acc / 100.0)) {
       return 1;
     }
   }
@@ -638,7 +675,7 @@ int wolfe::wolf(double xtmp, double ytmp) {
   double fa;
   int numAnswered = net->getNumDataItemsAnswered();
   if (ytmp > y0 + xtmp * rho * dy0)
-    return(0);
+    return 0;
 
   net->setFirstAnsweredData();
   for (i = 0; i < numAnswered; i++) {
@@ -646,10 +683,10 @@ int wolfe::wolf(double xtmp, double ytmp) {
     if (xtmp > a[0]) {
       fa = net->getNextAnswerY();
       if (ytmp >= fa + (xtmp - a[0]) * sigma * dy0)
-        return(1);
+        return 1;
     }
   }
-  return(0);
+  return 0;
 }
 
 double wolfe::maximum() {
@@ -663,10 +700,10 @@ double wolfe::maximum() {
     if (tmp < tempx[0])
       tmp = tempx[0];
   }
-  return(tmp);
+  return tmp;
 }
 
-void wolfe::swapstuff(double xtmp, double ytmp) {
+void wolfe::swapStuff(double xtmp, double ytmp) {
 
   if (xtmp <= xl || (xtmp >= xu && xu > 0.0)) {       /* outside bounds - can't use this */
     if (xtmp <= xl && ytmp * (1.0 + BORMACC) < yl) {  /* whoa - outside bounds but bounds wrong! */
@@ -686,7 +723,7 @@ void wolfe::swapstuff(double xtmp, double ytmp) {
       }
       xl = 0.0;
       yl = y0;
-      cout << "Error in linesearch - unimodality case\n";
+      cout << "Warning in linesearch - unimodality case\n";
       return;
     }
     return;
@@ -715,7 +752,7 @@ void wolfe::swapstuff(double xtmp, double ytmp) {
         xu = xc;
         yu = yc;
         xc = -1.;
-        cout << "Error in linesearch - unimodality case\n";
+        cout << "Warning in linesearch - unimodality case\n";
       }
     } else {                      /* within (*xu)<0 take all cases of xtmp < (*xc) */
       if (ytmp < yc) {            /* center is upper bd */
@@ -727,7 +764,7 @@ void wolfe::swapstuff(double xtmp, double ytmp) {
         xl = xtmp;
         yl = ytmp;
       } else if (ytmp > yc * (1 + BORMACC) && yc > yl) {  /* unimodality problem */
-        cout << "Error in linesearch - unimodality case\n";
+        cout << "Warning in linesearch - unimodality case\n";
       }
     }
 
@@ -748,7 +785,7 @@ void wolfe::swapstuff(double xtmp, double ytmp) {
         yu = ytmp;
         xc = -1.0;
         delta=(xu - xl) / numberOfProcesses;
-        cout << "Error in linesearch - unimodality case\n";
+        cout << "Warning in linesearch - unimodality case\n";
       } else if (ytmp < yc) {          /* new c to left of (*xc) */
         xu = xc;
         yu = yc;
@@ -782,13 +819,13 @@ lineseeker::lineseeker() {
 lineseeker::~lineseeker() {
 }
 
-int lineseeker::OutstandingRequests() {
+int lineseeker::outstandingRequests() {
   int pending = net->getNumNotAns();
   return pending;
 }
 
 /* In the initial version of Hooke and Jeeves, the point xnew+d is      */
-/* checked after each run of best_nearby, where d=xnew-xold. That is,   */
+/* checked after each run of bestNearby, where d=xnew-xold. That is,    */
 /* it's tried to go a bit further in the direction that improves the    */
 /* function value.  Here, some more points on the line through xnew and */
 /* xold are tried as most of the computers would just be waiting during */
@@ -805,14 +842,14 @@ int lineseeker::OutstandingRequests() {
 /* 7.....................xnew-1/2*d, xnew+1/2*d, xnew+d, xnew+3/2*d,    */
 /*                       xnew+2*d, xnew+4*d, xnew+8*d                   */
 /* and so further. (THLTH 29.08.01)                                     */
-void lineseeker::DoLineseek(const vector& xold, const vector& xnew,
-  double fnew, netInterface *netI) {
+void lineseeker::doLineseek(const vector& xold, const vector& xnew,
+  double fnew, NetInterface *netI) {
 
   int i, j, k, l;
   int send_receive, numDataItems;
 
   net = netI;
-  int numvar = net->getNumOfVarsInDataGroup();
+  int numvar = net->getNumVarsInDataGroup();
   int numberOfHosts = net->getNumFreeProcesses();
   vector d;
   vector z(numvar);
@@ -841,7 +878,7 @@ void lineseeker::DoLineseek(const vector& xold, const vector& xnew,
     for (j = 1; j < numberOfHosts; j++) {
       for (i = 0; i < numvar; i++) {
         z[i] = xnew[i] + (2 - 1 / 2 * (j - 1) - 1 / 4 * (j - 1) * (j - 2)) * d[i];
-        if (( z[i] < lower[i]) || (z[i] > upper[i]))
+        if ((z[i] < lower[i]) || (z[i] > upper[i]))
           l = 0;
       }
       if (l)
@@ -882,13 +919,13 @@ void lineseeker::DoLineseek(const vector& xold, const vector& xnew,
     }
   }
 
-  send_receive = net->send_receiveAllData();
-  if (send_receive == net->NET_ERROR()) {
-    cout << "Error in lineseeker - could not receive data\n";
+  send_receive = net->sendAndReceiveAllData();
+  if (send_receive == net->netError()) {
+    cerr << "Error in lineseeker - could not receive data\n";
     net->stopUsingDataGroup();
     exit(EXIT_FAILURE);
 
-  } else if (send_receive == net->NET_SUCCESS()) {
+  } else if (send_receive == net->netSuccess()) {
     numDataItems = net->getNumDataItemsAnswered();
     for (i = 0; i < numDataItems; i++) {
       if (net->getY(i) < f) {
@@ -899,7 +936,137 @@ void lineseeker::DoLineseek(const vector& xold, const vector& xnew,
     net->stopUsingDataGroup();
 
   } else {
-    cout << "Error in lineseeker - could not receive data\n";
+    cerr << "Error in lineseeker - could not receive data\n";
+    net->stopNetComm();
+    net->stopUsingDataGroup();
+    exit(EXIT_FAILURE);
+  }
+}
+
+/* In the initial version of Hooke and Jeeves, the point xnew+d is      */
+/* checked after each run of bestNearby, where d=xnew-xold. That is,    */
+/* it's tried to go a bit further in the direction that improves the    */
+/* function value.  Here, some more points on the line through xnew and */
+/* xold are tried as most of the computers would just be waiting during */
+/* this time anyway. These tries depend on the number of free computers */
+
+/* Nr. of computers:     Tries made:                                    */
+/* 0.....................xnew+d                                         */
+/* 1.....................xnew+d                                         */
+/* 2.....................xnew+d, xnew+2*d                               */
+/* 3.....................xnew+d, xnew+3/2*d, xnew+2*d                   */
+/* 4.....................xnew+1/2*d, xnew+d, xnew+3/2*d, xnew+2*d       */
+/* 5.....................xnew-1/2*d, xnew+1/2*d, xnew+d, xnew+3/2*d,    */
+/*                       xnew+2*d                                       */
+/* 6.....................xnew-1/2*d, xnew+1/2*d, xnew+d, xnew+3/2*d,    */
+/*                       xnew+2*d, xnew+4*d                             */
+/* 7.....................xnew-1/2*d, xnew+1/2*d, xnew+d, xnew+3/2*d,    */
+/*                       xnew+2*d, xnew+4*d, xnew+8*d                   */
+/* and so further. (THLTH 29.08.01) */
+void lineseeker::doLineseekCondor(const vector & xold, const vector & xnew, double fnew, NetInterface *netI) {
+
+  int SEND_RECEIVE;
+  net = netI;
+  int numvar = net->getNumVarsInDataGroup();
+  vector d;
+  vector z(numvar);
+  d = xnew - xold;
+  vector upper(numvar);
+  vector lower(numvar);
+  upper = netI->getUpperScaleConstant();
+  lower = netI->getLowerScaleConstant();
+  int i, j, k, l;
+  f = fnew;
+  x = xnew;
+
+  int numberOfHosts = net->getNumFreeProcesses();
+  //jongud 18.08.03
+  //If the number of hosts are 0 then use as many tries as if number of hosts were 1.
+  if (numberOfHosts == 0)
+    numberOfHosts = 1;
+
+  net->startNewDataGroup(numberOfHosts);
+  for (i = 0; i < numvar; i++)
+    d[i] = xnew[i] - xold[i];
+
+  if (numberOfHosts < 5) {
+    l = 1;
+    for (i = 0; i < numvar; i++) {
+      z[i] = xnew[i] + d[i];
+      if ((z[i] < lower[i]) || (z[i] > upper[i]))
+        l = 0;
+    }
+    if (l)
+      net->setX(z);
+
+    for (j = 1; j < numberOfHosts; j++) {
+      for (i = 0; i < numvar; i++) {
+        z[i] = xnew[i] + (2 - 1 / 2 * (j - 1) - 1 / 4 * (j - 1) * (j - 2)) * d[i];
+        if ((z[i] < lower[i]) || (z[i] > upper[i]))
+          l = 0;
+      }
+      if (l)
+        net->setX(z);
+      else
+        break;
+    }
+
+  } else {
+    // AJ okt. 2001
+    // Should not l be set to 0 or 1? Setting l to 1 as default value????
+    l = 1;
+    for (i = 0; i < numvar; i++)
+      z[i] = xnew[i] - 1 / 2 * d[i];
+    for (j = 1; j < 4; j++) {
+      for (i = 0; i < numvar; i++) {
+        z[i] = xnew[i] + 1 / 2 * j * d[i];
+        if ((z[i] < lower[i]) || (z[i] > upper[i]))
+          l = 0;
+      }
+      if (l)
+        net->setX(z);
+      else
+        break;
+    }
+    k = 2;
+    for (j = 4; j < numberOfHosts; j++) {
+      for (i = 0; i < numvar; i++) {
+        z[i] = xnew[i] + k * d[i];
+        if ((z[i] < lower[i]) || (z[i] > upper[i]))
+        l = 0;
+      }
+      if (l)
+        net->setX(z);
+      else
+        break;
+      k = 2 * k;
+    }
+  }
+
+  // AJ 23.05.00 In older version send/receive all data. Is this OK to only send to
+  // idle hosts, is there any lost data????
+  // sendToIdleHosts will only send to quick available hosts, can use sendToAllIdleHosts
+  // to send to all available hosts. If more data items set than number of available
+  // hosts in net at the moment then will not send all data sent.
+  SEND_RECEIVE = net->sendAndReceiveAllData();
+  if (SEND_RECEIVE == net->netError()) {
+    cerr << "Error in lineseeker - could not receive data\n";
+    net->stopUsingDataGroup();
+    exit(EXIT_FAILURE);
+
+  } else if (SEND_RECEIVE == net->netSuccess()) {
+    // Received all data sent - find minimum point of received data
+    int numDataItems = net->getNumDataItemsAnswered();
+    for (i = 0; i < numDataItems; i++) {
+      if (net->getY(i) < f) {
+        f = net->getY(i);
+        x = net->getX(i);
+      }
+    }
+    net->stopUsingDataGroup();
+
+  } else {
+    cerr << "Error in lineseeker - could not receive data\n";
     net->stopNetComm();
     net->stopUsingDataGroup();
     exit(EXIT_FAILURE);

@@ -23,7 +23,7 @@ public:
   void put(int tid);
   int get();
   int isEmpty();
-  int getNumberOfItems();
+  int getNumItems();
   int getLast();
   void putFirst(int dataId);
   int contains(int id);

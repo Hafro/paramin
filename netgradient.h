@@ -10,20 +10,21 @@
 class gradient {
 public:
   virtual ~gradient();
-  virtual void setXVectors(const vector& x, netInterface* netInt) = 0;
-  virtual int computeGradient(netInterface* net, const vector& x, int linesprob) = 0;
-  virtual vector getDiagonalHess() = 0;
+  virtual void setXVectors(const vector& x, NetInterface* netInt) = 0;
+  virtual int computeGradient(NetInterface* net, const vector& x, int linesprob) = 0;
+  virtual int computeGradientCondor(NetInterface* net, const vector & x, int linesprob) = 0;
+  virtual vector getDiagonalHessian() = 0;
   virtual double getNormGrad() = 0;
   virtual vector getGradient() = 0;
   virtual int getDifficultGrad() = 0;
-  virtual double getBaseF_x() = 0;
-  virtual void initializeDiaghess() = 0;
+  virtual double getBaseFX() = 0;
+  virtual void initializeDiagonalHessian() = 0;
 };
 
-/* class netGradient is a derived class of gradient and implements gradient
+/* class NetGradient is a derived class of gradient and implements gradient
  * computation which uses net communication to send/receive data. */
 
-class netGradient : public gradient {
+class NetGradient : public gradient {
 private:
   int numberOfVariables;
   double delta0;           // Upper bound on percentage h in f(x+h).
@@ -39,16 +40,17 @@ private:
   vector grad;
   double fx0;              // f(x0) where x0 is the base data vector
 public:
-  netGradient(int numVar);
-  virtual ~netGradient();
-  void setXVectors(const vector& x, netInterface* netInt);
-  int computeGradient(netInterface* net, const vector& x, int symgrad);
-  vector getDiagonalHess();
+  NetGradient(int numVar);
+  virtual ~NetGradient();
+  void setXVectors(const vector& x, NetInterface* netInt);
+  int computeGradient(NetInterface* net, const vector& x, int symgrad);
+  int computeGradientCondor(NetInterface* net, const vector & x, int symgrad);
+  vector getDiagonalHessian();
   double getNormGrad();
   vector getGradient();
   int getDifficultGrad();
-  double getBaseF_x();
-  void initializeDiaghess();
+  double getBaseFX();
+  void initializeDiagonalHessian();
 };
 
 #endif

@@ -21,25 +21,30 @@ con getConstants();
 
 int main(int argc, char* argv[]) {
 
-  time_t startExec;
-  startExec = time(NULL);
-  cout << "Starting Paramin version " << paramin_version << " at " << ctime(&startExec);
+  time_t startExec2;
+  startExec2 = time(NULL);
+  cout << "Starting Paramin version " << paraminversion << " at " << ctime(&startExec2)
+    << "\nRunning in pvm, PVM_ROOT = " << getenv("PVM_ROOT") << endl;
+#ifdef CONDOR
+  cout << "Running in condor\n";
+#endif
+
   con par;
   par = getConstants();
   srand(time(NULL));  // Initialize the random number generator
   int i = 0;
-  netCommunication* net;
+  NetCommunication* net;
   search* minMethod;
   double f = 0.0;
-  netInterface* netInt;
-  processManager* processM;
+  NetInterface* netInt;
+  ProcessManager* processM;
 
   // if no program specified on commandline, quit
   if (argc < 7) {
     cout << "\nMust specify number of processors, -i inputfilename -o outputfilename\n"
       << "and the name of program to be run on slaves\n"
-      << "For example: paramin 4 -i inputfile -o outputfile slave-prog\n"
-      << "Will start 4 processes of slave-prog, reading input values from inputfile\n"
+      << "For example: paramin 4 -i inputfile -o outputfile slaveProg\n"
+      << "Will start 4 processes of slaveProg, reading input values from inputfile\n"
       << "and writing the final minimum vector value to outputfile\n"
       << "If number of processes specified is equal to 0\n"
       << "the program will start as many processes as number of available hosts\n";
@@ -100,14 +105,14 @@ int main(int argc, char* argv[]) {
     strcpy(args[i], argv[i + 7]);
   }
   args[i] = NULL;
-  net = new masterCommunication(argv[6], args, numHosts, 300);
-  processM = new workLoadScheduler(0.5);
-  netInt = new netInterface(inputfilename, net, processM, par.scaling);
+  net = new MasterCommunication(argv[6], args, numHosts, 300);
+  processM = new ProcessManager();
+  netInt = new NetInterface(inputfilename, net, processM, par.scaling);
 
   // vm is the step length vector used in simulated annealing, and
   // c controls the step length ajustment.
   // maybe enough to have input as par.c_comp and par.vm_comp but not the whole vector
-  int n = netInt->getNumOfVarsInDataGroup();
+  int n = netInt->getNumVarsInDataGroup();
   vector c(n);
   vector vm(n);
   c.setValue(par.c_comp);
@@ -118,10 +123,17 @@ int main(int argc, char* argv[]) {
   if (par.SA == 1) {
     cout << "\nStarting Simulated Annealing\n";
     minMethod = new simann(netInt, par.MAXIM, par.SIM_ITER, c, par.T, vm);
+#ifndef CONDOR
     while (numit < par.SIM_ITER) {
-      numit += minMethod->DoSearch();
-      f = minMethod->GetBestF();
+      numit += minMethod->doSearch();
+      f = minMethod->getBestF();
     }
+#else
+    while (numit < par.SIM_ITER) {
+      numit += minMethod->doSearchCondor();
+      f = minMethod->getBestF();
+    }
+#endif
     cout << "Best point from Simulated Annealing is f(x) = " << f << " at\n" << netInt->getInitialX();
     delete minMethod;
   }
@@ -130,10 +142,17 @@ int main(int argc, char* argv[]) {
   if (par.HJ == 1) {
     cout << "\nStarting Hooke and Jeeves\n";
     minMethod = new hooke(netInt);
+#ifndef CONDOR
     while (numit < par.HOOKE_ITER) {
-      numit += minMethod->DoSearch();
-      f = minMethod->GetBestF();
+      numit += minMethod->doSearch();
+      f = minMethod->getBestF();
     }
+#else
+    while (numit < par.HOOKE_ITER) {
+      numit += minMethod->doSearchCondor();
+      f = minMethod->getBestF();
+    }
+#endif
     cout << "Best point from Hooke and Jeeves is f(x) = " << f << " at\n" << netInt->getInitialX();
     delete minMethod;
   }
@@ -141,8 +160,12 @@ int main(int argc, char* argv[]) {
   if (par.BFGS == 1) {
     cout << "\nStarting BFGS\n";
     minMethod = new minimizer(netInt);
-    minMethod->DoSearch();
-    f = minMethod->GetBestF();
+#ifndef CONDOR
+    minMethod->doSearch();
+#else
+    minMethod->doSearchCondor();
+#endif
+    f = minMethod->getBestF();
     cout << "Best point from BFGS is f(x) = " << f << " at\n" << netInt->getInitialX();
     delete minMethod;
   }
@@ -158,9 +181,9 @@ int main(int argc, char* argv[]) {
 
 #ifdef GADGET_NETWORK
     // write the data in the gadget format so this file can be used as a starting point
-    outfile << "; Output from Paramin version " << paramin_version << " on " << ctime(&startExec)
+    outfile << "; Output from Paramin version " << paraminversion << " on " << ctime(&startExec2)
       << "; The final likelihood value was " << f << "\nswitch\tvalue\t\tlower\tupper\toptimize\n";
-    vectorofcharptr switches = netInt->getSwitches();
+    VectorOfCharPtr switches = netInt->getSwitches();
     vector lower = netInt->getLowerbound();
     vector upper = netInt->getUpperbound();
     vector result = netInt->prepareVectorToSend(temp);
@@ -173,10 +196,9 @@ int main(int argc, char* argv[]) {
     // write the output data in the old format
     outfile << netInt->prepareVectorToSend(temp) << endl;
 #endif
-
   }
-  outfile.close();
 
+  outfile.close();
   // clean up
   delete netInt;
   delete processM;
@@ -191,13 +213,11 @@ int main(int argc, char* argv[]) {
   }
   for (i = 0; i < argc - 7; i++)
     delete args[i];
-  delete [] args;
-
-  time_t stopExec;
-  stopExec = time(NULL);
-  cout << "Paramin finished at " << ctime(&stopExec) << "Paramin runtime was "
-    << difftime(stopExec, startExec) << " seconds\n";
-
+  delete[] args;
+  time_t stopExec2;
+  stopExec2 = time(NULL);
+  cout << "Paramin finished at " << ctime(&stopExec2) << "Paramin runtime was "
+    << difftime(stopExec2, startExec2) << " seconds\n";
   exit(EXIT_SUCCESS);
 }
 
@@ -207,9 +227,9 @@ con getConstants() {
   char text[MaxStrLength];
   con tmp;
 
-  ifstream mainfile("mainconstants", ios::in|ios::binary|ios::nocreate);
+  ifstream mainfile("mainconstants", ios::in);
   if (!mainfile) {
-    cout << "Cannot open input file mainconstants\n";
+    cerr << "Error - cannot open input file mainconstants\n";
     exit(EXIT_FAILURE);
   }
 
@@ -220,7 +240,7 @@ con getConstants() {
       while ((letter != '\n') && !mainfile.eof())
         mainfile.get(letter);
 
-    } else if(strcasecmp(text, "//") == 0) {
+    } else if (strcasecmp(text, "//") == 0) {
       mainfile.get(letter);
       while ((letter != '\n') && !mainfile.eof())
         mainfile.get(letter);
@@ -268,11 +288,11 @@ con getConstants() {
 
   mainfile.close();
   if (i != 12) {
-    cout << "Error in reading from input file mainconstants\n"
+    cerr << "Error in reading from input file mainconstants\n"
       << "Expected variables are: NUMVARS, VM_COMPONENT, C_COMPONENT,\n"
       << "TEMPERATURE, MAXIM, SIM_ITER, HOOKE_ITER, EPSILON, SCALING,\n"
       << "SimulatedAnnealing, HookeAndJeeves and BFGS\n";
     exit(EXIT_FAILURE);
   }
-  return (tmp);
+  return tmp;
 }
