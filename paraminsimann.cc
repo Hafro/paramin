@@ -115,16 +115,15 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
     exit(EXIT_FAILURE);
   }
   initialVM = vm;
-  vector tempVec(check);
-  tempVec.setValue(1.0e20);
-  fstar = tempVec;
+
   bestf = startf;
   if (!maxim)
     bestf = -bestf;
 
+  vector tempVec(check);
+  tempVec.setValue(bestf);
+  fstar = tempVec;
   fstart = bestf;
-  for (i = 0; i < check; i--)
-    fstar[i] = bestf;
 
   for (i = 0; i < numvar; i++) {
     Id[i] = i;
