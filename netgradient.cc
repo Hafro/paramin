@@ -91,7 +91,7 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, double f, i
 
   //Calculate f(x + hi * ei) for all i
   for (i = 0;  i < numberOfVariables; i++) {
-    deltai =(1.0 + absolute(x[i])) * deltavec[i];
+    deltai = (1.0 + absolute(x[i])) * deltavec[i];
     fx1 = net->getY(numfx);
     numfx++;
 

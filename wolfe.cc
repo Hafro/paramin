@@ -247,14 +247,14 @@ void Wolfe::seekNewCenter() {
   int i;
   vector xtmp(1);
   double tmpdelta;
-  tmpdelta= (xc - xl) / 2.0;
+  tmpdelta = (xc - xl) / 2.0;
 
   for (i = askedfor + 1; i < numberOfProcesses - 1; i++) {
     if (i == askedfor + 1)
       xtmp[0]= -dy0 * (xc * xc) / (2.0 * (yc - y0 - dy0 * xc));
     else {
       xtmp[0] = xl + tmpdelta;
-      tmpdelta /= 2.0;
+      tmpdelta *= 0.5;
     }
 
     while (tabu(xtmp[0]))

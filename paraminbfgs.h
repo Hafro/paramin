@@ -15,8 +15,8 @@
  * Thordis Linda Thorarinsdottir
  *
  * The BFGS-method is one of the Quasi-Newton methods. Quasi-Newton methods are iterative methods which approximate Newton's method without calculating second derivatives. They are of the form
- *		x^k+1 = x^k + a^k * d^k,
- *		d^k = -D^k \nabla f( x^k ),
+ *      x^k+1 = x^k + a^k * d^k,
+ *      d^k = -D^k \nabla f( x^k ),
  * where D^k is a positive definite matrix, updated using the BFGS updating formula. To find the value of a, an inexact linesearch called the Armijo rule is used. That method finds an a such that Armijo condition is satiefied, which is based on getting a function value that is some amount better than the best know function value. This is done by trying at first an initial stepsize an than reducing the stepsize until a value that satisfies the Armijo condition is found. For details, see D.P. Bertsekas, "Nonlinear Programming", Athena Scientific, Belmont, 1999. As the objective function is not necessarily differentiable, the gradient is calculted numerically.
  */
 class ParaminBFGS : public ParaminSearch {
@@ -28,7 +28,7 @@ private:
   /**
    * \brief This object computes the gradient at x
    */
-  NetGradient* grad;     
+  NetGradient* grad;
   /**
    * \brief iteration number
    */
@@ -36,30 +36,30 @@ private:
   /**
    * \brief stores the diagonal entry of the hessian matrix.
    */
-  vector diaghess;    
+  vector diaghess;
   /**
    * \brief stores the inverse hessian matrix.
    */
-  double** invhess;   
+  double** invhess;
   /**
    * \brief stores the gradient at xi
    */
-  vector gi;    
+  vector gi;
   /**
    * \brief stores the gradient at xi-1
    */
   vector gim1;
   /**
    * \brief direction vector used in line minimization.
-   */  
-  vector h;           
+   */
+  vector h;
   /**
    * \brief derivative used in line minimization.
-   */    
-  double dery;        
+   */
+  double dery;
   /**
    * \brief difference between current bestx and the one before
-   */      
+   */
   vector deltax;
   /**
    * \brief norm of x
@@ -67,7 +67,7 @@ private:
   double normx;
   /**
    * \brief norm of h (search direction)
-   */ 
+   */
   double normh;
   /**
    * \brief norm of the gradient
@@ -87,9 +87,9 @@ private:
   int to_print;
   double s;
   /**
-   * \brief if Shannon scaling is to be used 
+   * \brief if Shannon scaling is to be used
    */
-  int shannonScaling; 
+  int shannonScaling;
   vector xopt;
   int bfgs_constant;
   double errortol;
@@ -135,7 +135,6 @@ public:
   void UpdateXandGrad();
   int bfgsUpdate();
   double norm();
-  void printResult();
   void printGradient();
   void printInverseHessian();
   double GetS(int get);

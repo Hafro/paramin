@@ -80,7 +80,7 @@ void NetInterface::setVector(InitialInputFile* data) {
     assert(numVarInDataGroup < numVarToSend);
     j = 0;
     for (i = 0; i < numVarToSend; i++) {
-      if (data->Optimize(i) == 1) {
+      if (data->Optimise(i) == 1) {
         tempVector[j] = data->Values(i);
         j++;
       }
@@ -104,7 +104,7 @@ void NetInterface::setNumVars(InitialInputFile* data) {
   }
   assert(numVarInDataGroup == 0);
   for (i = 0; i < numVarToSend; i++) {
-    if (data->Optimize(i) == 1)
+    if (data->Optimise(i) == 1)
       numVarInDataGroup++;
   }
 
@@ -140,7 +140,7 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
     j = 0;
     for (i = 0; i < numVarToSend; i++) {
       xfull[i] = data->Values(i);
-      xind[i] = data->Optimize(i);
+      xind[i] = data->Optimise(i);
       lowfull[i] = data->Lower(i);
       uppfull[i] = data->Upper(i);
       if (xind[i] == 1) {

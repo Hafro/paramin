@@ -43,7 +43,7 @@ void ParaminBFGS::Read(CommentStream& infile, char* text) {
   int i = 0;
   double temp;
 
-  while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
+  while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[simann]")) {
     infile >> ws;
     if (strcasecmp(text, "shannonscaling") == 0) {
       infile >> shannonScaling;
@@ -95,7 +95,7 @@ void ParaminBFGS::iteration() {
 
   //JMB - changed to check if a double is very close to zero
   alpha = lineS->getAlpha();
-  if (absolute(alpha) < verysmall) {
+  if (isZero(alpha)) {
     armijoproblem++;
     difficultgrad++;
     bfgsFail = -2;
@@ -254,16 +254,16 @@ int ParaminBFGS::bfgsUpdate() {
   /* do the BFGS update */
   for (i = 0; i < numvar; i++) {
     for (j = 0; j < numvar; j++) {
-      invhess[i][j] += deltax[i] * deltax[j] / (deltaxg) - hg[i] * hg[j] /
-        deltaghg + deltaghg * (deltax[i] / deltaxg - hg[i] / deltaghg) *
+      invhess[i][j] += (deltax[i] * deltax[j] / deltaxg) - (hg[i] * hg[j] /
+        deltaghg) + deltaghg * (deltax[i] / deltaxg - hg[i] / deltaghg) *
         (deltax[j] / deltaxg - hg[j] / deltaghg);
     }
   }
 
   if (deltaxg <= 0)
-    return(5);
+    return 5;
   else
-    return(-999);
+    return -999;
 }
 
 double ParaminBFGS::norm() {
@@ -273,19 +273,7 @@ double ParaminBFGS::norm() {
   for (i = 0; i < numvar; i++)
     normx += bestx[i] * bestx[i];
   normx = sqrt(normx);
-  return(normx);
-}
-
-void ParaminBFGS::printResult() {
-  ofstream outputfile;
-  outputfile.open("finalvals");
-  if (!outputfile) {
-    cerr << "Error in BFGS - could not print to finalvals\n" << net->unscaleX(bestx);
-    net->stopNetComm();
-    exit(EXIT_FAILURE);
-  }
-  outputfile << (net->unscaleX(bestx));
-  outputfile.close();
+  return normx;
 }
 
 void ParaminBFGS::printGradient() {
@@ -427,7 +415,7 @@ void ParaminBFGS::doSearch(const vector& startx, double startf) {
     }
     if (bfgsFail == 1)
       cerr << "BFGS - failed because alpha < 0" << endl;;
-    if ( bfgsFail == 2)
+    if (bfgsFail == 2)
       cerr << "BFGS - failed because normdeltax < xtol" << endl;
     if (bfgsFail == 4)
       cerr << "BFGS - failed because dery > 0" << endl;
@@ -452,7 +440,6 @@ void ParaminBFGS::doSearch(const vector& startx, double startf) {
 
   if (to_print) {
     this->printGradient();
-    // this->printResult();
     this->printInverseHessian();
   }
 }

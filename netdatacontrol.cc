@@ -125,7 +125,7 @@ int NetDataControl::getIdToSetNext() {
 
 void NetDataControl::setY(int id, double fx) {
   if (id < 0 || id >= totalNumx) {
-    cerr << "Error in netdatacontrol - illegal id\n";
+    cerr << "Error in netdatacontrol - invalid id\n";
     exit(EXIT_FAILURE);
   }
   if (!nInfo[id]->hasReceived()) {
@@ -179,7 +179,7 @@ vector NetDataControl::getNextXToSend() {
 
 double NetDataControl::getY(int id) {
   if (id < 0 || id >= totalNumx) {
-    cerr << "Error in netdatacontrol - illegal id\n";
+    cerr << "Error in netdatacontrol - invalid id\n";
     exit(EXIT_FAILURE);
   }
   if (!nInfo[id]->hasSet())
@@ -195,7 +195,7 @@ vector NetDataControl::getNextAnsweredX() {
     exit(EXIT_FAILURE);
   }
   if (nextAns >= numberOfx) {
-    cerr << "Error in netdatacontrol - illegal answer received\n";
+    cerr << "Error in netdatacontrol - invalid answer received\n";
     exit(EXIT_FAILURE);
   }
 
@@ -210,7 +210,7 @@ vector NetDataControl::getNextAnsweredX() {
 double NetDataControl::getNextAnsweredY() {
   int temp = nextAns - 1;
   if (temp < 0 || temp >= numberOfx) {
-    cerr << "Error in netdatacontrol - illegal answer received\n";
+    cerr << "Error in netdatacontrol - invalid answer received\n";
     exit(EXIT_FAILURE);
   }
   return xyCoord[temp]->getY();
@@ -257,7 +257,7 @@ int NetDataControl::getNextXToResend() {
 
 void NetDataControl::sentOne(int id) {
   if ((id < 0) || (id >= numberOfx)) {
-    cerr << "Error in netdatacontrol - illegal id\n";
+    cerr << "Error in netdatacontrol - invalid id\n";
     exit(EXIT_FAILURE);
   }
   if (nInfo[id]->sent == 1)
@@ -271,7 +271,7 @@ void NetDataControl::sentOne(int id) {
 
 void NetDataControl::resentOne(int id) {
   if ((id < 0) || (id >= numberOfx)) {
-    cerr << "Error in netdatacontrol - illegal id\n";
+    cerr << "Error in netdatacontrol - invalid id\n";
     exit(EXIT_FAILURE);
   }
   nInfo[id]->numPendingAnswers++;

@@ -8,7 +8,7 @@ vector::vector() {
 vector::vector(int n) {
   int i;
   if (n < 1) {
-    cerr << "Error in vector - illegal number of parameters in vector\n";
+    cerr << "Error in vector - invalid number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   dim = n;
@@ -20,7 +20,7 @@ vector::vector(int n) {
 vector::vector(DFP* f, int numVar) {
   int i;
   if (numVar < 1) {
-    cerr << "Error in vector - illegal number of parameters in vector\n";
+    cerr << "Error in vector - invalid number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   dim = numVar;
@@ -40,7 +40,7 @@ vector::vector(const vector& v) {
     for (i = 0; i < dim; i++)
       p[i] = v[i];
   } else {
-    cerr << "Error in vector - illegal number of parameters in vector\n";
+    cerr << "Error in vector - invalid number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
 }
@@ -69,7 +69,7 @@ vector& vector::operator = (const vector& v) {
     p = NULL;
     dim = 0;
   } else {
-    cerr << "Error in vector - illegal number of parameters in vector\n";
+    cerr << "Error in vector - invalid number of parameters in vector\n";
     exit(EXIT_FAILURE);
   }
   return (*this);
@@ -187,7 +187,7 @@ int operator != (const vector& v1, const vector& v2) {
 DFP& vector::operator [] (int i) const {
   assert(dim > 0);
   if ((i < 0) || (i >= dim)) {
-    cerr << "Error in vector - illegal reference to vector\n";
+    cerr << "Error in vector - invalid reference to vector\n";
     exit(EXIT_FAILURE);
   }
   return (p[i]);

@@ -35,7 +35,7 @@ vector DataConverter::convertX(const vector& v1) {
   for (i = 0; i < numVarTotal; i++) {
     if (xind[i] == 1) {
       if (j >= numVar) {
-        cerr << "Error in dataconverter - trying to access illegal parameter\n";
+        cerr << "Error in dataconverter - trying to access invalid parameter\n";
         exit(EXIT_FAILURE);
       }
       vec[i] = v1[j];

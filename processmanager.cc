@@ -93,7 +93,7 @@ void ProcessManager::initializePM(int numProc, int condor) {
 
 void ProcessManager::addProc(int id) {
   if (id < 0 || id >= totalNumProc) {
-    cerr << "Error in processmanager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   if (!(freeProcesses->contains(id)))
@@ -105,7 +105,7 @@ void ProcessManager::addProc(int id) {
 //jongud Added method to add more processes than to begin with
 void ProcessManager::addMoreProc(int id) {
   if (id < 0 || id >= (totalNumProc + 1)) {
-    cerr << "Error in processmanager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   if (!(freeProcesses->contains(id))) {
@@ -156,7 +156,7 @@ int ProcessManager::getNumGoodProc() {
 
 void ProcessManager::setFreeProc(int id) {
   if (id < 0 || id >= totalNumProc) {
-    cerr << "Error in processmanager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   if (!(freeProcesses->contains(id)))
@@ -211,7 +211,7 @@ int* ProcessManager::getStatus() {
 
 int ProcessManager::getStatus(int id) {
   if ((id < 0) || (id >= totalNumProc)) {
-    cerr << "Error in processmanager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   return procStat[id];
@@ -219,11 +219,11 @@ int ProcessManager::getStatus(int id) {
 
 void ProcessManager::setStatus(int id, int stat) {
   if ((id < 0) || (id >= totalNumProc)) {
-    cerr << "Error in processmanager - illegal process id " << id << endl;
+    cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
   if ((stat != 1) && (stat != -1)) {
-    cerr << "Error in processmanager - illegal status " << stat << endl;
+    cerr << "Error in processmanager - invalid status " << stat << endl;
     exit(EXIT_FAILURE);
   }
   procStat[id] = stat;
@@ -315,7 +315,7 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
 
 void WorkLoadScheduler::sent(int procId) {
   if (procId < 0 || procId >= totalNumProc) {
-    cerr << "Error in workloadscheduler - illegal process id " << procId << endl;
+    cerr << "Error in workloadscheduler - invalid process id " << procId << endl;
     exit(EXIT_FAILURE);
   }
   runInfo[procId]->startRun();

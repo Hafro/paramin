@@ -41,12 +41,12 @@ int NetInterface::sendOne(int processId, int x_id) {
     exit(EXIT_FAILURE);
   }
   if (processId < 0 || (processId >= net->getNumProcesses())) {
-    cerr << "Error in netinterface - illegal process id\n";
+    cerr << "Error in netinterface - invalid process id\n";
     stopNetComm();
     return net->netError();
   }
   if (x_id < 0 || (x_id >= dctrl->getTotalSet())) {
-    cerr << "Error in netinterface - illegal vector id\n";
+    cerr << "Error in netinterface - invalid vector id\n";
     stopNetComm();
     return net->netError();
   }
@@ -98,12 +98,12 @@ int NetInterface::sendOneAndDataid(int processId, int x_id) {
     exit(EXIT_FAILURE);
   }
   if (processId < 0 || (processId >= net->getNumProcesses())) {
-    cerr << "Error in netinterface - illegal process id\n";
+    cerr << "Error in netinterface - invalid process id\n";
     stopNetComm();
     return net->netError();
   }
   if (x_id < 0) {
-    cerr << "Error in netinterface - illegal data vector id\n";
+    cerr << "Error in netinterface - invalid data vector id\n";
     stopNetComm();
     return net->netError();
   }
