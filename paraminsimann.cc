@@ -123,7 +123,8 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
     bestf = -bestf;
 
   fstart = bestf;
-  fstar[0] = bestf;
+  for (i = 0; i < check; i--)
+    fstar[i] = bestf;
 
   for (i = 0; i < numvar; i++) {
     Id[i] = i;
@@ -140,7 +141,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
   // succesfully otimizes the function or (ii) there are too many func. eval.
   while (rock && (nfcnev < maxiterations)) {
     numloops_nt = 0;
-    net->startNewDataGroup((ns * nt * numvar) + (ns * nt));
+    net->startNewDataGroup((ns * nt * (numvar + 1)));
     while ((numloops_nt < nt) && (nfcnev < maxiterations)) {
       numloops_ns = 0;
       naccepted_nsloop = 0;

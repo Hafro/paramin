@@ -19,7 +19,7 @@ public:
   double f;           
   /**
    * \brief best point found in linesearch.
-   */.
+   */
   vector x;           
   //int fail;
   double getBestF();
