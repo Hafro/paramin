@@ -87,7 +87,6 @@ public:
   void Read(CommentStream& infile, char* text);
   void doSearch(const vector& startx, double startf);
   void SetXP(int k);
-  void SetTotalX();
   void AcceptPoint();
   void UpdateVM();
   void ReceiveValue();

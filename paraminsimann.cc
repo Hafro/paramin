@@ -256,33 +256,14 @@ void ParaminSimann::SetXP(int k) {
     }
   }
 
-  if (!net->dataGroupFull())
-    net->setX(xp);
-  else {
+  if (!net->dataGroupFull()) {
+    // net->setX(xp);          // this uses a FIFO stack
+    net->setXFirstToSend(xp);  // this uses a LIFO stack
+  } else {
     cerr << "During Simulated Annealing have set too many values" << endl;
     exit(EXIT_FAILURE);
   }
   net->sendToAllIdleHosts();
-}
-
-void ParaminSimann::SetTotalX() {
-  int i;
-  vector temp;
-  int id;
-
-  for (i = 0; i < numvar; i++) {
-    if (acpPointId[i] >= 0) {
-      // Use parameter from x with id = nacp_ns[i] which was accepted earlier
-      temp = net->getX(acpPointId[i]);
-      xp[i] = temp[i];
-    } else
-      xp[i] = xstart[i];
-  }
-
-  if (!net->dataGroupFull()) {
-    net->setX(xp);
-    net->sendToIdleHosts();
-  }
 }
 
 void ParaminSimann::AcceptPoint() {
