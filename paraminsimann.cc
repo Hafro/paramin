@@ -4,9 +4,8 @@
 // functions for class ParaminSimann
 // ********************************************************
 ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
-  lnobds = 0;
   maxim = 0;
-  T = 100;
+  T = 100.0;
   cs = 2.0;
 
   vector tempVec(numvar);
@@ -104,7 +103,7 @@ void ParaminSimann::Read(CommentStream& infile, char* text) {
 }
 
 void ParaminSimann::doSearch(const vector& startx, double startf) {
-  int i, numtoset, numacc;
+  int i, numtoset;
   int numloops_ns, numloops_nt;
   int numset_nsloop;     // 0 < numset_nsloop <= numvar
   int rock = 0;
@@ -166,7 +165,6 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
           }
         }
 
-        numacc = naccepted_nsloop;
         numloops_ns++;
       }
 
@@ -227,7 +225,6 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
       << " function evaluations (max " << maxiterations << ")\nThe optimisation stopped "
       << "because an optimum was found for this run\n";
   }
-  cout << "number of times out of bounds: " << lnobds << endl;
 }
 
 // generate xp, the trial value of x - note use of vm to choose xp.
@@ -240,7 +237,6 @@ void ParaminSimann::SetXP(int k) {
     if (i == k) {
       xp[k] = xstart[k] + (randomNumber() * 2.0 - 1.0) * vm[k];
       if (xp[k] < lowerbound[k] || xp[k] > upperbound[k]) {
-        lnobds++;
 	while((xp[k] < lowerbound[k] || xp[k] > upperbound[k])) {
 	  xp[k] = xstart[k] + (randomNumber() * 2.0 - 1.0) * vm[k];
 	}
@@ -329,8 +325,6 @@ void ParaminSimann::ReceiveValue() {
         // accept the new point if Metropolis condition is satisfied.
         if (pp < p)
           AcceptPoint();
-        else
-          nrej++;// AJ 24.03.04 nrej not used anywhere
       }
     }
 

@@ -56,14 +56,14 @@ NetInterface::~NetInterface() {
 #ifdef GADGET_NETWORK
 void NetInterface::setSwitches(InitialInputFile* data) {
   int i;
-  for (i = 0; i < data->NoVariables(); i++)
+  for (i = 0; i < data->numVariables(); i++)
      switches.resize(1, data->Switches(i).getValue());
 }
 
 void NetInterface::setVector(InitialInputFile* data) {
   int i, j;
   assert(numVarInDataGroup > 0);
-  assert(data->NoVariables() == numVarToSend);
+  assert(data->numVariables() == numVarToSend);
   vector tempVector(numVarInDataGroup);
   if ((data->repeatedValuesFileFormat()) || (numVarInDataGroup == numVarToSend)) {
     assert(numVarInDataGroup == numVarToSend);
@@ -91,7 +91,7 @@ void NetInterface::setVector(InitialInputFile* data) {
 
 void NetInterface::setNumVars(InitialInputFile* data) {
   int i;
-  numVarToSend = data->NoVariables();
+  numVarToSend = data->numVariables();
   if (numVarToSend <= 0) {
     cerr << "Error in netinterface - could not read vectors from file\n";
     exit(EXIT_FAILURE);
@@ -179,7 +179,7 @@ void NetInterface::readInputFile(char* initvalsFileName) {
 
   if (readInput->repeatedValuesFileFormat() == 1) {
     // initvalsFile contains only vector values, no optimization info
-    numVarInDataGroup = readInput->NoVariables();
+    numVarInDataGroup = readInput->numVariables();
     numVarToSend = numVarInDataGroup;
     startNewDataGroup();
     setVector(readInput);

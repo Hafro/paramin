@@ -22,7 +22,6 @@ private:
    */
   double fp;          
   vector fstar;
-
   double cs;
   double uratio;
   double lratio;
@@ -31,7 +30,7 @@ private:
    */
   vector vm;          
   vector initialVM;
-  double  T;
+  double T;
   /**
    * \brief number of iterations before temperature reduction.
    */
@@ -64,19 +63,7 @@ private:
   /**
    * \brief number of hosts available.
    */
-  int NumberOfHosts;  // number of hosts available.
-
-  // AJ 24.03 parameters which are not used in the implementation
-  // int iprint;         // controls printing inside simann.
-  // int nnew;           // number of optimums.
-  // int nobds;         // total number out of bound
-    // int nup;
-  int nrej;
-  // int ndown;
-  /**
-   * \brief total number of times x is out of bounds
-   */
-  int lnobds;           
+  int NumberOfHosts;
   /**
    * \brief the number of accepted function evaluations accepted in (ns*numvar) number of function evaluations.
    */
