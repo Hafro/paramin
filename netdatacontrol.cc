@@ -95,8 +95,8 @@ NetDataControl::~NetDataControl() {
     delete nInfo[i];
     nInfo[i] = NULL;
   }
-  delete xyCoord;
-  delete nInfo;
+  delete[] xyCoord;
+  delete[] nInfo;
 }
 
 // ----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void NetDataControl::setY(int id, double fx) {
   nInfo[id]->numPendingAnswers--;
 
   if (nInfo[id]->sent == 0)
-    cout << "Warning in netdatacontrol - setting f(x) but have not sent x with identity: " << id << endl;
+    cerr << "Warning in netdatacontrol - setting f(x) but have not sent x with identity: " << id << endl;
 }
 
 void NetDataControl::setDataPair(const vector& x1, double fx) {
@@ -153,8 +153,7 @@ vector NetDataControl::getX(int id) {
     cerr << "Error in netdatacontrol - have not set vector with id " << id << endl;
     exit(EXIT_FAILURE);
   }
-  vector vec = xyCoord[id]->getX();
-  return vec;
+  return xyCoord[id]->getX();
 }
 
 vector NetDataControl::getNextXToSend() {
@@ -175,8 +174,7 @@ vector NetDataControl::getNextXToSend() {
       FOUND = 1;
     i++;
   }
-  vec = xyCoord[i - 1]->getX();
-  return vec;
+  return xyCoord[i - 1]->getX();
 }
 
 double NetDataControl::getY(int id) {
@@ -185,9 +183,9 @@ double NetDataControl::getY(int id) {
     exit(EXIT_FAILURE);
   }
   if (!nInfo[id]->hasSet())
-    cout << "Warning in netdatacontrol - x has not been set yet\n";
+    cerr << "Warning in netdatacontrol - x has not been set yet\n";
   if (!nInfo[id]->hasReceived())
-    cout << "Warning in netdatacontrol - y has not been set yet\n";
+    cerr << "Warning in netdatacontrol - y has not been set yet\n";
   return xyCoord[id]->getY();
 }
 
@@ -206,9 +204,7 @@ vector NetDataControl::getNextAnsweredX() {
 
   int temp = nextAns;
   nextAns++;
-  vector vec;
-  vec = xyCoord[temp]->getX();
-  return vec;
+  return xyCoord[temp]->getX();
 }
 
 double NetDataControl::getNextAnsweredY() {
@@ -265,7 +261,7 @@ void NetDataControl::sentOne(int id) {
     exit(EXIT_FAILURE);
   }
   if (nInfo[id]->sent == 1)
-    cout << "Warning in netdatacontrol - already sent data with identity: " << id << endl;
+    cerr << "Warning in netdatacontrol - already sent data with identity: " << id << endl;
   else {
     nInfo[id]->sent = 1;
     nInfo[id]->numPendingAnswers++;

@@ -4,27 +4,27 @@
 #include "linesearch.h"
 #include "paramin.h"
 
-class linesearch;
+class LineSearch;
 
 /* class condition is an abstract class containing
  * only pure virtual functions except for the destructor */
 
-class condition {
+class Condition {
 public:
-  virtual ~condition() {};
+  virtual ~Condition() {};
   virtual int computeCondition() = 0;
 };
 
 /* class LineSeekerCondition can be used to compute a condition function
  * belonging to class lineSeeker which must return an interger value 0 or 1 */
 
-class LineSeekerCondition : public condition {
+class LineSeekerCondition : public Condition {
 public:
-  LineSeekerCondition(linesearch* lin);
+  LineSeekerCondition(LineSearch* lin);
   virtual ~LineSeekerCondition() {};
   int computeCondition();
 private:
-  linesearch* lines;
+  LineSearch* lines;
 };
 
 #endif

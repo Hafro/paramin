@@ -41,14 +41,12 @@ int queue::get() {
   assert(first);
   int tid = first->tid;
   if (first == last) {
+    delete last;
     last = NULL;
-    if (first != NULL)
-      delete first;
     first = NULL;
   } else {
     myLink* temp = first->l;
-    if (first != NULL)
-      delete first;
+    delete first;
     first = temp;
   }
   numberInQueue--;
@@ -59,8 +57,7 @@ int queue::getLast() {
   assert(last);
   int tid = last->tid;
   if (first == last) {
-    if (last != NULL)
-      delete last;
+    delete last;
     last = NULL;
     first = NULL;
   } else {

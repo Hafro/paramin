@@ -18,6 +18,14 @@ void runtime::stopRun(double a) {
   double newTime;
   stopExec = time(NULL);
   newTime = difftime(stopExec, startExec);
+
+  //minimum run time is set to 1
+  if ((absolute(newTime) < verysmall)) {
+    newTime = execTime;
+    if (newTime == -1.0)
+      execTime = 1.0;
+  }    
+
   if (execTime == -1.0)
     execTime = newTime;
   else
@@ -49,6 +57,7 @@ ProcessManager::ProcessManager() {
   WAIT_FOR_PROCESSES = -2;
   freeProcesses = new queue();
   totalNumProc = 0;
+  pmCondor = 0;
   procStat = NULL;
 }
 
@@ -61,19 +70,19 @@ ProcessManager::~ProcessManager() {
   }
 }
 
-void ProcessManager::initializePM(int numProc) {
+void ProcessManager::initializePM(int numProc, int condor) {
   int i;
   if (numProc <= 0) {
     cerr << "Error in processmanager - number of processes must be positive\n";
     exit(EXIT_FAILURE);
   }
   totalNumProc = numProc;
+  pmCondor = condor;
 
-#ifndef CONDOR
-  procStat = new int[totalNumProc];
-#else
-  procStat = new int[maxNumHosts];
-#endif
+  if (pmCondor)
+    procStat = new int[maxNumHosts];
+  else
+    procStat = new int[totalNumProc];
 
   for (i = 0; i < totalNumProc; i++) {
     procStat[i] = -1;
@@ -90,7 +99,7 @@ void ProcessManager::addProc(int id) {
   if (!(freeProcesses->contains(id)))
     freeProcesses->put(id);
   else
-    cout << "Warning in processmanager - process with id " << id << " already exists\n";
+    cerr << "Warning in processmanager - process with id " << id << " already exists\n";
 }
 
 //jongud Added method to add more processes than to begin with
@@ -103,7 +112,7 @@ void ProcessManager::addMoreProc(int id) {
     freeProcesses->put(id);
     totalNumProc++;
   } else
-    cout << "Warning in processmanager - process with id " << id << " already freed\n";
+    cerr << "Warning in processmanager - process with id " << id << " already freed\n";
 }
 
 
@@ -123,7 +132,7 @@ void ProcessManager::removeBadProc() {
   int numFreeProc = freeProcesses->getNumItems();
   while (counter < numFreeProc) {
     id = freeProcesses->get();
-    assert ((id >= 0) && (id < totalNumProc));
+    assert((id >= 0) && (id < totalNumProc));
     if (procStat[id] == 1)
       freeProcesses->put(id);
     counter++;
@@ -153,11 +162,9 @@ void ProcessManager::setFreeProc(int id) {
   if (!(freeProcesses->contains(id)))
     freeProcesses->put(id);
   else
-    cout << "Warning in processmanager - process with id " << id << " already freed\n";
+    cerr << "Warning in processmanager - process with id " << id << " already freed\n";
 }
 
-
-#ifndef CONDOR
 int ProcessManager::getNextTidToSend(NetCommunication* n) {
   int tid;
   n->getHealthOfProcesses(procStat);
@@ -169,51 +176,24 @@ int ProcessManager::getNextTidToSend(NetCommunication* n) {
     return tid;
   }
 }
-#endif
 
-#ifdef CONDOR
-int ProcessManager::getNextTidToSend(NetCommunication* n) {
-  int nextTid;
-  if (freeProcesses->isEmpty())
-    return NO_PROCESSES;
-  else {
-    nextTid = freeProcesses->get();
-    return nextTid;
-  }
-}
-#endif
-#ifdef CONDOR
 int ProcessManager::checkForNewProcess(NetCommunication* n) {
-  int newProcess;
-  newProcess = n->getHealthOfProcessesAndHostAdded(procStat);
-  removeBadProc();
-  if (newProcess > -1)
-    addMoreProc(newProcess);
-  return newProcess;
-}
-#endif
-#ifndef CONDOR
-int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;
-  n->getHealthOfProcesses(procStat);
+  tid = n->getHealthOfProcessesAndHostAdded(procStat);
   removeBadProc();
-  if (freeProcesses->isEmpty())
-    return NO_PROCESSES;
-  else {
-    tid = freeProcesses->get();
-    return tid;
-  }
+  if (tid > -1)
+    addMoreProc(tid);
+  return tid;
 }
-#endif
 
-#ifdef CONDOR
 int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;
-  int newProcess;
-  newProcess = n->getHealthOfProcessesAndHostAdded(procStat);
+
+  tid = n->getHealthOfProcessesAndHostAdded(procStat);
   removeBadProc();
-  if (newProcess > -1)
-    addMoreProc(newProcess);
+  if (tid > -1)
+    addMoreProc(tid);
+
   if (freeProcesses->isEmpty())
     return NO_PROCESSES;
   else {
@@ -221,7 +201,6 @@ int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
     return tid;
   }
 }
-#endif
 
 void ProcessManager::sent(int processId) {
 }
@@ -270,8 +249,11 @@ int ProcessManager::waitForBetterProcesses() {
   return WAIT_FOR_PROCESSES;
 }
 
-WorkLoadScheduler::WorkLoadScheduler(double a) {
-  alpha = a;
+
+WorkLoadScheduler::WorkLoadScheduler(CommandLineInfo* info) {
+  alpha = info->RunTimeMultiple();
+  hostMultiple = info->HostMultiple();
+  besttimeMultiple = info->BestTimeMultiple();
   runInfo = NULL;
   bestTime = 360000.0;
 }
@@ -281,13 +263,13 @@ WorkLoadScheduler::~WorkLoadScheduler() {
   if (runInfo != NULL) {
     for (i = 0; i < totalNumProc; i++)
       delete runInfo[i];
-    delete[]  runInfo;
+    delete[] runInfo;
   }
 }
 
-void WorkLoadScheduler::initializePM(int totalNumProc) {
+void WorkLoadScheduler::initializePM(int totalNumProc, int condor) {
   runInfo = new runtime*[totalNumProc];
-  ProcessManager::initializePM(totalNumProc);
+  ProcessManager::initializePM(totalNumProc, condor);
 }
 
 void WorkLoadScheduler::addProc(int id) {
@@ -314,7 +296,7 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
   ProcessManager::removeBadProc();
   if (freeProcesses->isEmpty()) {
     return NO_PROCESSES;
-  } else if (numLeftToSend >= 2 * totalNumProc) {
+  } else if (numLeftToSend >= hostMultiple * totalNumProc) {
     nextTid = freeProcesses->get();
     return nextTid;
   } else {
@@ -343,7 +325,7 @@ int WorkLoadScheduler::quickHostsAvailable() {
   int available = 0, counter = 0;
   while (!(available) && counter < totalNumProc) {
     if ((!runInfo[counter]->isRunning()) && (procStat[counter] == 1))
-      available = (runInfo[counter]->getRunTime() <= 2 * bestTime);
+      available = (runInfo[counter]->getRunTime() <= besttimeMultiple * bestTime);
     counter++;
   }
 
@@ -362,7 +344,7 @@ int WorkLoadScheduler::quickBusyProcesses() {
   int available = 0, counter = 0;
   while ((available == 0) && (counter < totalNumProc)) {
     if ((runInfo[counter]->isRunning() == 1) && (procStat[counter] == 1))
-      available = ((runInfo[counter]->getRunTime()) <= 2 * bestTime);
+      available = ((runInfo[counter]->getRunTime()) <= besttimeMultiple * bestTime);
     counter++;
   }
 

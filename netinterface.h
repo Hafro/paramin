@@ -12,7 +12,7 @@
 #include "condition.h"
 #include "paramin.h"
 
-class condition;
+class Condition;
 
 /* NetInterface is a class which manages netcommunication.
  * NetInterface uses the class NetCommunication to send/receive data.
@@ -42,6 +42,11 @@ private:
   vector alphaX;
   vector upperScale;
   vector lowerScale;
+  vector opt;
+  vector tmp;  
+  vector xUnscale;  
+  vector xConvert;  
+  vector xToSend;  
   int ISALPHA;
   int TOSCALE;
   #ifdef GADGET_NETWORK
@@ -50,7 +55,7 @@ private:
     vector lowerBound;
   #endif
 public:
-  NetInterface(char* initValsFilename, NetCommunication* netComm, ProcessManager* pm, int to_scale);
+  NetInterface(NetCommunication* netComm, ProcessManager* pm, CommandLineInfo* commandline);
   NetInterface(char* initValsFileName, NetCommunication* netComm, ProcessManager* pm);
   ~NetInterface();
   // ******************************************************
@@ -89,7 +94,7 @@ public:
   // ******************************************************
   // Function for initiating values before start using class NetInterface
   // ******************************************************
-  void initiateNetComm(ProcessManager* pm);
+  void initiateNetComm(ProcessManager* pm, int condor);
   // ******************************************************
   // Functions for starting/stopping a new data group
   // ******************************************************
@@ -124,16 +129,17 @@ public:
   int getNumVarsInDataGroup();
   int getNumVarsInSendData();
   int dataGroupFull();
+  int allSent();
   // ******************************************************
   // Functions for data converting and data scaling vectors
   // ******************************************************
-  vector makeVector(const vector& vec);
-  vector unscaleX(const vector& vec);
-  vector convertX(const vector& vec);
-  vector prepareVectorToSend(const vector& vec);
-  vector getLowerbound();
-  vector getUpperbound();
-  vector getOptInfo();
+  const vector& makeVector(const vector& vec);
+  const vector& unscaleX(const vector& vec);
+  const vector& convertX(const vector& vec);
+  const vector& prepareVectorToSend(const vector& vec);
+  const vector& getLowerbound();
+  const vector& getUpperbound();
+  const vector& getOptInfo();
   #ifdef GADGET_NETWORK
     VectorOfCharPtr getSwitches();
   #endif
@@ -151,16 +157,16 @@ public:
   int resend();
   int receiveOne();
   int sendAll();
-  int sendAllOnCondition(condition* con);
+  int sendAllOnCondition(Condition* con);
   int sendToIdleHosts();
   int sendToAllIdleHosts();
   int receiveAndSend();
   int receiveAll();
-  int receiveOnCondition(condition* con);
+  int receiveOnCondition(Condition* con);
   int sendAndReceiveAllData();
-  int sendAndReceiveTillCondition(condition* con);
-  int sendAndReceiveSetData(condition* con);
-#ifdef CONDOR
+  int sendAndReceiveTillCondition(Condition* con);
+  int sendAndReceiveSetData(Condition* con);
+
   //Added for condor
   int probeForReceiveOne();
   int receiveOneNonBlocking();
@@ -175,11 +181,8 @@ public:
   int receiveAllCondor();
   int sendDataCondor();
   int sendAndReceiveAllDataCondor();
-  int sendAndReceiveSetDataCondor(condition* con);
+  int sendAndReceiveSetDataCondor(Condition* con);
   int sendToAllIdleHostsCondor();
-#endif
-  int sendToIdleHostIfCan();
-  int sendOneAndDataid(int processId, int x_id);
 
   // ******************************************************
   // Functions concerning netcommunication

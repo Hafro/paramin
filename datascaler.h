@@ -2,6 +2,7 @@
 #define datascaler_h
 
 #include "paramin.h"
+#include "mathfunc.h"
 #include "vector.h"
 
 /* Class DataScaler can be used to scale/unscale x[0..numVar-1]
@@ -17,11 +18,9 @@
  *   outside = (x[i]<0.) ?(-x[i]): ((x[i]>1.) ? (x[i]-1.):(0.)) ;
  *   penalty[id] = MAX(outside,penalty[id]);
  *   y *= (1. + sqrt(penalty[id]));
- *   y /= SCALE;
  *  return p;
  * where outside is based on a given vector and penalty is a
- * vector[0...maxNum-1] which identifies the datapair (x[i..numVar-1],
- * y). SCALE is a given constant.
+ * vector[0...maxNum-1] which identifies the datapair (x[i..numVar-1], y)
  *
  * Lower and upperbound must be set before trying to scale/unscale
  * vectors and must have number of variables > 0. and penalty must have

@@ -6,6 +6,7 @@
 #include "netdata.h"
 #include "pvmconstants.h"
 #include "vector.h"
+#include "commandlineinfo.h"
 #ifdef GADGET_NETWORK
 #include "vectorofcharptr.h"
 #endif
@@ -33,11 +34,12 @@ protected:
   int mytid;         // tid of master process (me)
   int narch;         // number of different architectures taking part in VM.
   int nhost;
+  int numarg;
   int* tids;
   int tidsCounter;
   int* status;
-  struct pvmhostinfo *hostp;    // array that contains infformation about each host
-  struct pvmtaskinfo *taskp;    //Array that contains information about each task
+  struct pvmhostinfo *hostp;    // array that contains information about each host
+  struct pvmtaskinfo *taskp;    // array that contains information about each task
   int numVar;                   // number of variables in x in netDatavariables
   int numProcesses;             // number of processes started
   int numGoodProcesses;         // number of running processes
@@ -58,11 +60,8 @@ protected:
   int WAITFORPROCESS;
   int DATANOTSENT;
 
-
-
-
 public:
-  NetCommunication(char* progN, char** progA, int nh);
+  NetCommunication(const VectorOfCharPtr& funcNameArgs, int nh);
   virtual ~NetCommunication();
   int startPVM();
   int spawnProgram();
@@ -86,10 +85,6 @@ public:
   int netError();
   int netSuccess();
 
-
-  //  int startOneProcess(int processNum, int processTid);
-  //  int sendInitialMessageToTid(int tid, int processNum);
-  #ifdef CONDOR
   //Added for condor
   void checkHostsForSuspend();
   void checkHostsForDelete();
@@ -98,7 +93,6 @@ public:
   int checkHostForSuspendReturnsDataid(int* procTids);
   int checkHostForDeleteReturnsDataid(int* procTids);
   int checkHostForResumeReturnsDataid(int* procTids);
-  #endif
   virtual int receiveDataNonBlocking(NetDataResult* rp);
   int startOneProcess(int processNum, int processTid);
   int spawnAndStartOneProcess(int processNumber);
@@ -114,7 +108,7 @@ public:
   int probeForReceiveData();
   int checkProcessByTid(int tidToCheck, int processNum);
   int sendData(NetDataVariables* sendP, int processId, int dataId);
-  //#endif
+
 
 
 #ifdef GADGET_NETWORK
@@ -133,13 +127,12 @@ public:
 
 class MasterCommunication : public NetCommunication {
 private:
-  struct timeval tmout;
+  struct timeval* tmout;
 public:
-  MasterCommunication(char* progN, char** progA, int nh, int waitSec);
+  MasterCommunication(CommandLineInfo* info);
   virtual ~MasterCommunication();
   virtual int receiveData(NetDataResult* rp);
   virtual int receiveDataNonBlocking(NetDataResult* rp);
-
 };
 
 #endif

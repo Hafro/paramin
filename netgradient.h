@@ -10,11 +10,8 @@
 class gradient {
 public:
   virtual ~gradient();
-  virtual void setXVectors(const vector& x, NetInterface* netInt) = 0;
-  virtual int computeGradient(NetInterface* net, const vector& x, int linesprob) = 0;
-#ifdef CONDOR
-  virtual int computeGradientCondor(NetInterface* net, const vector & x, int linesprob) = 0;
-#endif
+  virtual void setXVectors(const vector& x, double fx, NetInterface* netInt) = 0;
+  virtual int computeGradient(NetInterface* net, const vector& x, double fx, int linesprob) = 0;
   virtual vector getDiagonalHessian() = 0;
   virtual double getNormGrad() = 0;
   virtual vector getGradient() = 0;
@@ -44,9 +41,8 @@ private:
 public:
   NetGradient(int numVar);
   virtual ~NetGradient();
-  void setXVectors(const vector& x, NetInterface* netInt);
-  int computeGradient(NetInterface* net, const vector& x, int symgrad);
-  int computeGradientCondor(NetInterface* net, const vector & x, int symgrad);
+  void setXVectors(const vector& x, double fx, NetInterface* netInt);
+  int computeGradient(NetInterface* net, const vector& x, double fx, int symgrad);
   vector getDiagonalHessian();
   double getNormGrad();
   vector getGradient();

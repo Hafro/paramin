@@ -222,6 +222,14 @@ int NetInterface::dataGroupFull() {
   return dctrl->isFull();
 }
 
+int NetInterface::allSent() {
+  if (dctrl == NULL) {
+    cerr << "Error in netInterface - no valid datagroup\n";
+    exit(EXIT_FAILURE);
+  }
+  return dctrl->allSent();
+}
+
 // ********************************************************
 // Input and output functions for data
 // ********************************************************
@@ -272,55 +280,46 @@ void NetInterface::printXUnscaled(int id) {
 // ********************************************************
 // Functions for data converting and data scaling vectors
 // ********************************************************
-vector NetInterface::makeVector(const vector& vec) {
-  vector x1;
+const vector& NetInterface::makeVector(const vector& vec) {
   if (ISALPHA == 1) {
-    x1 = (alphaX + (vec[0] * h));
-    return x1;
+    tmp = alphaX + (vec[0] * h);
+    return tmp;
   } else
     return vec;
 }
 
-vector NetInterface::unscaleX(const vector& vec) {
-  vector xUnScaled;
+const vector& NetInterface::unscaleX(const vector& vec) {
   if (scaler != NULL) {
-    xUnScaled = scaler->unscaleX(vec);
-    return xUnScaled;
+    xUnscale = scaler->unscaleX(vec);
+    return xUnscale;
   } else
     return vec;
 }
 
-vector NetInterface::convertX(const vector& vec) {
-  vector vCon;
+const vector& NetInterface::convertX(const vector& vec) {
   if (dataConvert != NULL) {
-    vCon = dataConvert->convertX(vec);
-    return vCon;
+    xConvert = dataConvert->convertX(vec);
+    return xConvert;
   } else
     return vec;
 }
 
-vector NetInterface::prepareVectorToSend(const vector& vec) {
-  vector v;
-  vector vUnscaled;
-  vector vConverted;
-
-  v = makeVector(vec);
-  vUnscaled = unscaleX(v);
-  vConverted = convertX(vUnscaled);
-  return vConverted;
+const vector& NetInterface::prepareVectorToSend(const vector& vec) {
+  xToSend = convertX(unscaleX(makeVector(vec)));
+  return xToSend;
 }
 
-vector NetInterface::getLowerbound() {
+const vector& NetInterface::getLowerbound() {
 #ifdef GADGET_NETWORK
   assert(lowerBound.dimension() != 0);
   return lowerBound;
 #else
-  assert (scaler != NULL);
+  assert(scaler != NULL);
   return scaler->getLower();
 #endif
 }
 
-vector NetInterface::getUpperbound() {
+const vector& NetInterface::getUpperbound() {
 #ifdef GADGET_NETWORK
   assert(upperBound.dimension() != 0);
   return upperBound;
@@ -337,15 +336,16 @@ VectorOfCharPtr NetInterface::getSwitches() {
 }
 #endif
 
-vector NetInterface::getOptInfo() {
+const vector& NetInterface::getOptInfo() {
   int i;
-  vector vec(numVarToSend);
   if (dataConvert != NULL)
-    vec = dataConvert->getOptInfo();
+    opt = dataConvert->getOptInfo();
   else {
     // no dataconverter, so all parameters must be optimised
+    vector vec(numVarToSend);
+    opt = vec;
     for (i = 0; i < numVarToSend; i++)
-      vec[i] = 1;
+      opt[i] = 1;
   }
-  return vec;
+  return opt;
 }

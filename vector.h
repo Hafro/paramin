@@ -1,7 +1,11 @@
 #ifndef vector_h
 #define vector_h
 
+#ifdef GADGET_NETWORK
+#include "gadget.h"
+#else
 #include "paramin.h"
+#endif
 
 typedef double DFP;
 

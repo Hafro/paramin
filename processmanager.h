@@ -3,6 +3,8 @@
 
 #include "datastructure.h"
 #include "netcommunication.h"
+#include "commandlineinfo.h"
+#include "mathfunc.h"
 #include "paramin.h"
 
 /* The class runtime provides functions to set time for beginning of
@@ -46,11 +48,12 @@ protected:
   int totalNumProc;
   int* procStat;
   int maxNumHosts;
+  int pmCondor;
 public:
   int* getStatus();
   ProcessManager();
   virtual ~ProcessManager();
-  virtual void initializePM(int numProc);
+  virtual void initializePM(int numProc, int condor);
   virtual void addProc(int id);
   virtual void addMoreProc(int id);
   int getNumFreeProc();
@@ -81,11 +84,13 @@ class WorkLoadScheduler : public ProcessManager {
 private:
   double bestTime;
   double alpha;
+  double hostMultiple;
+  double besttimeMultiple;
   runtime** runInfo;
 public:
-  WorkLoadScheduler(double a);
+  WorkLoadScheduler(CommandLineInfo* info);
   ~WorkLoadScheduler();
-  virtual void initializePM(int totalNumProc);
+  virtual void initializePM(int totalNumProc, int condor);
   virtual void addProc(int id);
   virtual void addMoreProc(int id);
   virtual void setFreeProc(int tid);

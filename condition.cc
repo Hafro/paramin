@@ -1,6 +1,6 @@
 #include "condition.h"
 
-LineSeekerCondition::LineSeekerCondition(linesearch* lin) {
+LineSeekerCondition::LineSeekerCondition(LineSearch* lin) {
   lines = lin;
 }
 

@@ -218,11 +218,12 @@ vector normalize(vector& v1) {
 
 istream& operator >> (istream& is, vector& v1) {
   int i;
+  char tmp; // = ' ';
   for (i = 0; i < v1.dim; i++) {
-    if (i == (v1.dim - 1))
+    if (i == v1.dim - 1)
       is >> v1[i];
     else
-      is >> v1[i] >> " ";
+      is >> v1[i] >> tmp;
   }
   return is;
 }
@@ -230,7 +231,7 @@ istream& operator >> (istream& is, vector& v1) {
 ostream& operator << (ostream& os, const vector& v) {
   int i;
   for (i = 0; i < v.dim; i++)
-    os << v[i] << " ";
+    os << v[i] << sep;
   os << endl;
   return os;
 }

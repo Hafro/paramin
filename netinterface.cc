@@ -3,8 +3,8 @@
 // ********************************************************
 // Constructors and destructor for class NetInterface
 // ********************************************************
-NetInterface::NetInterface(char* initvalsFileName,
-  NetCommunication* netComm, ProcessManager* pm, int to_scale) {
+NetInterface::NetInterface(NetCommunication* netComm,
+  ProcessManager* pm, CommandLineInfo* commandline) {
 
   MAXNUMX = 500;
   NUM_TRIES_TO_RECEIVE = 4;
@@ -14,14 +14,14 @@ NetInterface::NetInterface(char* initvalsFileName,
   dataSet = NULL;
   numVarInDataGroup = 0;
   numVarToSend = 0;
-  TOSCALE = to_scale;
+  TOSCALE = commandline->ToScale();
   net = netComm;
-#ifdef GADGET_NETWORK
-  readInputFile(initvalsFileName);
-#else
-  readInitVals(initvalsFileName);
-#endif
-  initiateNetComm(pm);
+  #ifdef GADGET_NETWORK
+    readInputFile(commandline->InputFilename());
+  #else
+    readInitVals(commandline->InputFilename());
+  #endif
+  initiateNetComm(pm, commandline->runCondor());
 }
 
 NetInterface::NetInterface(char* initvalsFileName,
@@ -37,7 +37,7 @@ NetInterface::NetInterface(char* initvalsFileName,
   numVarToSend = 0;
   net = netComm;
   readAllInitVals(initvalsFileName);
-  initiateNetComm(pm);
+  initiateNetComm(pm, 0);
 }
 
 NetInterface::~NetInterface() {
@@ -318,7 +318,7 @@ void NetInterface::readInitVals(char* fileName) {
 // ********************************************************
 // Function for initiating values before start using class NetInterface
 // ********************************************************
-void NetInterface::initiateNetComm(ProcessManager* pm) {
+void NetInterface::initiateNetComm(ProcessManager* pm, int condor) {
   int netStarted, numProc;
   ISALPHA = -1;
   pManager = pm;
@@ -333,7 +333,7 @@ void NetInterface::initiateNetComm(ProcessManager* pm) {
       cerr << "Error in netinterface - no processes\n";
       exit(EXIT_FAILURE);
     }
-    pManager->initializePM(numProc);
+    pManager->initializePM(numProc, condor);
     numberOfTags = 0;
     receiveId = -1;
   }

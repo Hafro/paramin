@@ -2,17 +2,26 @@
 #define paramin_h
 
 /* A list of the standard header files that are needed */
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stream.h>
-#include <strstream.h>
-#include <iostream.h>
-#include <fstream.h>
-#include <time.h>
-#include <math.h>
-#include <ctype.h>
+#include <cassert>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cmath>
+#include <ctime>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/utsname.h>
+#include <sys/param.h>
+
+/* This is a nasty hack to use the functions in the std namespace */
+/* it would be much better to explicitly state the std namespace  */
+/* when using the functions - eg std::strcmp() not just strcmp()  */
+/* Older compilers will reject this so it needs to be removed     */
+using namespace std;
 
 /* Some compilers define the values for EXIT_SUCCESS and EXIT_FAILURE */
 /* but to be sure that they are defined, they are also included here. */
@@ -23,26 +32,19 @@
 #define EXIT_FAILURE 1
 #endif
 
-/* Also defined are some macros used by Paramin */
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define ABS(x) ((x) > 0 ? (x) : -(x))
-
 /* Also defined are some of the constants used by Paramin */
-const int SCALE = 1;
-const int MAXITER = 10000;
-const int NUMVARS = 200;
-const double ROUNDOFF = 1e-12;
-const double BIG = 1e10;
-const double MACHEPS = 1e-12;
 const double LINACC = 0.00001;
 const double BORMACC = 0.001;
 #ifndef GADGET_NETWORK
+const double rathersmall = 1e-10;
+const double verysmall = 1e-100;
+const double verybig = 1e+10;
 const int MaxStrLength = 250;
 const char sep = ' ';
+const int NUMVARS = 350;
 #endif
 
 /* Update the following line each time upgrades are implemented */
-#define paraminversion "2.0.02-BETA"
+#define PARAMINVERSION "2.1.00-BETA"
 
 #endif

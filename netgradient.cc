@@ -1,4 +1,5 @@
 #include "netgradient.h"
+#include "mathfunc.h"
 
 gradient::~gradient() {
 }
@@ -27,7 +28,7 @@ void NetGradient::initializeDiagonalHessian() {
     diagHess[i]= -1.0;
 }
 
-void NetGradient::setXVectors(const vector& x, NetInterface* netInt) {
+void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
   int i;
   double deltai;
   int numberOfx = 0;
@@ -41,13 +42,14 @@ void NetGradient::setXVectors(const vector& x, NetInterface* netInt) {
 
   // initialize new datagroup for gradient computing and set current point
   netInt->startNewDataGroup(numberOfx);
-  netInt->setX(x);
+  netInt->setDataPair(x, f);
+  //netInt->setX(x);
 
   // compute x + hi * ei for all i
   vector tempVec;
   tempVec = x;
   for (i = 0; i < numberOfVariables; i++) {
-    deltai = deltavec[i] * (1.0 + ABS(tempVec[i]));
+    deltai = deltavec[i] * (1.0 + absolute(tempVec[i]));
     tempVec[i] -= deltai;
     netInt->setX(tempVec);
     if (difficultgrad == 1) {
@@ -66,7 +68,7 @@ void NetGradient::setXVectors(const vector& x, NetInterface* netInt) {
   }
 }
 
-int NetGradient::computeGradient(NetInterface* net, const vector& x, int difficultgradient) {
+int NetGradient::computeGradient(NetInterface* net, const vector& x, double f, int difficultgradient) {
 
   difficult = 0;
   difficultgrad = difficultgradient;
@@ -74,37 +76,38 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, int difficu
   int i;
   double fx1, fx2, fx3, fx4;
   int SEND_RECEIVE = 0;
-  setXVectors(x, net);
+  setXVectors(x, f, net);
   SEND_RECEIVE = net->sendAndReceiveAllData();
+  //SEND_RECEIVE = net->sendAndReceiveAllDataCondor(); //JMB
   if (SEND_RECEIVE == -1) {
     cerr << "Error in netgradient - could not send or receive data\n";
     exit(EXIT_FAILURE);
   }
-  int numfx = 0;
-  double fx = net->getY(numfx);
-  numfx++;
+
+  int numfx = 1;
+  fx0 = f;
   double deltai;
   normgrad = 0.0;
 
   //Calculate f(x + hi * ei) for all i
   for (i = 0;  i < numberOfVariables; i++) {
-    deltai=(1. + ABS(x[i])) * deltavec[i];
+    deltai =(1.0 + absolute(x[i])) * deltavec[i];
     fx1 = net->getY(numfx);
     numfx++;
 
     if (difficultgrad == 1) {
       fx4 = net->getY(numfx);
       numfx++;
-      grad[i] = (fx4 - fx1) / (2 * deltai);
-      diagHess[i] = (fx4 - 2 * fx + fx1) / (deltai * deltai);
+      grad[i] = (fx4 - fx1) / (2.0 * deltai);
+      diagHess[i] = (fx4 - 2.0 * fx0 + fx1) / (deltai * deltai);
 
       //Check for difficultgrad
-      if ((fx4 > fx) && (fx1 > fx))
+      if ((fx4 > fx0) && (fx1 > fx0))
         difficult = 1;
 
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
+      if (absolute(fx4 - fx1) / fx0 < rathersmall) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
+        cerr << "Warning in netgradient - possible roundoff errors in gradient\n";
       }
 
     } else if (difficultgrad >= 2) {
@@ -114,124 +117,36 @@ int NetGradient::computeGradient(NetInterface* net, const vector& x, int difficu
       numfx++;
       fx4 = net->getY(numfx);
       numfx++;
-      grad[i] = (fx1 - fx4 + 8 * fx3 - 8 * fx2) / (6 * deltai);
-      diagHess[i] = (fx4 - 2 * fx + fx1) / (deltai * deltai);
+      grad[i] = (fx1 - fx4 + 8.0 * fx3 - 8.0 * fx2) / (6.0 * deltai);
+      diagHess[i] = (fx4 - 2.0 * fx0 + fx1) / (deltai * deltai);
 
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
+      if (absolute(fx4 - fx1) / fx0 < rathersmall) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
+        cerr << "Warning in netgradient - possible roundoff errors in gradient\n";
       }
 
     } else {
-      grad[i] = (fx - fx1) / deltai;
-      if (ABS(fx - fx1) / fx < ROUNDOFF) {  // may be running into roundoff
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
+      grad[i] = (fx0 - fx1) / deltai;
+      if (absolute(fx0 - fx1) / fx0 < rathersmall) {  // may be running into roundoff
+        deltavec[i] = min(delta0, deltavec[i] * 5.0);
+        cerr << "Warning in netgradient - possible roundoff errors in gradient\n";
       }
     }
 
-    if (grad[i] > BIG) { // seem to be running outside the boundary
-      deltavec[i] = MAX(delta1, deltavec[i] / 5.0);
-      cout << "Warning in netgradient - possible boundary errors in gradient\n";
+    if (grad[i] > verybig) { // seem to be running outside the boundary
+      deltavec[i] = max(delta1, deltavec[i] / 5.0);
+      cerr << "Warning in netgradient - possible boundary errors in gradient\n";
     }
     normgrad += grad[i] * grad[i];
   }
 
   normgrad = sqrt(normgrad);
-  fx0 = fx;
   difficultgrad += difficult;
 
   // finished computing gradient do not need datagroup anymore
   net->stopUsingDataGroup();
   return 1;
 }
-#ifdef CONDOR
-int NetGradient::computeGradientCondor(NetInterface* net, const vector & x, int difficultgradient) {
-
-  difficult = 0;
-  difficultgrad = difficultgradient;
-
-  int i;
-  double fx1, fx2, fx3, fx4;
-  int SEND_RECEIVE = 0;
-  // initilize x-s for gradient compuation and store them in gradData
-  setXVectors(x, net);
-  // send/receive all x/f(x)s in datagroup to/from slave processes
-  SEND_RECEIVE = net->sendAndReceiveAllDataCondor();
-  if (SEND_RECEIVE == -1) {
-    cerr << "Error in netgradient - could not send or receive data\n";
-    exit(EXIT_FAILURE);
-  }
-  int numfx = 0;
-  double fx = net->getY(numfx);
-  numfx++;
-  double deltai;
-  normgrad = 0.0;
-
-  /* Phase 3 - get back f(x+hi*ei) for all i */
-  for (i = 0;  i < numberOfVariables; i++) {
-    deltai = (1.0 + ABS(x[i])) * deltavec[i];
-    fx1 = net->getY(numfx);
-    numfx++;
-    if (difficultgrad == 1) {
-      fx4 = net->getY(numfx);
-      numfx++;
-
-      //calculate gradient.  Using parabolic approximation.
-      grad[i] = (fx4 - fx1)/(2 * deltai);
-      diagHess[i] = (fx4 - 2 * fx + fx1) / (deltai * deltai);
-
-      //Check for difficultgrad
-      if ((fx4 > fx) && (fx1 > fx))
-        difficult = 1;
-
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) { /* may be running into roundoff */
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
-      }
-
-    } else if (difficultgrad >= 2) {
-      fx2 = net->getY(numfx);
-      numfx++;
-      fx3 = net->getY(numfx);
-      numfx++;
-      fx4 = net->getY(numfx);
-      numfx++;
-
-      //calculate gradient. Using polynomial of degree 4.
-      grad[i] = (fx1 - fx4 + 8 * fx3 - 8 * fx2)/(6 * deltai);
-      diagHess[i] = (fx4 - 2 * fx + fx1) / (deltai * deltai);
-
-      if (ABS(fx4 - fx1) / fx < ROUNDOFF) { /* may be running into roundoff */
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
-      }
-
-    } else {
-      grad[i] = (fx - fx1) / deltai;
-      if (ABS(fx - fx1) / fx < ROUNDOFF) { /* may be running into roundoff */
-        deltavec[i] = MIN(delta0, deltavec[i] * 5.0);
-        cout << "Warning in netgradient - possible roundoff errors in gradient\n";
-      }
-    }
-
-    if (grad[i] > BIG) {
-      // seem to be running outside the boundary or some such
-      deltavec[i] = MAX(delta1, deltavec[i] / 5.0);
-      cout << "Warning in netgradient - possible boundary errors in gradient\n";
-    }
-    normgrad += grad[i] * grad[i];
-  }
-
-  normgrad=sqrt(normgrad);
-  fx0 = fx;
-  difficultgrad += difficult;
-
-  // finished computing gradient do not need datagroup anymore
-  net->stopUsingDataGroup();
-  return 1;
-}
-#endif
 
 double NetGradient::getBaseFX() {
   return fx0;
