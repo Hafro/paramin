@@ -145,16 +145,14 @@ int NetCommunication::startNetCommunication() {
     }
 
 #ifdef CONDOR
-    //jongud added pvm_notify for if host get suspended
+    //jongud added pvm_notify to help CONDOR keep track of hosts
     info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), nhost, hostTids);
     if (info < 0) {
       printErrorMsg("Error in netcommunication - pvmnotify failed");
       stopNetCommunication();
       return ERROR;
     }
-#endif
 
-    //jongud added pvm_notify for if host is deleted
     info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), nhost, hostTids);
     if (info < 0) {
       printErrorMsg("Error in netcommunication - pvmnotify failed");
@@ -162,23 +160,20 @@ int NetCommunication::startNetCommunication() {
       return ERROR;
     }
 
-#ifdef CONDOR
-    //jongud added pvm_notify for if host resumes
     info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), nhost, hostTids);
     if (info < 0) {
       printErrorMsg("Error in netcommunication - pvmnotify failed");
       stopNetCommunication();
       return ERROR;
     }
-#endif
 
-    //jongud added pvm_notify for if host is added
     info = pvm_notify(PvmHostAdd, pvmConst->getAddHostTag(), -1, 0);
     if (info < 0) {
       printErrorMsg("Error in netcommunication - pvmnotify failed");
       stopNetCommunication();
       return ERROR;
     }
+#endif
 
     if (OK == 1) {
       // Have started slaveProgram slaveArguments on all nhost hosts.
@@ -368,7 +363,8 @@ int NetCommunication::startOneProcess(int processNum, int processTid) {
   int tidToNotify[] = {processTid};
   int hostTidToNotify[] = {hostTids[processNum]};
 
-  //jongud. pvm_notify for 1 process.
+#ifdef CONDOR
+  //jongud added pvm_notify to help CONDOR keep track of hosts
   info = pvm_notify(PvmTaskExit, pvmConst->getDiedTag(), 1, tidToNotify);
   if (info < 0) {
     printErrorMsg("Error in netcommunication - pvmnotify failed");
@@ -376,17 +372,13 @@ int NetCommunication::startOneProcess(int processNum, int processTid) {
     return ERROR;
   }
 
-#ifdef CONDOR
-  //jongud added pvm_notify for if host get suspended
   info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
   if (info < 0) {
     printErrorMsg("Error in netcommunication - pvmnotify failed");
     stopNetCommunication();
     return ERROR;
   }
-#endif
 
-  //jongud added pvm_notify for if host is deleted
   info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), 1, hostTidToNotify);
   if (info < 0) {
     printErrorMsg("Error in netcommunication - pvmnotify failed");
@@ -394,8 +386,6 @@ int NetCommunication::startOneProcess(int processNum, int processTid) {
     return ERROR;
   }
 
-#ifdef CONDOR
-  //jongud added pvm_notify for if host resumes
   info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), 1, hostTidToNotify);
   if (info < 0) {
     printErrorMsg("Error in netcommunication - pvmnotify failed");
@@ -949,11 +939,11 @@ int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
     for (i = 0; i < numProcesses; i++)
       procTids[i] = status[i];
 
-    int hostTidToNotify[] = {hostResumed};
-
 #ifdef CONDOR
+    int hostTidToNotify[] = {hostResumed};
     info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
 #endif
+
     for (i = 0; (i < numProcesses) && (processId == -1); i++)
       if (tids[i] == taskResumed)
         processId = i;
