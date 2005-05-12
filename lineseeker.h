@@ -9,7 +9,7 @@ private:
 public:
   LineSeeker();
   virtual ~LineSeeker();
-  int doLineseek(const vector& xold, const vector& xnew, double fnew, NetInterface* netI);
+  int doLineseek(const Vector& xold, const Vector& xnew, double fnew, NetInterface* netI);
   int outstandingRequests();
   double getAlpha() { return 0.0;};
   int computeConditionFunction() { return 0; };

@@ -134,7 +134,7 @@ void CommandLineInfo::read(int aNumber, char* const aVector[]) {
     waitMaster = -1;
 }
 
-const VectorOfCharPtr& CommandLineInfo::getFunction() {
+const CharPtrVector& CommandLineInfo::getFunction() {
   return function;
 }
 

@@ -1,7 +1,7 @@
 #ifndef commandlineinfo_h
 #define commandlineinfo_h
 
-#include "vectorofcharptr.h"
+#include "charptrvector.h"
 
 class CommandLineInfo {
 public:
@@ -23,13 +23,13 @@ public:
   char* getOutputFilename();
   char* getOptFilename();
   int getOptInfoFileGiven();
-  const VectorOfCharPtr& getFunction();
+  const CharPtrVector& getFunction();
 private:
-  VectorOfCharPtr inputfile;
-  VectorOfCharPtr outputfile;
-  VectorOfCharPtr optfile;
-  VectorOfCharPtr networkfile;
-  VectorOfCharPtr function;
+  CharPtrVector inputfile;
+  CharPtrVector outputfile;
+  CharPtrVector optfile;
+  CharPtrVector networkfile;
+  CharPtrVector function;
   int numProc;
   int scale;
   int condor;

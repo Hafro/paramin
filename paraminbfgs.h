@@ -36,7 +36,7 @@ private:
   /**
    * \brief stores the diagonal entry of the hessian matrix.
    */
-  vector diaghess;
+  Vector diaghess;
   /**
    * \brief stores the inverse hessian matrix.
    */
@@ -44,15 +44,15 @@ private:
   /**
    * \brief stores the gradient at xi
    */
-  vector gi;
+  Vector gi;
   /**
    * \brief stores the gradient at xi-1
    */
-  vector gim1;
+  Vector gim1;
   /**
    * \brief direction vector used in line minimization.
    */
-  vector h;
+  Vector h;
   /**
    * \brief derivative used in line minimization.
    */
@@ -60,7 +60,7 @@ private:
   /**
    * \brief difference between current bestx and the one before
    */
-  vector deltax;
+  Vector deltax;
   /**
    * \brief norm of x
    */
@@ -90,7 +90,7 @@ private:
    * \brief if Shannon scaling is to be used
    */
   int shannonScaling;
-  vector xopt;
+  Vector xopt;
   int bfgs_constant;
   double errortol;
   double xtol;
@@ -121,7 +121,7 @@ public:
    * \param startx is the starting point of the BFGS
    * \param startf is the f-value at startx
    */
-  void doSearch(const vector& startx, double startf);
+  void doSearch(const Vector& startx, double startf);
   /**
    * \brief Computes the gradient at x
    */

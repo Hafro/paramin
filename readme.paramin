@@ -159,11 +159,11 @@ send_receiveAllData()		Sends all uncalculated points in
 receiveOne()			Recieves one function value.
 receiveAll()			Recieves all function value, not yet
 				received.
-getRecievedId()			Gets the ID of the point, which 
+getRecievedID()			Gets the ID of the point, which 
 				function value was received last.
-getY( returnId )		Returns the function value of the 
-				point with ID returnId.
-getX( returnId )		Returns the point with ID returnId.
+getY( returnID )		Returns the function value of the 
+				point with ID returnID.
+getX( returnID )		Returns the point with ID returnID.
 getInitialX()			Returns the starting point, that is
 				the best point know, before the 
 				algorithm starts.	 	
@@ -520,11 +520,11 @@ send_receiveAllData()		Sends all uncalculated points in
 receiveOne()			Recieves one function value.
 receiveAll()			Recieves all function value, not yet
 				received.
-getRecievedId()			Gets the ID of the point, which 
+getRecievedID()			Gets the ID of the point, which 
 				function value was received last.
-getY( returnId )		Returns the function value of the 
-				point with ID returnId.
-getX( returnId )		Returns the point with ID returnId.
+getY( returnID )		Returns the function value of the 
+				point with ID returnID.
+getX( returnID )		Returns the point with ID returnID.
 getInitialX()			Returns the starting point, that is
 				the best point know, before the 
 				algorithm starts.	 	
@@ -645,14 +645,14 @@ send_receiveTillCondition(c)	Sends and receives data until condition c is
 				condition was met and 0 if condition not met 
 				and all data belonging to datagroup has been
 				sent and received. 
-getRecievedId()			Gets the ID of the point, which 
+getRecievedID()			Gets the ID of the point, which 
 				function value was received last.
-getY( returnId )		Returns the function value of the 
-				point with ID returnId.
+getY( returnID )		Returns the function value of the 
+				point with ID returnID.
 getNextAnswerY()		Returns the function value in the last data 
 				pair found while looking for a datapair with
 				an answer.
-getX( returnId )		Returns the point with ID returnId.
+getX( returnID )		Returns the point with ID returnID.
 getNextAnswerX()		Returns the next x found in datagroup which 
 				has an answer since last checked for answer.  
 				(x0, fx0), (x1, ), (x2, fx2), ...., (xn,fxn). 

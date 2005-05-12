@@ -20,11 +20,11 @@ protected:
   /**
    * \brief The lowerbound for the variables
    */
-  vector lowerbound;
+  Vector lowerbound;
   /**
    * \brief The upperbound for the variables
    */
-  vector upperbound;
+  Vector upperbound;
   /**
    * \brief maximum number of iterations for one minimization
    */ 
@@ -37,7 +37,7 @@ protected:
   /**
    * \brief best point found so far..
    */
-  vector bestx;       // x which gives best point???
+  Vector bestx;       // x which gives best point???
   /**
    * \brief The optimal value of the function, found so far
    */
@@ -64,7 +64,7 @@ public:
    * \param startx is the starting point of the BFGS
    * \param startf is the f-value at startx
    */
-  virtual void doSearch(const vector& startx, double startf) = 0;
+  virtual void doSearch(const Vector& startx, double startf) = 0;
   /**
    * \brief The file reader
    * \param infile is the CommentStream to read the optimisation parameters from
@@ -79,7 +79,7 @@ public:
   /**
    * \brief This function returns the best point, bestx
    */
-  const vector& getBestX();
+  const Vector& getBestX();
   /**
    * \brief This function returns the best f-value, bestf (corresponds to bestx)
    */

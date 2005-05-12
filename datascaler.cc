@@ -4,7 +4,7 @@ DataScaler::DataScaler() {
   numVar = -1;
 }
 
-void DataScaler::setInitialData(const vector& l, const vector& u) {
+void DataScaler::setInitialData(const Vector& l, const Vector& u) {
   assert(l.dimension() > 0);
   assert(l.dimension() == u.dimension());
   numVar = l.dimension();
@@ -15,15 +15,15 @@ void DataScaler::setInitialData(const vector& l, const vector& u) {
 DataScaler::~DataScaler() {
 }
 
-double DataScaler::scaleResult(double y, int id, const vector& v1) {
+double DataScaler::scaleResult(double y, int id, const Vector& v1) {
   return y;
 }
 
-vector DataScaler::scaleX(const vector& v1) {
+Vector DataScaler::scaleX(const Vector& v1) {
   assert(numVar > 0);
   assert(numVar == v1.dimension());
   int i;
-  vector vec(numVar);
+  Vector vec(numVar);
   for (i = 0; i < numVar; i++)
     vec[i] = scale(v1[i], i);
   return vec;
@@ -35,11 +35,11 @@ double DataScaler::scale(double p, int i) {
   return (p - ((ubd[i] + lbd[i]) * 0.5)) / ((ubd[i] - lbd[i]) * 0.5);
 }
 
-vector DataScaler::unscaleX(const vector& v1) {
+Vector DataScaler::unscaleX(const Vector& v1) {
   assert(numVar > 0);
   assert(v1.dimension() == numVar);
   int i;
-  vector vec(numVar);
+  Vector vec(numVar);
   for (i = 0; i < numVar; i++)
     vec[i]= unscale(v1[i], i);
   return vec;
@@ -52,16 +52,16 @@ double DataScaler::unscale(double p, int i) {
 }
 
 void DataScaler::setPenalty(int numIndexes) {
-  vector temp(numIndexes);
+  Vector temp(numIndexes);
   penalty = temp;
   penalty.setValue(0.0);
 }
 
-vector DataScaler::getLower() {
+Vector DataScaler::getLower() {
   return lbd;
 }
 
-vector DataScaler::getUpper() {
+Vector DataScaler::getUpper() {
   return ubd;
 }
 

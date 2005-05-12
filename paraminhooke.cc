@@ -59,20 +59,20 @@ void ParaminHooke::Read(CommentStream& infile, char* text)  {
   }
 }
 
-void ParaminHooke::doSearch(const vector& startx, double startf) {
+void ParaminHooke::doSearch(const Vector& startx, double startf) {
   double steplength;
   int i, keep;
 
   NumberOfHosts = net->getTotalNumProc();
   int maxnumindatagroup = numvar*10;
-  vector tempV(maxnumindatagroup);
+  Vector tempV(maxnumindatagroup);
   previousf = tempV;
   par = new int[maxnumindatagroup];
   xbefore = startx;
   fbefore = startf;
   bestx = startx;
   bestf = startf;
-  vector tempVec(numvar);
+  Vector tempVec(numvar);
   delta = tempVec;
   int numFromLineSeek;
   change = new int[numvar];
@@ -228,7 +228,7 @@ void ParaminHooke::bestNearby() {
 
 int ParaminHooke::SetPoint(int n) {
   // return 0 and do nothing if the changes goes out of bounds.
-  vector z(bestx);
+  Vector z(bestx);
   double next = bestx[n] + delta[n];
   int numset;
 

@@ -8,7 +8,7 @@ ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
   T = 100.0;
   cs = 2.0;
 
-  vector tempVec(numvar);
+  Vector tempVec(numvar);
   vm = tempVec;
   vm.setValue(1.0);
   xp = tempVec;
@@ -103,7 +103,7 @@ void ParaminSimann::Read(CommentStream& infile, char* text) {
   cs = cs / lratio;
 }
 
-void ParaminSimann::doSearch(const vector& startx, double startf) {
+void ParaminSimann::doSearch(const Vector& startx, double startf) {
   int i, numtoset;
   int numloops_ns, numloops_nt;
   int numset_nsloop;     // 0 < numset_nsloop <= numvar
@@ -121,7 +121,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
   if (!maxim)
     bestf = -bestf;
 
-  vector tempVec(check);
+  Vector tempVec(check);
   tempVec.setValue(bestf);
   fstar = tempVec;
   fstart = bestf;
@@ -232,7 +232,7 @@ void ParaminSimann::doSearch(const vector& startx, double startf) {
 // generate xp, the trial value of x - note use of vm to choose xp.
 void ParaminSimann::SetXP(int k) {
   int i;
-  vector temp;
+  Vector temp;
   int id;
 
   for (i = 0; i < numvar; i++) {

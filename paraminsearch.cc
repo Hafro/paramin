@@ -14,7 +14,7 @@ ParaminSearch::ParaminSearch(NetInterface* netInt) {
 ParaminSearch::~ParaminSearch() {
 }
 
-const vector& ParaminSearch::getBestX() {
+const Vector& ParaminSearch::getBestX() {
   return net->unscaleX(bestx);
 }
 

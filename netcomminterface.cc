@@ -33,8 +33,8 @@ int NetInterface::sendOne(int processID, int x_id) {
   // Function returns SUCCESS if successfully sent data
   // Function return 0 if process with process identity = processID can not be used.
   int i, cansend;
-  vector vec;
-  vector vecSend;
+  Vector vec;
+  Vector vecSend;
 
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -90,8 +90,8 @@ int NetInterface::sendOneAndDataid(int processID, int x_id) {
   // Function returns 2 if x_id does not belong to the data group.
 
   int cansend;
-  vector vec;           // vec has id = x_id stored in dctrl and is converted
-  vector vecSend;       // into vecSend before sending
+  Vector vec;           // vec has id = x_id stored in dctrl and is converted
+  Vector vecSend;       // into vecSend before sending
   int i;
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -148,8 +148,8 @@ int NetInterface::resend() {
   int i, canresend;
   int tid = -1;
   int sendID;
-  vector vec;
-  vector vecSend;
+  Vector vec;
+  Vector vecSend;
 
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -235,7 +235,7 @@ int NetInterface::receiveOne() {
     if (dctrl->getTag() == dp->tag) {
       // received data belonging to datagroup
       if (scaler != NULL) {
-        vector tempV;
+        Vector tempV;
         tempV = makeVector(dctrl->getX(dp->x_id));
         res = scaler->scaleResult(dp->result, dp->x_id, tempV);
       } else {
@@ -310,7 +310,7 @@ int NetInterface::receiveOneNonBlocking() {
     if (dctrl->getTag() == dp->tag) {
       // received data belonging to datagroup
       if (scaler != NULL) {
-        vector tempV;
+        Vector tempV;
         tempV = makeVector(dctrl->getX(dp->x_id));
         res = scaler->scaleResult(dp->result, dp->x_id, tempV);
       } else {

@@ -31,15 +31,15 @@ public:
 
 class Coordinates {
 private:
-  vector x;
+  Vector x;
   double y;
 public:
   Coordinates();
   ~Coordinates();
-  vector getX();
+  Vector getX();
   double getParameter(int num);
   double getY();
-  void setX(const vector& v1);
+  void setX(const Vector& v1);
   void setParameter(double p, int num);
   void setY(double y1);
   int getNumParameters();
@@ -95,13 +95,13 @@ private:
 public:
   NetDataControl(int numberOfx, int numberOfParameters, int t);
   ~NetDataControl();
-  void setX(const vector& x1);
+  void setX(const Vector& x1);
   void setY(int id, double fx);
-  void setDataPair(const vector& x1, double fx);
-  vector getX(int id);
-  vector getNextXToSend();
+  void setDataPair(const Vector& x1, double fx);
+  Vector getX(int id);
+  Vector getNextXToSend();
   double getY(int id);
-  vector getNextAnsweredX();
+  Vector getNextAnsweredX();
   double getNextAnsweredY();
   int getNextSendID();
   int getNextXToResend();

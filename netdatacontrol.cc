@@ -37,7 +37,7 @@ double Coordinates::getY() {
   return y;
 }
 
-vector Coordinates::getX() {
+Vector Coordinates::getX() {
   return x;
 }
 
@@ -50,7 +50,7 @@ double Coordinates::getParameter(int num) {
   return x[num];
 }
 
-void Coordinates::setX(const vector& x1) {
+void Coordinates::setX(const Vector& x1) {
   x = x1;
 }
 
@@ -101,7 +101,7 @@ NetDataControl::~NetDataControl() {
 
 // ----------------------------------------------------------------------------
 // Functions for setting data
-void NetDataControl::setX(const vector& x1) {
+void NetDataControl::setX(const Vector& x1) {
   if (numberOfx < 0 || numberOfx >= totalNumx) {
     cerr << "Error in netdatacontrol - cannot store vector\n";
     exit(EXIT_FAILURE);
@@ -140,7 +140,7 @@ void NetDataControl::setY(int id, double fx) {
     cerr << "Warning in netdatacontrol - setting f(x) but have not sent x with identity: " << id << endl;
 }
 
-void NetDataControl::setDataPair(const vector& x1, double fx) {
+void NetDataControl::setDataPair(const Vector& x1, double fx) {
   setX(x1);
   sentOne(numberOfx-1);
   setY(numberOfx-1, fx);
@@ -148,7 +148,7 @@ void NetDataControl::setDataPair(const vector& x1, double fx) {
 
 // ----------------------------------------------------------------------------
 // Functions for getting data
-vector NetDataControl::getX(int id) {
+Vector NetDataControl::getX(int id) {
   if (id < 0 || id >= numberOfx) {
     cerr << "Error in netdatacontrol - have not set vector with id " << id << endl;
     exit(EXIT_FAILURE);
@@ -156,10 +156,10 @@ vector NetDataControl::getX(int id) {
   return xyCoord[id]->getX();
 }
 
-vector NetDataControl::getNextXToSend() {
+Vector NetDataControl::getNextXToSend() {
   int i = 0;
   int FOUND = 0;
-  vector vec;
+  Vector vec;
 
   if (allSent()) {
     cerr << "Error in netdatacontrol - no vector to send\n";
@@ -189,7 +189,7 @@ double NetDataControl::getY(int id) {
   return xyCoord[id]->getY();
 }
 
-vector NetDataControl::getNextAnsweredX() {
+Vector NetDataControl::getNextAnsweredX() {
   if (numberAnswers == 0) {
     cerr << "Error in netdatacontrol - no answers received\n";
     exit(EXIT_FAILURE);

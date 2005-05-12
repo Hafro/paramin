@@ -8,7 +8,7 @@ private:
   /**
    * \brief starting values for the variables of the function
    */
-  vector xstart;      
+  Vector xstart;      
   /**
    * \brief the function value at xstart..
    */
@@ -16,20 +16,20 @@ private:
   /**
    * \brief the variable vector returned each time.
    */
-  vector xp;          
+  Vector xp;          
   /**
    * \brief the function value returned each time.
    */
   double fp;          
-  vector fstar;
+  Vector fstar;
   double cs;
   double uratio;
   double lratio;
   /**
    * \brief the step length vector.
    */
-  vector vm;          
-  vector initialVM;
+  Vector vm;          
+  Vector initialVM;
   double T;
   /**
    * \brief number of iterations before temperature reduction.
@@ -73,7 +73,7 @@ public:
   ParaminSimann(NetInterface* netInt);
   virtual ~ParaminSimann();
   void Read(CommentStream& infile, char* text);
-  void doSearch(const vector& startx, double startf);
+  void doSearch(const Vector& startx, double startf);
   void SetXP(int k);
   void AcceptPoint();
   void UpdateVM();

@@ -32,7 +32,7 @@ int LineSeeker::outstandingRequests() {
 /* 7.....................xnew-1/2*d, xnew+1/2*d, xnew+d, xnew+3/2*d,    */
 /*                       xnew+2*d, xnew+4*d, xnew+8*d                   */
 /* and so further. (THLTH 29.08.01)                                     */
-int LineSeeker::doLineseek(const vector& xold, const vector& xnew,
+int LineSeeker::doLineseek(const Vector& xold, const Vector& xnew,
   double fnew, NetInterface *netI) {
 
   int i, j, k, l;
@@ -44,11 +44,11 @@ int LineSeeker::doLineseek(const vector& xold, const vector& xnew,
   if (numberOfHosts == 0)
     numberOfHosts = 1;
 
-  vector d;
-  vector z(numvar);
+  Vector d;
+  Vector z(numvar);
   d = xnew - xold;
-  vector upper(numvar);
-  vector lower(numvar);
+  Vector upper(numvar);
+  Vector lower(numvar);
   upper = netI->getUpperScaleConstant();
   lower = netI->getLowerScaleConstant();
   f = fnew;

@@ -70,7 +70,7 @@ void NetInterface::setVector(InitialInputFile* data) {
   int i, j;
   assert(numVarInDataGroup > 0);
   assert(data->numVariables() == numVarToSend);
-  vector tempVector(numVarInDataGroup);
+  Vector tempVector(numVarInDataGroup);
   if ((data->repeatedValuesFileFormat()) || (numVarInDataGroup == numVarToSend)) {
     assert(numVarInDataGroup == numVarToSend);
     for (i = 0; i < numVarInDataGroup; i++)
@@ -117,12 +117,12 @@ void NetInterface::setNumVars(InitialInputFile* data) {
 void NetInterface::setOptInfo(InitialInputFile* data) {
   int i, j;
   setNumVars(data);
-  vector xvec(numVarInDataGroup);
-  vector low(numVarInDataGroup);
-  vector upp(numVarInDataGroup);
-  vector xfull(numVarToSend);
-  vector lowfull(numVarToSend);
-  vector uppfull(numVarToSend);
+  Vector xvec(numVarInDataGroup);
+  Vector low(numVarInDataGroup);
+  Vector upp(numVarInDataGroup);
+  Vector xfull(numVarToSend);
+  Vector lowfull(numVarToSend);
+  Vector uppfull(numVarToSend);
   int* xind;
   xind = new int[numVarToSend];
 
@@ -166,7 +166,7 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
     initialX = xvec;
   } else {
     scaler = new DataScaler();
-    vector temp(numVarInDataGroup);
+    Vector temp(numVarInDataGroup);
     temp.setValue(1.0);
     upperScale = temp;
     temp.setValue(-1.0);

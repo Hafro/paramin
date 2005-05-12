@@ -20,7 +20,7 @@ double Armijo::getAlpha() {
 
 int Armijo::conditionSatisfied(double y) {
   int returnID = net->getReceiveID();
-  vector temp(1);
+  Vector temp(1);
   temp = (net->getX(returnID));
   if ((initialf - y) >= (-sigma * temp[0] * df))
     return 1;
@@ -28,8 +28,8 @@ int Armijo::conditionSatisfied(double y) {
     return 0;
 }
 
-void Armijo::doArmijo(const vector& v1, double fx, double dery,
-  const vector& h, NetInterface *netI, double s1) {
+void Armijo::doArmijo(const Vector& v1, double fx, double dery,
+  const Vector& h, NetInterface *netI, double s1) {
 
   int cond_satisfied;
   alpha = 0.0;
@@ -66,7 +66,7 @@ int Armijo::computeConditionFunction() {
   int counter = net->getNumDataItemsSet();
   int newreturns = net->getNumDataItemsAnswered();
   double y;
-  vector temp;
+  Vector temp;
 
   returnID = net->getReceiveID();
   if (returnID >= 0) {
@@ -120,7 +120,7 @@ void Armijo::prepareNewLineSearch() {
     cerr << "Error in linesearch - bad derivative\n";
     net->stopUsingDataGroup();
   }
-  vector tempx(1);
+  Vector tempx(1);
   tempx[0] = 0.0;
   net->setDataPair(tempx, initialf);
 }
@@ -128,7 +128,7 @@ void Armijo::prepareNewLineSearch() {
 void Armijo::initiateAlphas() {
   int i = net->getTotalNumProc();
   int j;
-  vector tempx(1);
+  Vector tempx(1);
   assert(beta > 0.0);
   assert(beta <= 0.5);
   for (j = 0; j < i; j++) {
@@ -161,7 +161,7 @@ int Armijo::outstandingRequests() {
 }
 
 int Armijo::setData() {
-  vector tempx(1);
+  Vector tempx(1);
   int counter = net->getNumDataItemsSet() - 1;
   double a = pow(beta, counter) * s;
   tempx[0] = a;

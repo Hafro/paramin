@@ -5,7 +5,7 @@ DataConverter::DataConverter() {
   numVarTotal = -1;
 }
 
-void DataConverter::setInitialData(int* xi, const vector& xr) {
+void DataConverter::setInitialData(int* xi, const Vector& xr) {
   assert(xr.dimension() > 0);
   int i;
   numVarTotal = xr.dimension();
@@ -27,11 +27,11 @@ DataConverter::~DataConverter() {
   }
 }
 
-vector DataConverter::convertX(const vector& v1) {
+Vector DataConverter::convertX(const Vector& v1) {
   assert(numVarTotal > 0);
   int i, j = 0;
   int numVar = v1.dimension();
-  vector vec(numVarTotal);
+  Vector vec(numVarTotal);
   for (i = 0; i < numVarTotal; i++) {
     if (xind[i] == 1) {
       if (j >= numVar) {
@@ -50,13 +50,13 @@ int DataConverter::getNumVarTotal() {
   return numVarTotal;
 }
 
-vector DataConverter::getXFull() {
+Vector DataConverter::getXFull() {
   return xfullraw;
 }
 
-vector DataConverter::getOptInfo() {
+Vector DataConverter::getOptInfo() {
   int i;
-  vector vec(numVarTotal);
+  Vector vec(numVarTotal);
   if (numVarTotal > 0) {
     for (i = 0; i < numVarTotal; i++)
       vec[i] = xind[i];

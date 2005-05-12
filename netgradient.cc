@@ -12,7 +12,7 @@ NetGradient::NetGradient(int numVars) {
   delta = 0.0001;
   numVar = numVars;
   normgrad = -1.0;
-  vector tempVec(numVars);
+  Vector tempVec(numVars);
   grad = tempVec;
   diagHess = tempVec;
   deltavec = tempVec;
@@ -28,7 +28,7 @@ void NetGradient::initializeDiagonalHessian() {
     diagHess[i]= -1.0;
 }
 
-void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
+void NetGradient::setXVectors(const Vector& x, double f, NetInterface* netInt) {
   int i;
   double deltai;
   int numberOfx = 0;
@@ -46,7 +46,7 @@ void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
   //netInt->setX(x);
 
   // compute x + hi * ei for all i
-  vector tempVec;
+  Vector tempVec;
   tempVec = x;
   for (i = 0; i < numVar; i++) {
     deltai = deltavec[i] * (1.0 + absolute(tempVec[i]));
@@ -68,7 +68,7 @@ void NetGradient::setXVectors(const vector& x, double f, NetInterface* netInt) {
   }
 }
 
-int NetGradient::computeGradient(NetInterface* net, const vector& x, double f, int difficultgradient) {
+int NetGradient::computeGradient(NetInterface* net, const Vector& x, double f, int difficultgradient) {
 
   difficult = 0;
   difficultgrad = difficultgradient;
@@ -152,7 +152,7 @@ double NetGradient::getBaseFX() {
   return fx0;
 }
 
-vector NetGradient::getDiagonalHessian() {
+Vector NetGradient::getDiagonalHessian() {
   return diagHess;
 }
 
@@ -160,7 +160,7 @@ double NetGradient::getNormGrad() {
   return normgrad;
 }
 
-vector NetGradient::getGradient() {
+Vector NetGradient::getGradient() {
   return grad;
 }
 

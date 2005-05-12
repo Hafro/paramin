@@ -16,17 +16,17 @@ private:
   /**
    * \brief initial values for vector
    */
-  vector xfullraw;  
+  Vector xfullraw;  
   int* xind;
   int numVarTotal;
 public:
   DataConverter();
   ~DataConverter();
-  void setInitialData(int* xi, const vector& xr);
-  vector getXFull();
+  void setInitialData(int* xi, const Vector& xr);
+  Vector getXFull();
   int getNumVarTotal();
-  vector convertX(const vector& v1);
-  vector getOptInfo();
+  Vector convertX(const Vector& v1);
+  Vector getOptInfo();
 };
 
 #endif

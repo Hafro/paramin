@@ -4,7 +4,7 @@
 // functions for class ParaminBFGS
 // ********************************************************
 ParaminBFGS::ParaminBFGS(NetInterface* netInt) : ParaminSearch(netInt) {
-  vector temp(numvar);
+  Vector temp(numvar);
   lineS = new Armijo();   // use lineS to do linesearch
   grad = new NetGradient(numvar);            // use grad to compute gradient
   deltax = temp;                          // xi-xim1
@@ -220,7 +220,7 @@ void ParaminBFGS::UpdateXandGrad() {
   int i;
   double xi;
   normdeltax = 0.0;
-  vector temp(lineS->getBestX());
+  Vector temp(lineS->getBestX());
   deltax = (temp - bestx);
   bestx = temp;
   bestf = lineS->getBestF();
@@ -235,8 +235,8 @@ int ParaminBFGS::bfgsUpdate() {
    /* prepare the BFGS update */
   double deltaxg = 0.0;
   double deltaghg = 0.0;
-  vector hg(numvar);
-  vector deltag(numvar);
+  Vector hg(numvar);
+  Vector deltag(numvar);
   normx = 0.0;
 
   for (i = 0; i < numvar; i++) {
@@ -313,8 +313,8 @@ double ParaminBFGS::GetS(int get) {
   double b = 1.e69;
   double a = -1.e69;
 
-  vector alpha_l(numvar);
-  vector alpha_u(numvar);
+  Vector alpha_l(numvar);
+  Vector alpha_u(numvar);
 
   int i;
   for (i = 0; i < numvar; i++) {
@@ -388,7 +388,7 @@ void ParaminBFGS::UpdateValues() {
   error = normgrad / (1.0 + absolute(bestf));
 }
 
-void ParaminBFGS::doSearch(const vector& startx, double startf) {
+void ParaminBFGS::doSearch(const Vector& startx, double startf) {
   int rounds = 0;
   int numrounds = 0;
 

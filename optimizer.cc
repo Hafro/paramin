@@ -145,7 +145,7 @@ void Optimizer::OptimizeFunc() {
   }
 }
 
-const vector& Optimizer::getBestX(NetInterface* net) {
+const Vector& Optimizer::getBestX(NetInterface* net) {
   return net->prepareVectorToSend(startx);
 }
 
@@ -186,7 +186,7 @@ void Optimizer::printResult(NetInterface* net) {
         outfile << "; BFGS stopped because the maximum number of function evaluations was reached\n";
     }
     outfile  << "; The final likelihood value was " << startf << "\nswitch\tvalue\t\tlower\tupper\toptimise\n";
-    vector output;
+    Vector output;
     output = this->getBestX(net);
     for (i = 0; i < output.dimension(); i++) {
       outfile << net->getSwitches()[i] << TAB << setw(12) << setprecision(8)

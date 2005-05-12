@@ -4,12 +4,12 @@
 #include "pvm3.h"
 #include "netdata.h"
 #include "pvmconstants.h"
-#include "vectorofcharptr.h"
+#include "charptrvector.h"
 
 // AJ, 07.09.99
 /**
  * \class SlaveCommunication 
- * \brief The class SlaveCommunication handles netcommunication for a slave process communicating with a master process using PVM. It provides functions for starting/stopping communication with master and sending/receiving data to/from master. The class can receive data of the type: NetDataVariables and VectorOfCharPtr and send data of the type: NetDataResult. To successfully start netcommunication pvmd must be running on host and the process must have been spawned by a master process. 
+ * \brief The class SlaveCommunication handles netcommunication for a slave process communicating with a master process using PVM. It provides functions for starting/stopping communication with master and sending/receiving data to/from master. The class can receive data of the type: NetDataVariables and CharPtrVector and send data of the type: NetDataResult. To successfully start netcommunication pvmd must be running on host and the process must have been spawned by a master process. 
  */
 
 class SlaveCommunication {
@@ -35,7 +35,7 @@ private:
   NetDataVariables* netDataVar;
   double* netDataDouble;
   struct timeval tmout;
-  VectorOfCharPtr netDataStr;
+  CharPtrVector netDataStr;
 
 public:
   SlaveCommunication();

@@ -38,11 +38,11 @@ private:
   /**
    * \brief  xset = bestx with one parameter, p, changed: xset[p] = bestx[p] + delta[p]
    */
-  vector xset;           
+  Vector xset;           
   /**
    * \brief last best point.
    */
-  vector xbefore;    
+  Vector xbefore;    
   /**
    * \brief last best f-value
    */  
@@ -63,11 +63,11 @@ private:
   /**
    * \brief the changes tried in best_nearby.
    */
-  vector delta;      
+  Vector delta;      
   /**
    * \brief the opt value when xset added to datagroup.
    */
-  vector previousf;    
+  Vector previousf;    
   /**
    * \brief number of hosts available.
    */
@@ -87,7 +87,7 @@ public:
   ParaminHooke(NetInterface* netInt);
   virtual ~ParaminHooke();
   void Read(CommentStream& infile, char* text);
-  void doSearch(const vector& startx, double startf);
+  void doSearch(const Vector& startx, double startf);
   void bestNearby();
   int SetPoint( int n);
   int MyDataGroup();

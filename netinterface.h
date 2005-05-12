@@ -51,24 +51,24 @@ private:
   /**
    * \brief initial starting point for sending data
    */
-  vector initialX;            
+  Vector initialX;            
   int receiveID;
   int numVarInDataGroup;
   int numVarToSend;
-  vector h;
-  vector alphaX;
-  vector upperScale;
-  vector lowerScale;
-  vector opt;
-  vector tmp;  
-  vector xUnscale;  
-  vector xConvert;  
-  vector xToSend;  
+  Vector h;
+  Vector alphaX;
+  Vector upperScale;
+  Vector lowerScale;
+  Vector opt;
+  Vector tmp;  
+  Vector xUnscale;  
+  Vector xConvert;  
+  Vector xToSend;  
   int isAlpha;
   int toscale;
-  VectorOfCharPtr switches;
-  vector upperBound;
-  vector lowerBound;
+  CharPtrVector switches;
+  Vector upperBound;
+  Vector lowerBound;
 public:
   NetInterface(NetCommunication* netComm, ProcessManager* pm, CommandLineInfo* commandline);
   ~NetInterface();
@@ -110,23 +110,23 @@ public:
   // ******************************************************
   void startNewDataGroup();
   void startNewDataGroup(int numInGroup);
-  void startNewDataGroup(const vector& x1, const vector& h1);
-  void startNewDataGroup(int numInGroup, const vector& x1, const vector& h1);
+  void startNewDataGroup(const Vector& x1, const Vector& h1);
+  void startNewDataGroup(int numInGroup, const Vector& x1, const Vector& h1);
   void stopUsingDataGroup();
   // ******************************************************
   // Functions for setting/getting netdata
   // ******************************************************
-  void setX(const vector& x1);
-  void setXFirstToSend(const vector& x1);
-  void setDataPair(const vector& x1, double fx);
-  vector getX(int id);
+  void setX(const Vector& x1);
+  void setXFirstToSend(const Vector& x1);
+  void setDataPair(const Vector& x1, double fx);
+  Vector getX(int id);
   double getY(int id);
-  vector getNextAnswerX();
+  Vector getNextAnswerX();
   double getNextAnswerY();
-  vector getInitialX();
-  void setBestX(const vector& x);
-  vector getUpperScaleConstant();
-  vector getLowerScaleConstant();
+  Vector getInitialX();
+  void setBestX(const Vector& x);
+  Vector getUpperScaleConstant();
+  Vector getLowerScaleConstant();
   // ******************************************************
   // Functions for getting/setting information about datagroup
   // ******************************************************
@@ -141,16 +141,16 @@ public:
   int dataGroupFull();
   int allSent();
   // ******************************************************
-  // Functions for data converting and data scaling vectors
+  // Functions for data converting and data scaling Vectors
   // ******************************************************
-  const vector& makeVector(const vector& vec);
-  const vector& unscaleX(const vector& vec);
-  const vector& convertX(const vector& vec);
-  const vector& prepareVectorToSend(const vector& vec);
-  const vector& getLowerbound();
-  const vector& getUpperbound();
-  const vector& getOptInfo();
-  VectorOfCharPtr getSwitches();
+  const Vector& makeVector(const Vector& vec);
+  const Vector& unscaleX(const Vector& vec);
+  const Vector& convertX(const Vector& vec);
+  const Vector& prepareVectorToSend(const Vector& vec);
+  const Vector& getLowerbound();
+  const Vector& getUpperbound();
+  const Vector& getOptInfo();
+  CharPtrVector getSwitches();
   // ******************************************************
   // Input and output functions for data
   // ******************************************************

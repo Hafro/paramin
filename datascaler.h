@@ -25,21 +25,21 @@
 class DataScaler {
 private:
   int numVar;
-  vector lbd;
-  vector ubd;
-  vector penalty;
+  Vector lbd;
+  Vector ubd;
+  Vector penalty;
 public:
   DataScaler();
   ~DataScaler();
-  void setInitialData(const vector& l, const vector& u);
-  double scaleResult(double y, int id, const vector& v1);
+  void setInitialData(const Vector& l, const Vector& u);
+  double scaleResult(double y, int id, const Vector& v1);
   double scale(double p, int i);
-  vector scaleX(const vector& v1);
+  Vector scaleX(const Vector& v1);
   double unscale(double p, int i);
-  vector unscaleX(const vector& v1);
+  Vector unscaleX(const Vector& v1);
   void setPenalty(int numIndexes);
-  vector getLower();
-  vector getUpper();
+  Vector getLower();
+  Vector getUpper();
   int getNumVariables();
 };
 

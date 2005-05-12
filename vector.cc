@@ -1,11 +1,11 @@
 #include "vector.h"
 
-vector::vector() {
+Vector::Vector() {
   p = NULL;
   dim = 0;
 }
 
-vector::vector(int n) {
+Vector::Vector(int n) {
   int i;
   if (n < 1) {
     cerr << "Error in vector - invalid number of parameters in vector\n";
@@ -17,7 +17,7 @@ vector::vector(int n) {
     p[i] = 0.0;
 }
 
-vector::vector(DFP* f, int numVar) {
+Vector::Vector(DFP* f, int numVar) {
   int i;
   if (numVar < 1) {
     cerr << "Error in vector - invalid number of parameters in vector\n";
@@ -29,7 +29,7 @@ vector::vector(DFP* f, int numVar) {
     p[i] = f[i];
 }
 
-vector::vector(const vector& v) {
+Vector::Vector(const Vector& v) {
   int i;
   if (v.dim == 0) {
     p = NULL;
@@ -45,7 +45,7 @@ vector::vector(const vector& v) {
   }
 }
 
-vector::~vector() {
+Vector::~Vector() {
   if (dim > 0) {
     delete[] p;
     p = NULL;
@@ -53,7 +53,7 @@ vector::~vector() {
   }
 }
 
-vector& vector::operator = (const vector& v) {
+Vector& Vector::operator = (const Vector& v) {
   int i;
   if (dim > 0) {
     delete[] p;
@@ -76,59 +76,59 @@ vector& vector::operator = (const vector& v) {
 }
 
 // Vector addition, subtraction and multiplication
-vector operator + (const vector& v1, const vector& v2) {
+Vector operator + (const Vector& v1, const Vector& v2) {
   assert(v1.dim == v2.dim);
   assert(v1.dim > 0);
 
   int i;
-  vector result(v1.dim);
+  Vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] + v2.p[i];
   return result;
 }
 
-vector operator - (const vector& v1, const vector& v2) {
+Vector operator - (const Vector& v1, const Vector& v2) {
   assert(v1.dim == v2.dim);
   assert(v1.dim > 0);
 
   int i;
-  vector result(v1.dim);
+  Vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] - v2.p[i];
   return result;
 }
 
-vector operator - (const vector& v1) {
+Vector operator - (const Vector& v1) {
   assert(v1.dim > 0);
 
   int i;
-  vector result(v1.dim);
+  Vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = -v1.p[i];
   return result;
 }
 
-vector operator * (DFP a, const vector& v1) {
+Vector operator * (DFP a, const Vector& v1) {
   assert(v1.dim > 0);
 
   int i;
-  vector result(v1.dim);
+  Vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = a * v1.p[i];
   return result;
 }
 
-vector operator * (const vector& v1, DFP a) {
+Vector operator * (const Vector& v1, DFP a) {
   assert(v1.dim > 0);
 
   int i;
-  vector result(v1.dim);
+  Vector result(v1.dim);
   for (i = 0; i < v1.dim; i++)
     result.p[i] = v1.p[i] * a;
   return result;
 }
 
-DFP operator * (const vector& v1, const vector& v2) {
+DFP operator * (const Vector& v1, const Vector& v2) {
   assert(v1.dim == v2.dim);
   assert(v1.dim > 0);
 
@@ -139,7 +139,7 @@ DFP operator * (const vector& v1, const vector& v2) {
   return result;
 }
 
-int operator < (const vector& v1, const vector& v2) {
+int operator < (const Vector& v1, const Vector& v2) {
   assert(v1.dim == v2.dim);
   assert(v1.dim > 0);
 
@@ -151,7 +151,7 @@ int operator < (const vector& v1, const vector& v2) {
   return 0;
 }
 
-int operator > (const vector& v1, const vector& v2) {
+int operator > (const Vector& v1, const Vector& v2) {
   assert(v1.dim == v2.dim);
   assert(v1.dim > 0);
 
@@ -163,7 +163,7 @@ int operator > (const vector& v1, const vector& v2) {
   return 0;
 }
 
-int operator == (const vector& v1, const vector& v2) {
+int operator == (const Vector& v1, const Vector& v2) {
   int i;
   if ((v1.dim == 0) && (v2.dim == 0)) {
     return 1;
@@ -180,11 +180,11 @@ int operator == (const vector& v1, const vector& v2) {
   }
 }
 
-int operator != (const vector& v1, const vector& v2) {
+int operator != (const Vector& v1, const Vector& v2) {
   return !(v1 == v2);
 }
 
-DFP& vector::operator [] (int i) const {
+DFP& Vector::operator [] (int i) const {
   assert(dim > 0);
   if ((i < 0) || (i >= dim)) {
     cerr << "Error in vector - invalid reference to vector\n";
@@ -193,7 +193,7 @@ DFP& vector::operator [] (int i) const {
   return (p[i]);
 }
 
-DFP vector::magnitude() {
+DFP Vector::magnitude() {
   assert(dim > 0);
   int i;
   DFP m = 0.0;
@@ -202,10 +202,10 @@ DFP vector::magnitude() {
   return sqrt(m);
 }
 
-vector normalize(vector& v1) {
+Vector normalize(Vector& v1) {
   assert(v1.dimension() > 0);
   int i;
-  vector newVector(v1.dimension());
+  Vector newVector(v1.dimension());
   DFP m = v1.magnitude();
   if (m == 0) {
     cerr << "Error in vector - cannot normalize vector with zero magnitude\n";
@@ -216,7 +216,7 @@ vector normalize(vector& v1) {
   return newVector;
 }
 
-istream& operator >> (istream& is, vector& v1) {
+istream& operator >> (istream& is, Vector& v1) {
   int i;
   char tmp; // = ' ';
   for (i = 0; i < v1.dim; i++) {
@@ -228,7 +228,7 @@ istream& operator >> (istream& is, vector& v1) {
   return is;
 }
 
-ostream& operator << (ostream& os, const vector& v) {
+ostream& operator << (ostream& os, const Vector& v) {
   int i;
   for (i = 0; i < v.dim; i++)
     os << v[i] << sep;
@@ -236,11 +236,11 @@ ostream& operator << (ostream& os, const vector& v) {
   return os;
 }
 
-int vector::dimension() const {
+int Vector::dimension() const {
   return dim;
 }
 
-void vector::setValue(DFP f) {
+void Vector::setValue(DFP f) {
   int i;
   for (i = 0; i < dim; i++)
     p[i] = f;

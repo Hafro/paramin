@@ -7,12 +7,12 @@
 #include "pvmconstants.h"
 #include "vector.h"
 #include "commandlineinfo.h"
-#include "vectorofcharptr.h"
+#include "charptrvector.h"
 
 // AJ, 26.02.99
 /**
  * \class NetCommunication
- * \brief The class NetCommunication provides functions for a master process to handle netcommunication with its slave processes using Parallell Virtual Machine(PVM) for actual communication. To successfully start netcommunication with a group of processes, pvmd must have been started on all hosts participating in PVM.NetCommunication includes functions to enroll in PVM providing pvmd is running on all machines participating in PVM, spawning new processes and halting running processes. Maximum number of hosts which can participate in pvm is equal to MAXHOSTS. It also includes functions to send data of type NetDataVariables and VectorOfCharPtr to a spawned process and receiving data of type NetDataResult from a spawned process. functions which return information about the status of netcommunication 
+ * \brief The class NetCommunication provides functions for a master process to handle netcommunication with its slave processes using Parallell Virtual Machine(PVM) for actual communication. To successfully start netcommunication with a group of processes, pvmd must have been started on all hosts participating in PVM.NetCommunication includes functions to enroll in PVM providing pvmd is running on all machines participating in PVM, spawning new processes and halting running processes. Maximum number of hosts which can participate in pvm is equal to MAXHOSTS. It also includes functions to send data of type NetDataVariables and CharPtrVector to a spawned process and receiving data of type NetDataResult from a spawned process. functions which return information about the status of netcommunication 
  */
 
 class NetCommunication {
@@ -84,7 +84,7 @@ protected:
   int DATANOTSENT;
 
 public:
-  NetCommunication(const VectorOfCharPtr& funcNameArgs, int nh);
+  NetCommunication(const CharPtrVector& funcNameArgs, int nh);
   virtual ~NetCommunication();
   int startPVM();
   int spawnProgram();
@@ -144,10 +144,10 @@ public:
   int checkProcessByTid(int tidToCheck, int processNum);
   int sendData(NetDataVariables* sendP, int processID, int dataID);
 
-  int sendData(VectorOfCharPtr sendP);
-  int sendData(VectorOfCharPtr sendP, int processID);
-  int sendBoundData(vector sendP);
-  int sendBoundData(vector sendP, int processID);
+  int sendData(CharPtrVector sendP);
+  int sendData(CharPtrVector sendP, int processID);
+  int sendBoundData(Vector sendP);
+  int sendBoundData(Vector sendP, int processID);
 
 };
 

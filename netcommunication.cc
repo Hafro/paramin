@@ -1,6 +1,6 @@
 #include "netcommunication.h"
 
-NetCommunication::NetCommunication(const VectorOfCharPtr& funcNameArgs, int nh) {
+NetCommunication::NetCommunication(const CharPtrVector& funcNameArgs, int nh) {
   // pvmConst contains information about which tags and dataencoding to use
   pvmConst = new PVMConstants();
   nHostInn = nh;
@@ -967,7 +967,7 @@ int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
-int NetCommunication::sendData(VectorOfCharPtr sendP) {
+int NetCommunication::sendData(CharPtrVector sendP) {
   int i, info;
 
   if (NETSTARTED == 1) {
@@ -1002,7 +1002,7 @@ int NetCommunication::sendData(VectorOfCharPtr sendP) {
   }
 }
 
-int NetCommunication::sendData(VectorOfCharPtr sendP, int processID) {
+int NetCommunication::sendData(CharPtrVector sendP, int processID) {
   int i, info;
 
   if (NETSTARTED == 1) {
@@ -1038,7 +1038,7 @@ int NetCommunication::sendData(VectorOfCharPtr sendP, int processID) {
   }
 }
 
-int NetCommunication::sendBoundData(vector sendP) {
+int NetCommunication::sendBoundData(Vector sendP) {
   int i, info;
   double* temp;
 
@@ -1077,7 +1077,7 @@ int NetCommunication::sendBoundData(vector sendP) {
   }
 }
 
-int NetCommunication::sendBoundData(vector sendP, int processID) {
+int NetCommunication::sendBoundData(Vector sendP, int processID) {
   int i, info;
   double* temp;
 

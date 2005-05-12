@@ -5,36 +5,36 @@
 
 typedef double DFP;
 
-/** \class vector 
-    This class implements a vector[0..dim-1] of type DFP. It facilitates vector manipulation. Class vector contains functions for vector output and input, vector comparison functions, functions for addition, subtraction and mulitplication, functions for finding vector magnitude and normalize vector 
+/** \class Vector 
+    This class implements a Vector[0..dim-1] of type DFP. It facilitates Vector manipulation. Class Vector contains functions for Vector output and input, Vector comparison functions, functions for addition, subtraction and mulitplication, functions for finding Vector magnitude and normalize Vector 
 */
 
-class vector {
+class Vector {
 public:
   /**
    * \brief This is the default constructor
    */
-  vector();
+  Vector();
   /**
    * \brief This constructor initializes a Vector of value zero
    * \param n is the size of the Vector
    */
-  vector(int n);
+  Vector(int n);
   /**
    * \brief This constructor initializes a Vector with f
    * \param numVar is the size of the Vector
    * \param f is a double* of size numVar
    */
-  vector(DFP* f, int numVar);
+  Vector(DFP* f, int numVar);
   /**
    * \brief This constructor initializes a Vector with values from another Vector object
    * \param v is a Vector
    */
-  vector(const vector& v);
+  Vector(const Vector& v);
   /**
    * \brief This is the default destructor
    */
-  ~vector();
+  ~Vector();
   /**
    * \brief Returns the length of the Vector  
    */
@@ -44,46 +44,46 @@ public:
    * \param v1 
    * \param v2
    */
-  friend vector operator + (const vector& v1, const vector& v2);
+  friend Vector operator + (const Vector& v1, const Vector& v2);
   /**
    * \brief Returns the subtraction of v2 to v1 (positionwise)
    * \param v1 is the Vector subtracted from  
    * \param v2 is the subtracting Vector 
    */
-  friend vector operator - (const vector& v1, const vector& v2);
+  friend Vector operator - (const Vector& v1, const Vector& v2);
   /**
    * \brief Returns -V1
    * \param v1 
    */  
-  friend vector operator - (const vector& v1);
+  friend Vector operator - (const Vector& v1);
   /**
    * \brief Returns a*v1
    * \param a is the scalar
    */
-  friend vector operator * (DFP a, const vector& v1);
+  friend Vector operator * (DFP a, const Vector& v1);
   /**
    * \brief Returns a*v1
    * \param a is the scalar
    */
-  friend vector operator * (const vector& v1, DFP a);
+  friend Vector operator * (const Vector& v1, DFP a);
   /**
    * \brief Returns the dot product of v1 and v2
    * \param v1 a Vector
    * \param v2 a Vector
    */
-  friend DFP operator * (const vector& v1, const vector& v2);
+  friend DFP operator * (const Vector& v1, const Vector& v2);
 
-  friend int operator < (const vector& v1, const vector& v2);
-  friend int operator > (const vector& v1, const vector& v2);
-  friend int operator == (const vector& v1, const vector& v2);
-  friend int operator != (const vector& v1, const vector& v2);
-  vector& operator = (const vector& v);
+  friend int operator < (const Vector& v1, const Vector& v2);
+  friend int operator > (const Vector& v1, const Vector& v2);
+  friend int operator == (const Vector& v1, const Vector& v2);
+  friend int operator != (const Vector& v1, const Vector& v2);
+  Vector& operator = (const Vector& v);
   DFP& operator [] (int i) const;
   void setValue(DFP f);
   DFP magnitude();
-  friend vector normalize(vector& v1);
-  friend ostream& operator << (ostream& os, const vector& v1);
-  friend istream& operator >> (istream& is, vector& v1);
+  friend Vector normalize(Vector& v1);
+  friend ostream& operator << (ostream& os, const Vector& v1);
+  friend istream& operator >> (istream& is, Vector& v1);
 private:
   DFP* p;
   int dim;

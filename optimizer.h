@@ -18,7 +18,7 @@ public:
    */
   void OptimizeFunc();
   void printResult(NetInterface* net);
-  const vector& getBestX(NetInterface* net);
+  const Vector& getBestX(NetInterface* net);
   double getBestF();
   /**
    * \brief This is the file reader
@@ -44,7 +44,7 @@ private:
   /**
    *\brief The starting point of the optimisation
    */
-  vector startx;
+  Vector startx;
   /**
    * \brief The f-value at startx
    */
