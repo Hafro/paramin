@@ -40,17 +40,17 @@ void NetInterface::readInputFile(char* initvalsFileName) {
   InitialInputFile* readInput = new InitialInputFile(initvalsFileName);
   readInput->readFromFile();
 
-  if (readInput->readSwitches())
+  if (readInput->numSwitches() > 0)
     setSwitches(readInput);
 
-  if (readInput->repeatedValuesFileFormat() == 1) {
+  if (readInput->isRepeatedValues()) {
     // initvalsFile contains only vector values, no optimization info
     numVarInDataGroup = readInput->numVariables();
     numVarToSend = numVarInDataGroup;
     startNewDataGroup();
     setVector(readInput);
-    while (!readInput->reachedEndOfFile()) {
-      readInput->readVectorFromLine();
+    while (readInput->isDataLeft()) {
+      readInput->readNextLine();
       setVector(readInput);
     }
   } else {
@@ -63,7 +63,7 @@ void NetInterface::readInputFile(char* initvalsFileName) {
 void NetInterface::setSwitches(InitialInputFile* data) {
   int i;
   for (i = 0; i < data->numVariables(); i++)
-     switches.resize(1, data->Switches(i).getName());
+     switches.resize(1, data->getSwitch(i).getName());
 }
 
 void NetInterface::setVector(InitialInputFile* data) {
@@ -71,17 +71,17 @@ void NetInterface::setVector(InitialInputFile* data) {
   assert(numVarInDataGroup > 0);
   assert(data->numVariables() == numVarToSend);
   Vector tempVector(numVarInDataGroup);
-  if ((data->repeatedValuesFileFormat()) || (numVarInDataGroup == numVarToSend)) {
+  if ((data->isRepeatedValues()) || (numVarInDataGroup == numVarToSend)) {
     assert(numVarInDataGroup == numVarToSend);
     for (i = 0; i < numVarInDataGroup; i++)
-      tempVector[i] = data->Values(i);
+      tempVector[i] = data->getValue(i);
 
   } else {
     assert(numVarInDataGroup < numVarToSend);
     j = 0;
     for (i = 0; i < numVarToSend; i++) {
-      if (data->Optimise(i) == 1) {
-        tempVector[j] = data->Values(i);
+      if (data->getOptimise(i) == 1) {
+        tempVector[j] = data->getValue(i);
         j++;
       }
     }
@@ -104,7 +104,7 @@ void NetInterface::setNumVars(InitialInputFile* data) {
   }
   assert(numVarInDataGroup == 0);
   for (i = 0; i < numVarToSend; i++) {
-    if (data->Optimise(i) == 1)
+    if (data->getOptimise(i) == 1)
       numVarInDataGroup++;
   }
 
@@ -129,9 +129,9 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
   if (numVarInDataGroup == numVarToSend) {
     // only need lower, upper and xvec
     for (i = 0; i < numVarInDataGroup; i++) {
-      xvec[i] = data->Values(i);
-      low[i] = data->Lower(i);
-      upp[i] = data->Upper(i);
+      xvec[i] = data->getValue(i);
+      low[i] = data->getLower(i);
+      upp[i] = data->getUpper(i);
     }
     uppfull = upp;
     lowfull = low;
@@ -139,14 +139,14 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
   } else {
     j = 0;
     for (i = 0; i < numVarToSend; i++) {
-      xfull[i] = data->Values(i);
-      xind[i] = data->Optimise(i);
-      lowfull[i] = data->Lower(i);
-      uppfull[i] = data->Upper(i);
+      xfull[i] = data->getValue(i);
+      xind[i] = data->getOptimise(i);
+      lowfull[i] = data->getLower(i);
+      uppfull[i] = data->getUpper(i);
       if (xind[i] == 1) {
-        xvec[j] = data->Values(i);
-        low[j] = data->Lower(i);
-        upp[j] = data->Upper(i);
+        xvec[j] = data->getValue(i);
+        low[j] = data->getLower(i);
+        upp[j] = data->getUpper(i);
         j++;
       }
     }
