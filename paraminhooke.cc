@@ -4,19 +4,20 @@
 // functions for class ParaminHooke
 // ********************************************************
 ParaminHooke::ParaminHooke(NetInterface* netInt) : ParaminSearch(netInt) {
-  numiters = 0;
+  iters = 0;
   returnID = -1;
   lambda = 0;
   rho = 0.5;
   epsilon = 1e-4;
   maxiterations = 1000;
-  converged = 0;
+  // already set in optinfo
+  // converge = 0;
 }
 
 ParaminHooke::~ParaminHooke() {
 }
 
-void ParaminHooke::Read(CommentStream& infile, char* text)  {
+void ParaminHooke::read(CommentStream& infile, char* text)  {
   int i = 0;
 
   while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
@@ -59,39 +60,57 @@ void ParaminHooke::Read(CommentStream& infile, char* text)  {
   }
 }
 
-void ParaminHooke::doSearch(const Vector& startx, double startf) {
+void ParaminHooke::OptimiseLikelihood() {
   double steplength;
   int i, keep;
-
+  
   NumberOfHosts = net->getTotalNumProc();
   int maxnumindatagroup = numvar*10;
-  Vector tempV(maxnumindatagroup);
-  previousf = tempV;
-  par = new int[maxnumindatagroup];
-  xbefore = startx;
-  fbefore = startf;
-  bestx = startx;
-  bestf = startf;
-  Vector tempVec(numvar);
-  delta = tempVec;
+  // maybe not needed can do resize on the go????
+  // Vector tempV(maxnumindatagroup);
+  //previousf = tempV;
+  previousf.Reset();
+  previousf.resize(maxnumindatagroup, 0.0);
+  //par = new int[maxnumindatagroup];
+  par.resize(maxnumindatagroup, 0);
+  xbefore = net->getInitialX();
+  fbefore = net->getScore();
+  bestx = xbefore;
+  bestf = fbefore;
+ 
+  cout << "in opt hooke and Jeeves best x is " << endl;
+  for (i = 0; i < bestx.Size(); i++)  {
+    cout << bestx[i] << " ";
+  };
+  cout << endl;
+  cout << "in opt hooke and jeeves best f is " << bestf << endl;
+ 
+  delta.Reset();
+  delta.resize(numvar, 0.0);
   int numFromLineSeek;
-  change = new int[numvar];
-  param = new int[numvar];
+  // change = new int[numvar];
+  //  param = new int[numvar];
+  change.Reset();
+  change.resize(numvar, 0);
+  param.Reset();
+  param.resize(numvar,0);
   // The original definition of the delta array has not been changed, even
   // though we're sometimes working with scaled x-values.
   for (i = 0; i < numvar; i++) {
-    delta[i] = absolute(bestx[i] * rho);
+    delta[i] = fabs(bestx[i] * rho);
     if (delta[i] == 0.0)
       delta[i] = rho;
     param[i] = i;
   }
 
   steplength = ((lambda < verysmall) ? rho : lambda);
+  
   lineS = new LineSeeker();
-
-  while ((numiters < maxiterations) && (steplength > epsilon)) {
+ 
+  while ((iters < maxiterations) && (steplength > epsilon)) {
     /* randomize the order of the parameters once in a while, to avoid */
     /* the order having an influence on which changes are accepted.    */
+      
     randomOrder(param);
 
     /* find best new point, one coord at a time */
@@ -101,20 +120,22 @@ void ParaminHooke::doSearch(const Vector& startx, double startf) {
     
     /* if we made some improvements, pursue that direction */
     keep = 1;
-    while ((bestf < fbefore) && (keep == 1) && (numiters < maxiterations)) {
+    while ((bestf < fbefore) && (keep == 1) && (iters < maxiterations)) {
+	// cout << "some improvement from bestNearby" << endl;
       for (i = 0; i < numvar; i++) {
         /* firstly, arrange the sign of delta[] */
         if (bestx[i] <= xbefore[i])
-          delta[i] = 0.0 - absolute(delta[i]);
+          delta[i] = 0.0 - fabs(delta[i]);
         else
-          delta[i] = absolute(delta[i]);
+          delta[i] = fabs(delta[i]);
       }
 
       numFromLineSeek = lineS->doLineseek(xbefore, bestx, bestf, net);
-      numiters += numFromLineSeek;
+      iters += numFromLineSeek;
       xbefore = bestx;
       fbefore = bestf;
       bestf = lineS->getBestF();
+      cout << "hooke and jeeves best f " << bestf << endl;
       bestx = lineS->getBestX();
 
       // if the further (optimistic) move was bad
@@ -124,7 +145,7 @@ void ParaminHooke::doSearch(const Vector& startx, double startf) {
 
       } else {
         // else, look around from that point
-        if (numiters < maxiterations) {
+        if (iters < maxiterations) {
           xbefore = bestx;
           fbefore = bestf;
           bestNearby();
@@ -138,7 +159,7 @@ void ParaminHooke::doSearch(const Vector& startx, double startf) {
             for (i = 0; i < numvar; i++) {
               keep = 1;
               // AJ changing to be the same check as in gadget..
-              if (absolute(bestx[i] - xbefore[i]) > rathersmall)
+              if (fabs(bestx[i] - xbefore[i]) > rathersmall)
                 break;
               else
                 keep = 0;
@@ -154,37 +175,42 @@ void ParaminHooke::doSearch(const Vector& startx, double startf) {
         delta[i] *= rho;
     }
   }
-
-  cout << "\nStopping Hooke and Jeeves\n\nThe optimisation stopped after " << numiters
+  // Must look into this cout..  things.. should be handle...
+  cout << "\nStopping Hooke and Jeeves\n\nThe optimisation stopped after " << iters
     << " iterations (max " << maxiterations << ")\nThe steplength was reduced to "
     << steplength << " (min " << epsilon << ")\n";
 
-  if (numiters >= maxiterations)
+  if (iters >= maxiterations)
     cout << "The optimisation stopped because the maximum number of iterations" << "\nwas reached and NOT because an optimum was found for this run\n";
   else {
     cout << "The optimisation stopped because an optimum was found for this run\n";
-    converged = 1;
+    converge = 1;
   }
   delete lineS;
-  delete[] change;
-  delete[] param;
-  delete[] par;
-  net->setBestX(bestx);
+  // delete[] change;
+  // delete[] param;
+  // delete[] par;
+  net->setInitialScore(bestx, bestf);
+  score = bestf;
 }
 
 // JMB - CONDOR version is different ...
 void ParaminHooke::bestNearby() {
   double ftmp;
-  int i;
+  int i, j;
   int withinbounds;
   int newopt;
   net->startNewDataGroup(10 * numvar);
-
+ 
   for (i = 0; i < numvar; i++)
     change[i] = 0;
   numparamset = 0;
   i = 0;
   // sending as many points as there are processors in total.
+  // ************
+  // AJ if never within bound then will set numvar points!!!!
+  // 
+
   while ((i < NumberOfHosts) && (numparamset < numvar)) {
     withinbounds = SetPoint(param[numparamset]);
     if (withinbounds == 1) {
@@ -193,7 +219,6 @@ void ParaminHooke::bestNearby() {
     }
     numparamset++;
   }
-
   // send all available data to all free hosts and then receive them
   // back one at a time, sending new points when possible. If point I was
   // trying to set was not within bound then nothing has been set and
@@ -201,15 +226,19 @@ void ParaminHooke::bestNearby() {
   net->sendToAllIdleHosts();
   while (net->getNumNotAns() > 0) {
     ReceiveValue();
-    if (numiters % 1000 == 0)
-      cout << "\nAfter " << numiters << " function evaluations, f(x) = " << bestf << " at\n" << bestx;
-
-    if (numiters < maxiterations) {
+    if (iters % 1000 == 0) {
+	cout << "\nAfter " << iters << " function evaluations, f(x) = " << bestf << " at\n"; 
+	  for (j = 0; j < bestx.Size(); j++) 
+	      cout << bestx[j] << sep;
+      cout << endl;
+    }
+    if (iters < maxiterations) {
       if (MyDataGroup()) {
         // Update the optimum if received a better value
         newopt = UpdateOpt();
-        if (!newopt)
+        if (!newopt) {
           SetPointNearby();
+	};
       }
       if (net->allSent())
         SetPointNextCoord();
@@ -228,15 +257,20 @@ void ParaminHooke::bestNearby() {
 
 int ParaminHooke::SetPoint(int n) {
   // return 0 and do nothing if the changes goes out of bounds.
-  Vector z(bestx);
+  DoubleVector z(bestx);
   double next = bestx[n] + delta[n];
   int numset;
-
-  if (next < lowerbound[n])
-    return 0;
-  else if (next > upperbound[n])
-    return 0;
+ 
+  if (next < lowerbound[n]) {
+      
+      return 0;
+  }
+  else if (next > upperbound[n]) {
+      
+      return 0;
+  }
   else {
+      
     numset = net->getNumDataItemsSet();
     z[n] = next;
     net->setX(z);
@@ -259,7 +293,7 @@ void ParaminHooke::ReceiveValue() {
   }
   returnID = net->getReceiveID();
   if (MyDataGroup()) {
-    numiters++;
+    iters++;
     freceive = net->getY(returnID);
   }
 }
@@ -298,4 +332,15 @@ void ParaminHooke::SetPointNextCoord()  {
       change[param[numparamset]]++;
     numparamset++;
   }
+}
+void ParaminHooke::Print(ofstream& outfile, int prec) {
+ outfile << "; Hooke & Jeeves algorithm ran for " << iters
+    << " function evaluations\n; and stopped when the likelihood value was "
+    << setprecision(prec) << score;
+  if (converge == -1)
+    outfile << "\n; because an error occured during the optimisation\n";
+  else if (converge == 1)
+    outfile << "\n; because the convergence criteria were met\n";
+  else
+    outfile << "\n; because the maximum number of function evaluations was reached\n";
 }

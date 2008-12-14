@@ -2,7 +2,7 @@
 #define netdatacontrol_h
 
 #include "paramin.h"
-#include "vector.h"
+#include "doublevector.h"
 
 /**
  * \class NetInfo
@@ -31,15 +31,15 @@ public:
 
 class Coordinates {
 private:
-  Vector x;
+  DoubleVector x;
   double y;
 public:
   Coordinates();
   ~Coordinates();
-  Vector getX();
+  const DoubleVector& getX();
   double getParameter(int num);
   double getY();
-  void setX(const Vector& v1);
+  void setX(const DoubleVector& v1);
   void setParameter(double p, int num);
   void setY(double y1);
   int getNumParameters();
@@ -95,13 +95,13 @@ private:
 public:
   NetDataControl(int numberOfx, int numberOfParameters, int t);
   ~NetDataControl();
-  void setX(const Vector& x1);
+  void setX(const DoubleVector& x1);
   void setY(int id, double fx);
-  void setDataPair(const Vector& x1, double fx);
-  Vector getX(int id);
-  Vector getNextXToSend();
+  void setDataPair(const DoubleVector& x1, double fx);
+  const DoubleVector& getX(int id);
+  const DoubleVector& getNextXToSend();
   double getY(int id);
-  Vector getNextAnsweredX();
+  const DoubleVector& getNextAnsweredX();
   double getNextAnsweredY();
   int getNextSendID();
   int getNextXToResend();

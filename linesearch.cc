@@ -15,7 +15,7 @@ double LineSearch::getBestF() {
   return f;
 }
 
-Vector LineSearch::getBestX() {
+const DoubleVector& LineSearch::getBestX() {
   return x;
 }
 

@@ -967,10 +967,17 @@ int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
-int NetCommunication::sendData(CharPtrVector sendP) {
-  int i, info;
-
+int NetCommunication::sendData(const ParameterVector& sendP) {
+    // must absolutely check if this is possible or can not delete
+    // stringValue now.}}}}}}}}}}}}}x
+    int i, info;
+  char** stringValue;
   if (NETSTARTED == 1) {
+      stringValue = new char*[numVar];
+      for (i = 0; i < numVar; i++) {
+	  stringValue[i] = new char(strlen(sendP[i].getName())+1);
+          strcpy(stringValue[i], sendP[i].getName());
+      };
     info = pvm_initsend(pvmConst->getDataEncode());
     if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to send data");
@@ -980,7 +987,7 @@ int NetCommunication::sendData(CharPtrVector sendP) {
 
     assert(sendP.Size() >= numVar);
     for (i = 0; i < numVar; i++) {
-      info = pvm_pkstr(sendP[i]);
+      info = pvm_pkstr(stringValue[i]);
       if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to send data");
         stopNetCommunication();
@@ -989,6 +996,9 @@ int NetCommunication::sendData(CharPtrVector sendP) {
     }
 
     info = pvm_mcast(tids, nhost, pvmConst->getMasterSendStringTag());
+    for (i = 0; i < numVar; i++)
+	delete [] stringValue[i];
+    delete [] stringValue;
     if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to send data");
       stopNetCommunication();
@@ -1002,10 +1012,15 @@ int NetCommunication::sendData(CharPtrVector sendP) {
   }
 }
 
-int NetCommunication::sendData(CharPtrVector sendP, int processID) {
+int NetCommunication::sendData(const ParameterVector& sendP, int processID) {
   int i, info;
-
+  char** stringValue;
   if (NETSTARTED == 1) {
+      stringValue = new char*[numVar];
+      for (i = 0; i < numVar; i++) {
+	  stringValue[i] = new char(strlen(sendP[i].getName())+1);
+          strcpy(stringValue[i], sendP[i].getName());
+      };
     info = pvm_initsend(pvmConst->getDataEncode());
     if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to send data");
@@ -1015,15 +1030,21 @@ int NetCommunication::sendData(CharPtrVector sendP, int processID) {
 
     assert(sendP.Size() >= numVar);
     for (i = 0; i < numVar; i++) {
-      info = pvm_pkstr(sendP[i]);
+      info = pvm_pkstr(stringValue[i]);
       if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
+	  printErrorMsg("Error in netcommunication - unable to send data");
         stopNetCommunication();
+	for (i = 0; i < numVar; i++)
+	    delete [] stringValue[i];
+	delete [] stringValue;
         return ERROR;
       }
     }
 
     info = pvm_send(tids[processID], pvmConst->getMasterSendStringTag());
+    for (i = 0; i < numVar; i++)
+	delete [] stringValue[i];
+    delete [] stringValue;
     if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to send data");
       stopNetCommunication();
@@ -1038,7 +1059,7 @@ int NetCommunication::sendData(CharPtrVector sendP, int processID) {
   }
 }
 
-int NetCommunication::sendBoundData(Vector sendP) {
+int NetCommunication::sendBoundData(const DoubleVector& sendP) {
   int i, info;
   double* temp;
 
@@ -1077,7 +1098,7 @@ int NetCommunication::sendBoundData(Vector sendP) {
   }
 }
 
-int NetCommunication::sendBoundData(Vector sendP, int processID) {
+int NetCommunication::sendBoundData(const DoubleVector& sendP, int processID) {
   int i, info;
   double* temp;
 
@@ -1430,7 +1451,6 @@ int NetCommunication::netWaitForBetterProcesses() {
 
 MasterCommunication::MasterCommunication(CommandLineInfo* info)
   : NetCommunication(info->getFunction(), info->getNumProc()) {
-
   int wait = info->getWaitMaster();
   tmout = new timeval;
   if (wait == -1)
@@ -1516,7 +1536,6 @@ int MasterCommunication::receiveDataNonBlocking(NetDataResult* rp) {
       stopNetCommunication();
       return ERROR;
     }
-
     info = pvm_upkint(&rp->who, 1, 1);
     if (info < 0) {
       printErrorMsg("Error in netcommunication - unable to receive data");

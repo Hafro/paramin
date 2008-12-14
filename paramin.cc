@@ -1,19 +1,22 @@
 #include "pvm3.h"
 #include "paramin.h"
 #include "optimizer.h"
+#include "errorhandler.h"
+
+ErrorHandler handle;
 
 int main(int argc, char* argv[]) {
   time_t startExec;
   startExec = time(NULL);
   cout << "Starting Paramin version " << PARAMINVERSION << " at " << ctime(&startExec) << endl;
-
+  int i;
   NetCommunication* net;
   Optimizer* optimize;
   NetInterface* netInt;
   ProcessManager* processM;
   CommandLineInfo* commandline;
 
-  commandline = new CommandLineInfo;
+  commandline = new CommandLineInfo();
   // Find out options given on command line
   commandline->read(argc, argv);
 
@@ -21,13 +24,20 @@ int main(int argc, char* argv[]) {
   processM = new WorkLoadScheduler(commandline);
   netInt = new NetInterface(net, processM, commandline);
   optimize = new Optimizer(commandline, netInt);
-
-  cout << "Starting function value from inputfiles: " << optimize->getBestF() << " at: \n" << optimize->getBestX(netInt);
+  /* taking out, will get info from the optimization...
+  DoubleVector temp(optimize->getBestX(netInt));
+  cout << "Starting function value from inputfiles: " << optimize->getBestF() << " at: \n";
+  for (i = 0; i < temp.Size(); i++) {
+      cout << temp[i] << " ";
+  }
+  cout << endl;
+  */
   // This prints X full, unscaled and including all parameteters. Not x as
   // possibly used by opt. methods.
+  // AJ. no, this prints x only using the optimizing parameters....But unscaled.
   optimize->OptimizeFunc();
-  optimize->printResult(netInt);
-
+  optimize->printResult();
+  
   // clean up
   delete netInt;
   delete processM;

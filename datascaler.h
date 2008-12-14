@@ -3,7 +3,7 @@
 
 #include "paramin.h"
 #include "mathfunc.h"
-#include "vector.h"
+#include "doublevector.h"
 
 /**
  * \class DataScaler
@@ -25,21 +25,22 @@
 class DataScaler {
 private:
   int numVar;
-  Vector lbd;
-  Vector ubd;
-  Vector penalty;
+  DoubleVector lbd;
+  DoubleVector ubd;
+  DoubleVector penalty;
+  DoubleVector x_vec;
 public:
   DataScaler();
   ~DataScaler();
-  void setInitialData(const Vector& l, const Vector& u);
-  double scaleResult(double y, int id, const Vector& v1);
+  void setInitialData(const DoubleVector& l, const DoubleVector& u);
+  double scaleResult(double y, int id, const DoubleVector& v1);
   double scale(double p, int i);
-  Vector scaleX(const Vector& v1);
+  const DoubleVector& scaleX(const DoubleVector& v1);
   double unscale(double p, int i);
-  Vector unscaleX(const Vector& v1);
+  const DoubleVector& unscaleX(const DoubleVector& v1);
   void setPenalty(int numIndexes);
-  Vector getLower();
-  Vector getUpper();
+  const DoubleVector& getLower();
+  const DoubleVector& getUpper();
   int getNumVariables();
 };
 

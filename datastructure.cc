@@ -90,8 +90,9 @@ int Queue::contains(int id) {
   int i = 0;
   int inQueue = 0;
   Link* temp;
-  if (isEmpty())
+  if (isEmpty()) {
     return 0;
+  };
 
   temp = first;
   while (inQueue == 0 && i < numberInQueue) {

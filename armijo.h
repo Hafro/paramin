@@ -36,7 +36,7 @@ public:
    * \param netI 
    * \param s is the starting alpha value
    */
-  void doArmijo(const Vector& v1, double fx, double dery, const Vector& h, NetInterface* netI, double s);
+  void doArmijo(const DoubleVector& v1, double fx, double dery, const DoubleVector& h, NetInterface* netI, double s);
   /**
    * \brief Prepares the linesearch by setting the first f-value as initalf (corresponds to alpha = 0)
    */
@@ -77,7 +77,7 @@ private:
   /**
    * \brief Linesearch done from initialx
    */
-  Vector initialx;    
+  DoubleVector initialx;    
   /**
    * \brief The function value at initialx.
    */
@@ -86,7 +86,7 @@ private:
    * \brief The derivative of g(alpha)=f(x + alpha * h).
    */
   double df;          
-  Vector hvec;
+  DoubleVector hvec;
   double s;
   double sigma;
   NetInterface* net;

@@ -7,11 +7,16 @@
 #include "paramin.h"
 #include "netgradient.h"
 #include "commandlineinfo.h"
+#include "optinfo.h"
+
 /**
  * \class ParaminSearch
  * \brief Base class for Paramin search algorithms
  */
-class ParaminSearch {
+// AJ. should chekc if need the upper, lower, x, f..
+// think so because used throughout the algos..
+// but better check is...
+class ParaminSearch : public OptInfo {
 protected:
   /**
    * \brief Used for parallell computations
@@ -20,11 +25,11 @@ protected:
   /**
    * \brief The lowerbound for the variables
    */
-  Vector lowerbound;
+  DoubleVector lowerbound;
   /**
    * \brief The upperbound for the variables
    */
-  Vector upperbound;
+  DoubleVector upperbound;
   /**
    * \brief maximum number of iterations for one minimization
    */ 
@@ -37,14 +42,15 @@ protected:
   /**
    * \brief best point found so far..
    */
-  Vector bestx;       // x which gives best point???
+  DoubleVector bestx;       // x which gives best point???
   /**
    * \brief The optimal value of the function, found so far
    */
+  // AJ this is in optinfo?????
   double bestf;       // best point found so far..
   // The optimal value of the function, found so far
   // but where in the algo. Always or just at end..
-  int converged;
+  // int converged;
 public:
   /**
    * \brief The default constructor
@@ -64,22 +70,24 @@ public:
    * \param startx is the starting point of the BFGS
    * \param startf is the f-value at startx
    */
-  virtual void doSearch(const Vector& startx, double startf) = 0;
-  /**
+  //virtual void doSearch(const DoubleVector& startx, double startf) = 0;
+  // don't need the startx, startf, as they are in netInterface...
+  virtual void OptimiseLikelihood() = 0;
+   /**
    * \brief The file reader
    * \param infile is the CommentStream to read the optimisation parameters from
    * \param text is the latest entry from infile
    */
-  virtual void Read(CommentStream& infile, char* text) = 0;
+  virtual void read(CommentStream& infile, char* text) = 0;
   /**
    * \brief This function randomizes the order of varibles of vec
    * \param vec is an int* of size numvar 
    */
-  void randomOrder(int* vec);
+  void randomOrder(IntVector& vec);
   /**
    * \brief This function returns the best point, bestx
    */
-  const Vector& getBestX();
+  const DoubleVector& getBestX();
   /**
    * \brief This function returns the best f-value, bestf (corresponds to bestx)
    */
@@ -93,7 +101,10 @@ public:
    * \brief Returns a randomNumber coming from an even distribution on the interval 0 to 1
    */
   double randomNumber();
-  int GetConverged() { return converged;};
+  int GetConverged() { return converge;};
+  virtual void Print(ofstream& outfile, int prec) = 0;
+  void printX(const DoubleVector& vec);
+  void printX(ofstream& output, const DoubleVector& vec);
 };
 
 #endif

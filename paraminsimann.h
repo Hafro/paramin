@@ -8,7 +8,7 @@ private:
   /**
    * \brief starting values for the variables of the function
    */
-  Vector xstart;      
+  DoubleVector xstart;      
   /**
    * \brief the function value at xstart..
    */
@@ -16,20 +16,20 @@ private:
   /**
    * \brief the variable vector returned each time.
    */
-  Vector xp;          
+  DoubleVector xp;          
   /**
    * \brief the function value returned each time.
    */
   double fp;          
-  Vector fstar;
+  DoubleVector fstar;
   double cs;
   double uratio;
   double lratio;
   /**
    * \brief the step length vector.
    */
-  Vector vm;          
-  Vector initialVM;
+  DoubleVector vm;          
+  DoubleVector initialVM;
   double T;
   /**
    * \brief number of iterations before temperature reduction.
@@ -46,19 +46,22 @@ private:
   /**
    * \brief acpPointID[0..numvar], acpPointID[i] = -1 if point with trial parameter x[i] was not accepted else acpPointID[i] = returnID of the value which gives the accepted point.
    */
-  int* acpPointID;     
+  IntVector acpPointID;
+  //int* acpPointID;     
   /**
    * \brief number of accepted points for each parameter
    */
-  int* nacp;      
+  // int* nacp;
+  IntVector nacp;
   /**
    * \brief total number of function evaluations.
    */
-  int nfcnev;     
+  // int nfcnev;     
   /**
    * \brief denotes in what order the points were sent
    */
-  int *ID;            
+  // int *ID;
+  IntVector ID;
   int returnID;
   /**
    * \brief number of hosts available.
@@ -72,13 +75,14 @@ private:
 public:
   ParaminSimann(NetInterface* netInt);
   virtual ~ParaminSimann();
-  void Read(CommentStream& infile, char* text);
-  void doSearch(const Vector& startx, double startf);
+  void read(CommentStream& infile, char* text);
+  // void doSearch(const DoubleVector& startx, double startf);
+  void OptimiseLikelihood();
   void SetXP(int k);
   void AcceptPoint();
   void UpdateVM();
   void ReceiveValue();
-  
+  void Print(ofstream& outfile, int prec);
 
 };
 

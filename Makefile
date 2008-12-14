@@ -15,6 +15,7 @@ PVMINCLUDE = $(PVM_ROOT)/include
 # NOTE that the Gadget input library needs to be compiled
 # first - see the Makefile for Gadget to create libgadgetinput.a
 # and the location of the gadget directory needs to be set here
+
 GADGETDIR = ../source
 ################################################################
 # 1. Linux, g++ compiler
@@ -51,7 +52,7 @@ CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
 OBJECTS =  paramin.o processmanager.o netdatacontrol.o netgradient.o \
 	netcommunication.o linesearch.o netinterface.o netdatainterface.o \
 	netcomminterface.o condition.o datascaler.o dataconverter.o \
-	vector.o datastructure.o slavecommunication.o netdata.o pvmconstants.o \
+	datastructure.o slavecommunication.o netdata.o pvmconstants.o \
 	commandlineinfo.o optimizer.o paraminsearch.o paraminhooke.o \
 	paraminsimann.o paraminbfgs.o armijo.o lineseeker.o
 

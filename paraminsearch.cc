@@ -4,6 +4,7 @@
 // functions for base class ParaminSearch
 // ********************************************************
 ParaminSearch::ParaminSearch(NetInterface* netInt) {
+    // Must make sure the optinfo is called and constructor initialized..
   net = netInt;
   lowerbound = net->getLowerScaleConstant();
   upperbound = net->getUpperScaleConstant();
@@ -14,7 +15,7 @@ ParaminSearch::ParaminSearch(NetInterface* netInt) {
 ParaminSearch::~ParaminSearch() {
 }
 
-const Vector& ParaminSearch::getBestX() {
+const DoubleVector& ParaminSearch::getBestX() {
   return net->unscaleX(bestx);
 }
 
@@ -22,9 +23,12 @@ double ParaminSearch::getBestF() {
   return bestf;
 }
 
-void ParaminSearch::randomOrder(int* vec) {
+void ParaminSearch::randomOrder(IntVector& vec) {
   int i, j, k, change;
-  i = j = k = change = 0;
+  /*
+    i = j = k = change = 0;
+  if (vec.Size() != numvar)
+      // error
   while (change < numvar) {
     j = rand() % numvar;
     k = 1;
@@ -37,6 +41,7 @@ void ParaminSearch::randomOrder(int* vec) {
       change++;
     }
   }
+  */
 }
 
 double ParaminSearch::expRep(double x) {
@@ -54,4 +59,18 @@ double ParaminSearch::randomNumber() {
   int r = rand();
   double k = r % 32767;
   return k / 32767.0;
+
+    // return 0.4;
+}
+void ParaminSearch::printX(const DoubleVector& vec) {
+    int i;
+    for (i = 0; i < vec.Size(); i++)
+	cout << vec[i] << sep;
+    cout << endl;
+}
+void ParaminSearch::printX(ofstream& output, const DoubleVector& vec) {
+   int i;
+    for (i = 0; i < vec.Size(); i++)
+	output << vec[i] << sep;
+    output << endl;   
 }

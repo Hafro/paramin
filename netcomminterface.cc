@@ -33,8 +33,8 @@ int NetInterface::sendOne(int processID, int x_id) {
   // Function returns SUCCESS if successfully sent data
   // Function return 0 if process with process identity = processID can not be used.
   int i, cansend;
-  Vector vec;
-  Vector vecSend;
+  // Vector vec;
+  DoubleVector vecSend;
 
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -54,11 +54,12 @@ int NetInterface::sendOne(int processID, int x_id) {
   // prepare data to be sent
   assert(numVarToSend > 0);
   NetDataVariables* sp = new NetDataVariables(numVarToSend);
-  vec = dctrl->getX(x_id);
-  vecSend = prepareVectorToSend(vec);
-  for (i = 0; i < numVarToSend; i++)
+  // vec = dctrl->getX(x_id);
+  vecSend = prepareVectorToSend(dctrl->getX(x_id));
+  for (i = 0; i < numVarToSend; i++) {
     sp->x[i] = vecSend[i];
-
+  }
+  
   sp->x_id = x_id;
   sp->tag = dctrl->getTag();
   cansend = net->sendData(sp, processID);
@@ -90,8 +91,8 @@ int NetInterface::sendOneAndDataid(int processID, int x_id) {
   // Function returns 2 if x_id does not belong to the data group.
 
   int cansend;
-  Vector vec;           // vec has id = x_id stored in dctrl and is converted
-  Vector vecSend;       // into vecSend before sending
+  // Vector vec;           // vec has id = x_id stored in dctrl and is converted
+  DoubleVector vecSend;       // into vecSend before sending
   int i;
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -115,8 +116,8 @@ int NetInterface::sendOneAndDataid(int processID, int x_id) {
   // Prepare data to be sent
   assert(numVarToSend > 0);
   NetDataVariables* sp = new NetDataVariables(numVarToSend);
-  vec = dctrl->getX(x_id);
-  vecSend = prepareVectorToSend(vec);
+  // vec = dctrl->getX(x_id);
+  vecSend = prepareVectorToSend(dctrl->getX(x_id));
   // prepare sp for sending
   for (i = 0; i < numVarToSend; i++)
     sp->x[i] = vecSend[i];
@@ -148,8 +149,8 @@ int NetInterface::resend() {
   int i, canresend;
   int tid = -1;
   int sendID;
-  Vector vec;
-  Vector vecSend;
+  // Vector vec;
+  DoubleVector vecSend;
 
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
@@ -168,7 +169,7 @@ int NetInterface::resend() {
 
   tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
   if (tid < 0)
-    tid = pManager->getNextTidToSend(net);
+    tid = pManager->getTidToSend(net);
 
   if (tid < 0) {
     // there are no free processes
@@ -178,8 +179,8 @@ int NetInterface::resend() {
   }
 
   sendID = dctrl->getNextXToResend();
-  vec = dctrl->getX(sendID);
-  vecSend = prepareVectorToSend(vec);
+  // vec = dctrl->getX(sendID);
+  vecSend = prepareVectorToSend(dctrl->getX(sendID));
   assert(numVarToSend > 0);
   NetDataVariables* sp = new NetDataVariables(numVarToSend);
   for (i = 0; i < numVarToSend; i++)
@@ -191,7 +192,7 @@ int NetInterface::resend() {
   while (canresend == 0 && pManager->isFreeProc()) {
    tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
    if (tid < 0)
-     tid = pManager->getNextTidToSend(net);
+     tid = pManager->getTidToSend(net);
    canresend = net->sendData(sp, tid);
   }
 
@@ -235,9 +236,10 @@ int NetInterface::receiveOne() {
     if (dctrl->getTag() == dp->tag) {
       // received data belonging to datagroup
       if (scaler != NULL) {
-        Vector tempV;
-        tempV = makeVector(dctrl->getX(dp->x_id));
-        res = scaler->scaleResult(dp->result, dp->x_id, tempV);
+	  // Vector tempV;
+	  // tempV = makeVector(dctrl->getX(dp->x_id));
+	  // res = scaler->scaleResult(dp->result, dp->x_id, tempV);
+	  res = scaler->scaleResult(dp->result, dp->x_id, makeVector(dctrl->getX(dp->x_id)));
       } else {
         res = dp->result;
       }
@@ -310,9 +312,10 @@ int NetInterface::receiveOneNonBlocking() {
     if (dctrl->getTag() == dp->tag) {
       // received data belonging to datagroup
       if (scaler != NULL) {
-        Vector tempV;
-        tempV = makeVector(dctrl->getX(dp->x_id));
-        res = scaler->scaleResult(dp->result, dp->x_id, tempV);
+	  // Vector tempV;
+	  // tempV = makeVector(dctrl->getX(dp->x_id));
+	  // res = scaler->scaleResult(dp->result, dp->x_id, tempV);
+	  res = scaler->scaleResult(dp->result, dp->x_id, makeVector(dctrl->getX(dp->x_id)));
       } else {
         res = dp->result;
       }
@@ -354,21 +357,21 @@ int NetInterface::sendToAllIdleHosts() {
   int tid = 0;
   int dataID;
   int cansend = 1;
-
+  
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
 
-  if (!dctrl->allSent())
+  if (!dctrl->allSent()) {
     tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
-
+  };
   while ((tid != this->noAvailableProcesses()) && !dctrl->allSent()
       && (cansend == 1 || cansend == 0)) {
 
     // have not sent all data belonging to dctrl
     if (tid == this->waitForBetterProcesses())
-      tid = pManager->getNextTidToSend(net);
+      tid = pManager->getTidToSend(net);
 
     if (tid != this->noAvailableProcesses()) {
       assert(tid >= 0);
@@ -415,7 +418,7 @@ int NetInterface::sendToAllIdleHostsCondor() {
       && (cansend == 1 || cansend == 0 || cansend == 2)) {
 
     if (tid == this->waitForBetterProcesses())
-      tid = pManager->getNextTidToSend(net);
+      tid = pManager->getTidToSend(net);
 
     if (tid == -1) {
       cerr << "Error in netinterface - illiegal task id\n";
@@ -467,7 +470,7 @@ int NetInterface::sendToIdleHostIfCan() {
     sendBoundValues(newTid);
   }
 
-  tid = pManager->getNextTidToSend(net);
+  tid = pManager->getTidToSend(net);
   //Check if free process was available. If not return with NEEDMOREHOSTS
   if (tid == pManager->noAvailableProcesses()) {
     return net->netNeedMoreHosts();
@@ -528,7 +531,6 @@ int NetInterface::checkHostForResume() {
 int NetInterface::sendToIdleHosts() {
   // function returns ERROR if error occures while trying to send data,
   // function returns SUCCESS if successfully sent available data
-
   int tid = 0;
   int dataID;
   int cansend = 1;
@@ -537,10 +539,12 @@ int NetInterface::sendToIdleHosts() {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
-
-  if (!dctrl->allSent())
-    tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
-
+  
+  if (!dctrl->allSent()) {
+      tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
+      // tid = 0;
+  }
+  
   while ((tid != this->noAvailableProcesses()) && (tid != this->waitForBetterProcesses())
       && (!dctrl->allSent()) && (cansend == 1 || cansend == 0)) {
 
@@ -551,8 +555,9 @@ int NetInterface::sendToIdleHosts() {
     cansend = sendOne(tid, dataID);
     if (cansend != 1)
       dataSet->putFirst(dataID);
-    if ((cansend == 1 || cansend == 0) && !dctrl->allSent())
+    if ((cansend == 1 || cansend == 0) && !dctrl->allSent()) {
       tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
+    };
   }
 
   if (cansend > 1 || cansend < -1) {
@@ -1025,14 +1030,14 @@ void NetInterface::sendStringValue(int processID) {
 
 void NetInterface::sendBoundValues() {
   assert(numVarToSend > 0);
-  assert(lowerBound.dimension() == numVarToSend);
+  assert(lowerBound.Size() == numVarToSend);
   int SEND = net->sendBoundData(lowerBound);
   if (!(SEND == netSuccess())) {
     cerr << "Error in netinterface - failed to send lowerbounds\n";
     exit(EXIT_FAILURE);
   }
 
-  assert(upperBound.dimension() == numVarToSend);
+  assert(upperBound.Size() == numVarToSend);
   SEND = net->sendBoundData(upperBound);
   if (!(SEND == netSuccess())) {
     cerr << "Error in netinterface - failed to send upperbounds\n";
@@ -1042,13 +1047,13 @@ void NetInterface::sendBoundValues() {
 
 void NetInterface::sendBoundValues(int processID) {
   assert(numVarToSend > 0);
-  assert(lowerBound.dimension() == numVarToSend);
+  assert(lowerBound.Size() == numVarToSend);
   int SEND = net->sendBoundData(lowerBound, processID);
   if (!(SEND == netSuccess())) {
     cerr << "Error in netinterface - failed to send lowerbounds\n";
     exit(EXIT_FAILURE);
   }
-  assert(upperBound.dimension() == numVarToSend);
+  assert(upperBound.Size() == numVarToSend);
   SEND = net->sendBoundData(upperBound, processID);
   if (!(SEND == netSuccess())) {
     cerr << "Error in netinterface - failed to send upperbounds\n";

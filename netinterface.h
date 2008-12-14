@@ -51,24 +51,28 @@ private:
   /**
    * \brief initial starting point for sending data
    */
-  Vector initialX;            
+  DoubleVector initialX;
+  // The function value of initialX
+  double initialScore;
+  
   int receiveID;
   int numVarInDataGroup;
   int numVarToSend;
-  Vector h;
-  Vector alphaX;
-  Vector upperScale;
-  Vector lowerScale;
-  Vector opt;
-  Vector tmp;  
-  Vector xUnscale;  
-  Vector xConvert;  
-  Vector xToSend;  
+  DoubleVector h;
+  DoubleVector alphaX;
+  DoubleVector upperScale;
+  DoubleVector lowerScale;
+  // DoubleVector opt;
+  DoubleVector alphaX_h;
+  IntVector optVec;
+  // DoubleVector xUnscale;  
+  // DoubleVector xConvert;  
+  // DoubleVector xToSend;  
   int isAlpha;
   int toscale;
-  CharPtrVector switches;
-  Vector upperBound;
-  Vector lowerBound;
+  ParameterVector switches;
+  DoubleVector upperBound;
+  DoubleVector lowerBound;
 public:
   NetInterface(NetCommunication* netComm, ProcessManager* pm, CommandLineInfo* commandline);
   ~NetInterface();
@@ -96,9 +100,7 @@ public:
     * to one datagroup. If initvals is of type 3 and optimize given then not
     * all variables can be set to 0. */
   void readInputFile(char* initvalsFileName);
-  void setSwitches(InitialInputFile* data);
-  void setVector(InitialInputFile* data);
-  void setNumVars(InitialInputFile* data);
+  void setRepeatedValues(InitialInputFile* data);
   void setOptInfo(InitialInputFile* data);
 
   // ******************************************************
@@ -110,23 +112,33 @@ public:
   // ******************************************************
   void startNewDataGroup();
   void startNewDataGroup(int numInGroup);
-  void startNewDataGroup(const Vector& x1, const Vector& h1);
-  void startNewDataGroup(int numInGroup, const Vector& x1, const Vector& h1);
+  void startNewDataGroup(const DoubleVector& x1, const DoubleVector& h1);
+  void startNewDataGroup(int numInGroup, const DoubleVector& x1, const DoubleVector& h1);
   void stopUsingDataGroup();
   // ******************************************************
   // Functions for setting/getting netdata
   // ******************************************************
-  void setX(const Vector& x1);
-  void setXFirstToSend(const Vector& x1);
-  void setDataPair(const Vector& x1, double fx);
-  Vector getX(int id);
+  void setX(const DoubleVector& x1);
+  void setXFirstToSend(const DoubleVector& x1);
+  void setDataPair(const DoubleVector& x1, double fx);
+  const DoubleVector& getX(int id);
   double getY(int id);
-  Vector getNextAnswerX();
+  const DoubleVector& getNextAnswerX();
   double getNextAnswerY();
-  Vector getInitialX();
-  void setBestX(const Vector& x);
-  Vector getUpperScaleConstant();
-  Vector getLowerScaleConstant();
+  /* returns x as used by the optimization algorithm. That is only the optimizations parameters are included and x is scaled if scaling is usred
+   */
+  const DoubleVector& getInitialX();
+  /* x contains the full value of the initialX. All parameters, including those that are not optimized if any. And X is unscaled if scaling is used. fx contains the function value of x.
+   */
+  void setScore(double fx);
+  double getScore();
+  double getInitialScore(DoubleVector& x);
+  //void getInitialScore(DoubleVector& x, double fx);
+  /* x must be of the same size as used by the optimizations algorithm.
+   */
+  void setInitialScore(const DoubleVector& x, double fx);
+  const DoubleVector& getUpperScaleConstant();
+  const DoubleVector& getLowerScaleConstant();
   // ******************************************************
   // Functions for getting/setting information about datagroup
   // ******************************************************
@@ -143,14 +155,14 @@ public:
   // ******************************************************
   // Functions for data converting and data scaling Vectors
   // ******************************************************
-  const Vector& makeVector(const Vector& vec);
-  const Vector& unscaleX(const Vector& vec);
-  const Vector& convertX(const Vector& vec);
-  const Vector& prepareVectorToSend(const Vector& vec);
-  const Vector& getLowerbound();
-  const Vector& getUpperbound();
-  const Vector& getOptInfo();
-  CharPtrVector getSwitches();
+  const DoubleVector& makeVector(const DoubleVector& vec);
+  const DoubleVector& unscaleX(const DoubleVector& vec);
+  const DoubleVector& convertX(const DoubleVector& vec);
+  const DoubleVector& prepareVectorToSend(const DoubleVector& vec);
+  const DoubleVector& getLowerbound();
+  const DoubleVector& getUpperbound();
+  const IntVector& getOptInfo();
+  const ParameterVector& getSwitches();
   // ******************************************************
   // Input and output functions for data
   // ******************************************************

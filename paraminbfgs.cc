@@ -1,22 +1,25 @@
 #include "paraminbfgs.h"
+// Check compute direction vector, how use invhess[i][j], i, j OK???
 
 // ********************************************************
 // functions for class ParaminBFGS
 // ********************************************************
 ParaminBFGS::ParaminBFGS(NetInterface* netInt) : ParaminSearch(netInt) {
-  Vector temp(numvar);
+    // Vector temp(numvar);
   lineS = new Armijo();   // use lineS to do linesearch
   grad = new NetGradient(numvar);            // use grad to compute gradient
-  deltax = temp;                          // xi-xim1
-  h = temp;                               // the line search vector
-  gim1 = temp;                            // store previous gradient
-  invhess = new double*[numvar];
+  // not sure I need to resize here, need to check...
+  deltax.resize(numvar, 0.0);                          // xi-xim1
+  h.resize(numvar, 0.0);                               // the line search vector
+  gim1.resize(numvar, 0.0);                            // store previous gradient
+  invhess.AddRows(numvar, numvar, 0.0);
+      /*invhess = new double*[numvar];
   int i;
   for (i = 0; i < numvar; i++)
     invhess[i] = new double[numvar];
-
-  xopt = temp;
-  iter = 0;
+      */
+  // xopt.resize(numvar, 1);
+  // iter = 0;
   // default values
   shannonScaling = 0;
   bfgs_constant = 1;
@@ -28,19 +31,21 @@ ParaminBFGS::ParaminBFGS(NetInterface* netInt) : ParaminSearch(netInt) {
   initial_difficultgrad = 1;
   // If want to set default value separately
   maxiterations = 200;
-  converged = 0;
+  // converged = 0;
 }
 
 ParaminBFGS::~ParaminBFGS() {
   int i;
+  /*
   for (i = 0; i < numvar; i++)
     delete[] invhess[i];
   delete[] invhess;
+  */
   delete grad;
   delete lineS;
 }
 
-void ParaminBFGS::Read(CommentStream& infile, char* text) {
+void ParaminBFGS::read(CommentStream& infile, char* text) {
   int i = 0;
   double temp;
 
@@ -117,12 +122,13 @@ void ParaminBFGS::iteration() {
     ComputeGradient();
 
     normgrad = grad->getNormGrad();
+    //cout << "got normgrad: " << normgrad << endl;
     gi = grad->getGradient();
 
     if (difficultgrad >= 1)
       diaghess = grad->getDiagonalHessian();
 
-    error = normgrad / (1.0 + absolute(bestf));
+    error = normgrad / (1.0 + fabs(bestf));
     if (bfgsFail != 6 && bfgsFail != -2) {
       if (bfgs_constant == 1) {
         int update = bfgsUpdate();
@@ -134,7 +140,6 @@ void ParaminBFGS::iteration() {
     // relchng = (prevy - y) / (1.0 + ABSOFNUM(prevy));
   }
 
-  net->setBestX(bestx);
   if (bfgsFail <= 0) {
     if (error <= errortol) {
       bfgsFail = 0;
@@ -152,7 +157,8 @@ void ParaminBFGS::ComputeGradient() {
   int tmp = grad->getDifficultGrad();
   difficultgrad = tmp;
   if (i == net->netError()) {
-    cerr << "Error in BFGS - did not receive gradient data\n" << net->unscaleX(bestx);
+    cerr << "Error in BFGS - did not receive gradient data\n";
+    this->printX(net->unscaleX(bestx));
     net->stopNetComm();
     exit(EXIT_FAILURE);
   }
@@ -168,7 +174,7 @@ void ParaminBFGS::doLineseek() {
   }
   s = upp;
   if (shannonScaling == 1) {
-    if (iter == 0 || upp < 1.0)
+    if (iters == 0 || upp < 1.0)
       s = upp;
     else
       s = 1.0;
@@ -220,12 +226,15 @@ void ParaminBFGS::UpdateXandGrad() {
   int i;
   double xi;
   normdeltax = 0.0;
-  Vector temp(lineS->getBestX());
-  deltax = (temp - bestx);
+  DoubleVector temp(lineS->getBestX());
+  for (i = 0; i < numvar; i++) 
+      deltax[i] = temp[i] - bestx[i];
   bestx = temp;
   bestf = lineS->getBestF();
-  temp = gi;
-  gim1 = temp;
+  // temp = gi;
+  // gim1 = temp;
+  gim1 = gi;
+  // must check if this is still behaving correctly with double vector..
   normdeltax = (deltax * deltax);
 }
 
@@ -235,8 +244,8 @@ int ParaminBFGS::bfgsUpdate() {
    /* prepare the BFGS update */
   double deltaxg = 0.0;
   double deltaghg = 0.0;
-  Vector hg(numvar);
-  Vector deltag(numvar);
+  DoubleVector hg(numvar);
+  DoubleVector deltag(numvar);
   normx = 0.0;
 
   for (i = 0; i < numvar; i++) {
@@ -248,7 +257,7 @@ int ParaminBFGS::bfgsUpdate() {
 
   if (deltaxg <= 0.0)
     cerr << "Warning in BFGS - instability error\n";
-
+  // Must check that invhess is used correctly [i][j] or [j][i]
   for (i = 0; i < numvar; i++) {
     for (j = 0; j < numvar; j++)
       hg[i] += invhess[i][j] * deltag[j];
@@ -275,21 +284,27 @@ double ParaminBFGS::norm() {
   int i;
   double normx;
   normx = 0.0;
+  /*
   for (i = 0; i < numvar; i++)
     normx += bestx[i] * bestx[i];
+  */
+  normx = bestx*bestx;
   normx = sqrt(normx);
   return normx;
 }
 
 void ParaminBFGS::printGradient() {
+    int i;
   ofstream outputfile;
   outputfile.open("gradient");
   if (!outputfile) {
-    cerr << "Error in BFGS - could not print gradient data\n" << gi;
+    cerr << "Error in BFGS - could not print gradient data\n";
+    printX(gi);
     net->stopNetComm();
     exit(EXIT_FAILURE);
   }
-  outputfile << gi;
+  printX(outputfile, gi);
+  
   outputfile.close();
 }
 
@@ -301,11 +316,14 @@ void ParaminBFGS::printInverseHessian() {
     cerr << "Error in BFGS - could not print hessian\n";
     exit(EXIT_FAILURE);
   }
+  invhess.Print(outputfile);
+  /*
   for (i = 0; i < numvar; i++) {
     for (j = 0; j < numvar; j++)
       outputfile << invhess[i][j] << " ";
     outputfile << endl;
   }
+  */
   outputfile.close();
 }
 
@@ -313,8 +331,8 @@ double ParaminBFGS::GetS(int get) {
   double b = 1.e69;
   double a = -1.e69;
 
-  Vector alpha_l(numvar);
-  Vector alpha_u(numvar);
+  DoubleVector alpha_l(numvar);
+  DoubleVector alpha_u(numvar);
 
   int i;
   for (i = 0; i < numvar; i++) {
@@ -342,9 +360,6 @@ double ParaminBFGS::GetS(int get) {
   }
 }
 
-void ParaminBFGS::printX() {
-  cout << net->unscaleX(bestx);
-}
 
 void ParaminBFGS::SetInitialValues() {
   // For the first iteration, define the parameters
@@ -379,21 +394,21 @@ void ParaminBFGS::UpdateValues() {
   }
 
   // if scaling of direction vector is to be done, then do it here.
-  if (iter <= numvar && shannonScaling == 1)
+  if (iters <= numvar && shannonScaling == 1)
     ScaleDirectionVector();
   if (dery > 0) {
     cerr << "Error in BFGS - the derivative is positive\n";
     bfgsFail = 4;
   }
-  error = normgrad / (1.0 + absolute(bestf));
+  error = normgrad / (1.0 + fabs(bestf));
 }
 
-void ParaminBFGS::doSearch(const Vector& startx, double startf) {
+void ParaminBFGS::OptimiseLikelihood() {
   int rounds = 0;
   int numrounds = 0;
 
-  bestx = startx;
-  bestf = startf;
+  bestx = net->getInitialX();
+  bestf = net->getScore();
   difficultgrad = -1;
 
   // Loop over BFGS iterations
@@ -403,15 +418,17 @@ void ParaminBFGS::doSearch(const Vector& startx, double startf) {
 
   for (rounds = 0; rounds < maxrounds; rounds++) {
     bfgsFail = -1;
-    iter = 0;
+    iters = 0;
     SetInitialValues();
-    while ((iter < maxiterations) && (bfgsFail < 0)) {
+    while ((iters < maxiterations) && (bfgsFail < 0)) {
       this->UpdateValues();
       this->iteration();
-      iter++;
+      
+      net->setInitialScore(bestx, bestf);
+      iters++;
     }
 
-    if ((iter == maxiterations) && (bfgsFail != 0))
+    if ((iters == maxiterations) && (bfgsFail != 0))
       cout << "During BFGS - Quit this round because have reached maxiterations." << endl;
 
     if (bfgsFail == 0) {
@@ -436,14 +453,17 @@ void ParaminBFGS::doSearch(const Vector& startx, double startf) {
   }
 
   if ((rounds >= maxrounds) &&  (bfgsFail != 0)) {
-    cout << "\nBFGS optimisation completed after " << rounds << " rounds (max " << maxrounds << ") and " << iter << " iterations (max " << maxiterations << ")\nThe model terminated because the maximum number of rounds was reached\n";
+    cout << "\nBFGS optimisation completed after " << rounds << " rounds (max " << maxrounds << ") and " << iters << " iterations (max " << maxiterations << ")\nThe model terminated because the maximum number of rounds was reached\n";
   } else if (bfgsFail == 0)  {
-    cout << "\nStopping BFGS \n\nThe optimisation stopped after " << numrounds << " rounds (max " << maxrounds << ") and " << iter << " iterations  (max " << maxiterations << ")\nThe optimisation stopped because an optimum was found for this run\n";
-    converged = 1;
+    cout << "\nStopping BFGS \n\nThe optimisation stopped after " << numrounds << " rounds (max " << maxrounds << ") and " << iters << " iterations  (max " << maxiterations << ")\nThe optimisation stopped because an optimum was found for this run\n";
+    converge = 1;
   }
-
+  score = bestf;
   if (to_print) {
     this->printGradient();
     this->printInverseHessian();
   }
+}
+void ParaminBFGS::Print(ofstream& outfile, int prec) {
+
 }

@@ -1,6 +1,9 @@
 #include "commandlineinfo.h"
 #include "commentstream.h"
+#include "errorhandler.h"
 #include "paramin.h"
+
+extern ErrorHandler handle;
 
 void CommandLineInfo::showCorrectUsage(char* error) {
   cerr << "Error in command line value - unrecognised option " << error << endl
@@ -58,74 +61,74 @@ void CommandLineInfo::read(int aNumber, char* const aVector[]) {
         scale = 1;
 
       } else if (strcasecmp(aVector[k], "-condor") == 0) {
+        condor = 1;
+
         #ifndef CONDOR
-          cout << "\nError - Paramin cannot run CONDOR without CONDOR supported being compiled\n";
-        #else
-          condor = 1;
+          handle.logMessage(LOGFAIL, "Error - Paramin cannot currently run in CONDOR mode\nParamin must be recompiled to enable CONDOR support");
         #endif
 
       } else if (strcasecmp(aVector[k], "-i") == 0) {
         if (k == aNumber - 1)
-          showCorrectUsage(aVector[k]);
+          this->showCorrectUsage(aVector[k]);
         k++;
-        inputfile.resize(1, aVector[k]);
+        inputfile.resize(aVector[k]);
 
       } else if (strcasecmp(aVector[k], "-o") == 0) {
         if (k == aNumber - 1)
-          showCorrectUsage(aVector[k]);
+          this->showCorrectUsage(aVector[k]);
         k++;
-        outputfile.resize(1, aVector[k]);
+        outputfile.resize(aVector[k]);
 
       } else if (strcasecmp(aVector[k], "-network") == 0) {
         if (k == aNumber - 1)
-          showCorrectUsage(aVector[k]);
+          this->showCorrectUsage(aVector[k]);
         k++;
-        networkfile.resize(1, aVector[k]);
+        networkfile.resize(aVector[k]);
         this->readNetworkInfo();
 
       } else if (strcasecmp(aVector[k], "-opt") == 0) {
         if (k == aNumber - 1)
-          showCorrectUsage(aVector[k]);
+          this->showCorrectUsage(aVector[k]);
         k++;
-        optfile.resize(1, aVector[k]);
+        optfile.resize(aVector[k]);
 
       } else if ((strcasecmp(aVector[k], "-v") == 0) || (strcasecmp(aVector[k], "--version") == 0)) {
         cout << "Paramin version " << PARAMINVERSION << endl << endl;
         exit(EXIT_SUCCESS);
 
       } else if ((strcasecmp(aVector[k], "-h") == 0) || (strcasecmp(aVector[k], "--help") == 0)) {
-        showUsage();
+        this->showUsage();
 
       } else if ((strcasecmp(aVector[k], "-func") == 0) || (strcasecmp(aVector[k], "-function") == 0)) {
         if (k == aNumber - 1)
-          showCorrectUsage(aVector[k]);
+          this->showCorrectUsage(aVector[k]);
         k++;
-        function.resize(1, aVector[k]);
+        function.resize(aVector[k]);
         while (k < aNumber - 1) {
           k++;
-          function.resize(1, aVector[k]);
+          function.resize(aVector[k]);
         }
 
       } else
-        showCorrectUsage(aVector[k]);
+        this->showCorrectUsage(aVector[k]);
 
       k++;
     }
 
     // Must have set both name of function and name of the inputfile
     if (function.Size() < 1)
-      showCorrectUsage();
+      this->showCorrectUsage();
     if (inputfile.Size() != 1)
-      showCorrectUsage();
+      this->showCorrectUsage();
 
   } else
-    showCorrectUsage();
+    this->showCorrectUsage();
 
   // Set the default value for the output
   if (outputfile.Size() < 1) {
     char* defaultname = new char[strlen("params.out") + 1];
     strcpy(defaultname, "params.out");
-    outputfile.resize(1, defaultname);
+    outputfile.resize(defaultname);
     delete[] defaultname;
   }
 

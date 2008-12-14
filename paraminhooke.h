@@ -38,11 +38,11 @@ private:
   /**
    * \brief  xset = bestx with one parameter, p, changed: xset[p] = bestx[p] + delta[p]
    */
-  Vector xset;           
+  DoubleVector xset;           
   /**
    * \brief last best point.
    */
-  Vector xbefore;    
+  DoubleVector xbefore;    
   /**
    * \brief last best f-value
    */  
@@ -54,7 +54,7 @@ private:
   /**
    * \brief which parameter was changed at point the i-th point sent.
    */
-  int *par;           
+  IntVector par;           
   /**
    * \brief 
    */
@@ -63,18 +63,20 @@ private:
   /**
    * \brief the changes tried in best_nearby.
    */
-  Vector delta;      
+  DoubleVector delta;      
   /**
    * \brief the opt value when xset added to datagroup.
    */
-  Vector previousf;    
+  DoubleVector previousf;    
   /**
    * \brief number of hosts available.
    */
   int NumberOfHosts;  
-  int* param;
+  // int* param;
+  IntVector param;
   LineSeeker* lineS;
-  int* change;
+  // int* change;
+  IntVector change;
   /**
    * \brief id of the last returned function value.
    */
@@ -86,8 +88,9 @@ private:
 public:
   ParaminHooke(NetInterface* netInt);
   virtual ~ParaminHooke();
-  void Read(CommentStream& infile, char* text);
-  void doSearch(const Vector& startx, double startf);
+  void read(CommentStream& infile, char* text);
+  // void doSearch(const DoubleVector& startx, double startf);
+  void OptimiseLikelihood();
   void bestNearby();
   int SetPoint( int n);
   int MyDataGroup();
@@ -95,7 +98,7 @@ public:
   int UpdateOpt();
   void SetPointNearby();
   void SetPointNextCoord();
- 
+  void Print(ofstream& outfile, int prec); 
 };
 
 #endif

@@ -5,9 +5,9 @@
 #include "pvm3.h"
 #include "netdata.h"
 #include "pvmconstants.h"
-#include "vector.h"
+#include "doublevector.h"
 #include "commandlineinfo.h"
-#include "charptrvector.h"
+#include "parametervector.h"
 
 // AJ, 26.02.99
 /**
@@ -84,6 +84,7 @@ protected:
   int DATANOTSENT;
 
 public:
+  // this should be changed to use commandline...
   NetCommunication(const CharPtrVector& funcNameArgs, int nh);
   virtual ~NetCommunication();
   int startPVM();
@@ -144,10 +145,10 @@ public:
   int checkProcessByTid(int tidToCheck, int processNum);
   int sendData(NetDataVariables* sendP, int processID, int dataID);
 
-  int sendData(CharPtrVector sendP);
-  int sendData(CharPtrVector sendP, int processID);
-  int sendBoundData(Vector sendP);
-  int sendBoundData(Vector sendP, int processID);
+  int sendData(const ParameterVector& sendP);
+  int sendData(const ParameterVector& sendP, int processID);
+  int sendBoundData(const DoubleVector& sendP);
+  int sendBoundData(const DoubleVector& sendP, int processID);
 
 };
 

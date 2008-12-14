@@ -17,10 +17,12 @@ NetInterface::NetInterface(NetCommunication* netComm,
   toscale = commandline->getScale();
   net = netComm;
   readInputFile(commandline->getInputFilename());
-  initiateNetComm(pm, commandline->runCondor());
+
+   initiateNetComm(pm, commandline->runCondor());
 }
 
 NetInterface::~NetInterface() {
+    int i;
   stopNetComm();
   stopUsingDataGroup();
   if (toscale == 1) {
@@ -31,149 +33,97 @@ NetInterface::~NetInterface() {
     delete dataConvert;
     dataConvert = NULL;
   }
+  /*
+    if (switches.Size() > 0) {
+      for (i = 0; i < switches.Size(); i++)
+	  delete [] switches[i];
+ }
+  */
 }
 
 // ********************************************************
 // Functions for reading input values from file
 // ********************************************************
 void NetInterface::readInputFile(char* initvalsFileName) {
+    // must be careful about setX. that added to datagroup!!!
+    // if needed....
   InitialInputFile* readInput = new InitialInputFile(initvalsFileName);
   readInput->readFromFile();
-
-  if (readInput->numSwitches() > 0)
-    setSwitches(readInput);
-
+  
   if (readInput->isRepeatedValues()) {
-    // initvalsFile contains only vector values, no optimization info
-    numVarInDataGroup = readInput->numVariables();
-    numVarToSend = numVarInDataGroup;
-    startNewDataGroup();
-    setVector(readInput);
-    while (readInput->isDataLeft()) {
-      readInput->readNextLine();
-      setVector(readInput);
-    }
+      this->setRepeatedValues(readInput);
+    
   } else {
-    // initvalsFile contains vector values and optimization info
-    setOptInfo(readInput);
-  }
-  delete readInput;
+      this->setOptInfo(readInput);
+  };
+  // need to check if better do diff or just keep this here and for sure
+  // use numVarInDataGroup
+  alphaX_h.resize(numVarInDataGroup, 0.0);
+   delete readInput;
 }
 
-void NetInterface::setSwitches(InitialInputFile* data) {
-  int i;
-  for (i = 0; i < data->numVariables(); i++)
-     switches.resize(1, data->getSwitch(i).getName());
-}
-
-void NetInterface::setVector(InitialInputFile* data) {
-  int i, j;
-  assert(numVarInDataGroup > 0);
-  assert(data->numVariables() == numVarToSend);
-  Vector tempVector(numVarInDataGroup);
-  if ((data->isRepeatedValues()) || (numVarInDataGroup == numVarToSend)) {
-    assert(numVarInDataGroup == numVarToSend);
-    for (i = 0; i < numVarInDataGroup; i++)
-      tempVector[i] = data->getValue(i);
-
-  } else {
-    assert(numVarInDataGroup < numVarToSend);
-    j = 0;
-    for (i = 0; i < numVarToSend; i++) {
-      if (data->getOptimise(i) == 1) {
-        tempVector[j] = data->getValue(i);
-        j++;
-      }
-    }
-    assert(j == numVarInDataGroup);
-  }
-
-  if (dataGroupFull()) {
-    cerr << "Error in netinterface - datagroup is full\n";
-    exit(EXIT_FAILURE);
-  }
-  setX(tempVector);
-}
-
-void NetInterface::setNumVars(InitialInputFile* data) {
-  int i;
-  numVarToSend = data->numVariables();
-  if (numVarToSend <= 0) {
+void NetInterface::setRepeatedValues(InitialInputFile* data) {
+  // initvalsFile contains only vector values, no optimization info
+  DoubleVector xValue;
+  data->getSwitches(switches);
+  data->getValues(xValue);
+  numVarToSend = xValue.Size();
+  if (numVarToSend <= 0)  {
     cerr << "Error in netinterface - could not read vectors from file\n";
     exit(EXIT_FAILURE);
   }
-  assert(numVarInDataGroup == 0);
-  for (i = 0; i < numVarToSend; i++) {
-    if (data->getOptimise(i) == 1)
-      numVarInDataGroup++;
-  }
-
-  if (numVarInDataGroup == 0) {
-    cerr << "Error in netinterface - no variables to optimise\n";
-    exit(EXIT_FAILURE);
+  numVarInDataGroup = numVarToSend;
+  startNewDataGroup();
+  setX(xValue);
+  while (data->isDataLeft()) {
+    data->readNextLine();
+    data->getValues(xValue);
+    setX(xValue);
   }
 }
-
 void NetInterface::setOptInfo(InitialInputFile* data) {
-  int i, j;
-  setNumVars(data);
-  Vector xvec(numVarInDataGroup);
-  Vector low(numVarInDataGroup);
-  Vector upp(numVarInDataGroup);
-  Vector xfull(numVarToSend);
-  Vector lowfull(numVarToSend);
-  Vector uppfull(numVarToSend);
-  int* xind;
-  xind = new int[numVarToSend];
-
-  if (numVarInDataGroup == numVarToSend) {
-    // only need lower, upper and xvec
-    for (i = 0; i < numVarInDataGroup; i++) {
-      xvec[i] = data->getValue(i);
-      low[i] = data->getLower(i);
-      upp[i] = data->getUpper(i);
+    int i;
+    DoubleVector xValue;
+    IntVector optValue;
+    data->getVectors(switches, xValue, lowerBound, upperBound, optValue);
+    numVarToSend = xValue.Size();
+    if (numVarToSend <= 0)  {
+	cerr << "Error in netinterface - could not read vectors from file\n";
+	exit(EXIT_FAILURE);
     }
-    uppfull = upp;
-    lowfull = low;
-
-  } else {
-    j = 0;
-    for (i = 0; i < numVarToSend; i++) {
-      xfull[i] = data->getValue(i);
-      xind[i] = data->getOptimise(i);
-      lowfull[i] = data->getLower(i);
-      uppfull[i] = data->getUpper(i);
-      if (xind[i] == 1) {
-        xvec[j] = data->getValue(i);
-        low[j] = data->getLower(i);
-        upp[j] = data->getUpper(i);
-        j++;
-      }
+    if (optValue.Size() == 0 || numVarToSend == optValue.Size())  {
+	// no opt info or all parameters used for optimizing
+	initialX = xValue;
+	lowerScale = lowerBound;
+	upperScale = upperBound;
+	numVarInDataGroup = numVarToSend;
     }
-    assert(j == numVarInDataGroup);
-    dataConvert = new DataConverter();
-    dataConvert->setInitialData(xind, xfull);
-  }
-
-  // store the bounds so they can be sent to gadget
-  upperBound = uppfull;
-  lowerBound = lowfull;
-
-  delete[] xind;
-  if (toscale == 0) {
-    lowerScale = low;
-    upperScale = upp;
-    initialX = xvec;
-  } else {
-    scaler = new DataScaler();
-    Vector temp(numVarInDataGroup);
-    temp.setValue(1.0);
-    upperScale = temp;
-    temp.setValue(-1.0);
-    lowerScale = temp;
-    scaler->setInitialData(low, upp);
-    initialX = (scaler->scaleX(xvec));
-  }
+    else {
+	numVarInDataGroup = 0;
+	for (i = 0; i < numVarToSend; i++) {
+	if (optValue[i] == 1) {
+	    initialX.resize(1,xValue[numVarInDataGroup]);
+	    lowerScale.resize(1, lowerBound[numVarInDataGroup]);
+	    upperScale.resize(1, upperBound[numVarInDataGroup]);
+	    numVarInDataGroup++;
+	};
+	dataConvert = new DataConverter();
+	dataConvert->setInitialData(optValue, xValue);
+    }
+    // have set opt info if any
+    }
+    if (toscale == 1) {
+	 scaler = new DataScaler();
+	 scaler->setInitialData(lowerScale, upperScale);
+	 lowerScale.Reset();
+	 upperScale.Reset();
+	 lowerScale.resize(numVarInDataGroup, -1.0);
+	 upperScale.resize(numVarInDataGroup, 1.0);
+	 // maybe need to do diff!!!
+	 initialX = scaler->scaleX(initialX);    
+  };
+    
+    
 }
 
 // ********************************************************
@@ -201,6 +151,6 @@ void NetInterface::initiateNetComm(ProcessManager* pm, int condor) {
 
   if (switches.Size() > 0)
     sendStringValue();
-  if (lowerBound.dimension() > 0)
+  if (lowerBound.Size() > 0)
     sendBoundValues();
 }

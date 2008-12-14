@@ -12,11 +12,11 @@
 class Gradient {
 public:
   virtual ~Gradient();
-  virtual void setXVectors(const Vector& x, double fx, NetInterface* netInt) = 0;
-  virtual int computeGradient(NetInterface* net, const Vector& x, double fx, int linesprob) = 0;
-  virtual Vector getDiagonalHessian() = 0;
+  virtual void setXVectors(const DoubleVector& x, double fx, NetInterface* netInt) = 0;
+  virtual int computeGradient(NetInterface* net, const DoubleVector& x, double fx, int linesprob) = 0;
+  virtual const DoubleVector& getDiagonalHessian() = 0;
   virtual double getNormGrad() = 0;
-  virtual Vector getGradient() = 0;
+  virtual const DoubleVector& getGradient() = 0;
   virtual int getDifficultGrad() = 0;
   virtual double getBaseFX() = 0;
   virtual void initializeDiagonalHessian() = 0;
@@ -49,7 +49,7 @@ private:
   /**
    * \brief 
    */
-  Vector deltavec;
+  DoubleVector deltavec;
   /**
    * \brief 0 if linear approx, 1 if symmetric approx, and >=2 if approx. using four points
    */
@@ -58,9 +58,9 @@ private:
    * \brief 1 if values around x are all bigger, 0 else.
    */
   int difficult;           
-  Vector diagHess;
+  DoubleVector diagHess;
   double normgrad;
-  Vector grad;
+  DoubleVector grad;
   /**
    * \brief f(x0) where x0 is the base data vector
    */
@@ -68,11 +68,11 @@ private:
 public:
   NetGradient(int numVars);
   virtual ~NetGradient();
-  void setXVectors(const Vector& x, double fx, NetInterface* netInt);
-  int computeGradient(NetInterface* net, const Vector& x, double fx, int symgrad);
-  Vector getDiagonalHessian();
+  void setXVectors(const DoubleVector& x, double fx, NetInterface* netInt);
+  int computeGradient(NetInterface* net, const DoubleVector& x, double fx, int symgrad);
+  const DoubleVector& getDiagonalHessian();
   double getNormGrad();
-  Vector getGradient();
+  const DoubleVector& getGradient();
   int getDifficultGrad();
   double getBaseFX();
   void initializeDiagonalHessian();

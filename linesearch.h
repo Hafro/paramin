@@ -20,10 +20,10 @@ public:
   /**
    * \brief best point found in linesearch.
    */
-  Vector x;           
+  DoubleVector x;           
   //int fail;
   double getBestF();
-  Vector getBestX();
+  const DoubleVector& getBestX();
   virtual double getAlpha() = 0;
   virtual int computeConditionFunction() = 0;
 };

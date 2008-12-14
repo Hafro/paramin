@@ -20,7 +20,7 @@ void RunTime::stopRun(double a) {
   newTime = difftime(stopExec, startExec);
 
   //minimum run time is set to 1
-  if ((absolute(newTime) < verysmall)) {
+  if ((fabs(newTime) < verysmall)) {
     newTime = execTime;
     if (newTime == -1.0)
       execTime = 1.0;
@@ -83,7 +83,6 @@ void ProcessManager::initializePM(int numProc, int condor) {
     procStat = new int[maxNumHosts];
   else
     procStat = new int[totalNumProc];
-
   for (i = 0; i < totalNumProc; i++) {
     procStat[i] = -1;
     addProc(i);
@@ -96,8 +95,9 @@ void ProcessManager::addProc(int id) {
     cerr << "Error in processmanager - invalid process id " << id << endl;
     exit(EXIT_FAILURE);
   }
-  if (!(freeProcesses->contains(id)))
+  if (!(freeProcesses->contains(id))) {
     freeProcesses->put(id);
+  }
   else
     cerr << "Warning in processmanager - process with id " << id << " already exists\n";
 }
@@ -165,7 +165,7 @@ void ProcessManager::setFreeProc(int id) {
     cerr << "Warning in processmanager - process with id " << id << " already freed\n";
 }
 
-int ProcessManager::getNextTidToSend(NetCommunication* n) {
+int ProcessManager::getTidToSend(NetCommunication* n) {
   int tid;
   n->getHealthOfProcesses(procStat);
   removeBadProc();
@@ -188,12 +188,10 @@ int ProcessManager::checkForNewProcess(NetCommunication* n) {
 
 int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;
-
   tid = n->getHealthOfProcessesAndHostAdded(procStat);
   removeBadProc();
   if (tid > -1)
     addMoreProc(tid);
-
   if (freeProcesses->isEmpty())
     return errorNoProcesses;
   else {
@@ -289,7 +287,7 @@ void WorkLoadScheduler::setFreeProc(int tid) {
   ProcessManager::setFreeProc(tid);
 }
 
-int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
+int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) { 
   int id, q;
   int nextTid = -1;
   n->getHealthOfProcesses(procStat);
@@ -311,6 +309,7 @@ int WorkLoadScheduler::getNextTidToSend(int numLeftToSend, NetCommunication* n) 
     id = freeProcesses->get();
     return id;
   }
+										  
 }
 
 void WorkLoadScheduler::sent(int procID) {

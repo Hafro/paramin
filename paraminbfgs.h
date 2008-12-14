@@ -2,6 +2,7 @@
 #define paraminbfgs_h
 
 #include "paraminsearch.h"
+#include "doublematrix.h"
 /**
  * \class ParaminBFGS
  * \brief BFGS
@@ -32,27 +33,28 @@ private:
   /**
    * \brief iteration number
    */
-  int iter;
+  // int iter;
   /**
    * \brief stores the diagonal entry of the hessian matrix.
    */
-  Vector diaghess;
+  DoubleVector diaghess;
   /**
    * \brief stores the inverse hessian matrix.
    */
-  double** invhess;
-  /**
+  // double** invhess;
+  DoubleMatrix invhess;
+   /**
    * \brief stores the gradient at xi
    */
-  Vector gi;
+  DoubleVector gi;
   /**
    * \brief stores the gradient at xi-1
    */
-  Vector gim1;
+  DoubleVector gim1;
   /**
    * \brief direction vector used in line minimization.
    */
-  Vector h;
+  DoubleVector h;
   /**
    * \brief derivative used in line minimization.
    */
@@ -60,7 +62,7 @@ private:
   /**
    * \brief difference between current bestx and the one before
    */
-  Vector deltax;
+  DoubleVector deltax;
   /**
    * \brief norm of x
    */
@@ -90,7 +92,7 @@ private:
    * \brief if Shannon scaling is to be used
    */
   int shannonScaling;
-  Vector xopt;
+  // DoubleVector xopt;
   int bfgs_constant;
   double errortol;
   double xtol;
@@ -115,14 +117,15 @@ public:
    * \param infile is the CommentStream to read the optimisation parameters from
    * \param text is the latest entry from infile
    */
-  void Read(CommentStream& infile, char* text);
+  void read(CommentStream& infile, char* text);
   /**
    * \brief Does a BFGS search
    * \param startx is the starting point of the BFGS
    * \param startf is the f-value at startx
    */
-  void doSearch(const Vector& startx, double startf);
-  /**
+  // void doSearch(const DoubleVector& startx, double startf);
+  void OptimiseLikelihood();
+   /**
    * \brief Computes the gradient at x
    */
   void ComputeGradient();
@@ -139,8 +142,7 @@ public:
   void printGradient();
   void printInverseHessian();
   double GetS(int get);
-  void printX();
-
+  void Print(ofstream& outfile, int prec);
   // About termination criteria:
   // bfgsfail = -1 iff minimization will be continued.
   // bfgsfail = 0 iff error <= errortol

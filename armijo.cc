@@ -20,16 +20,16 @@ double Armijo::getAlpha() {
 
 int Armijo::conditionSatisfied(double y) {
   int returnID = net->getReceiveID();
-  Vector temp(1);
-  temp = (net->getX(returnID));
-  if ((initialf - y) >= (-sigma * temp[0] * df))
+  // Vector temp(1);
+  // temp = (net->getX(returnID));
+  if ((initialf - y) >= (-sigma * net->getX(returnID)[0] * df))
     return 1;
   else
     return 0;
 }
 
-void Armijo::doArmijo(const Vector& v1, double fx, double dery,
-  const Vector& h, NetInterface *netI, double s1) {
+void Armijo::doArmijo(const DoubleVector& v1, double fx, double dery,
+  const DoubleVector& h, NetInterface *netI, double s1) {
 
   int cond_satisfied;
   alpha = 0.0;
@@ -66,20 +66,20 @@ int Armijo::computeConditionFunction() {
   int counter = net->getNumDataItemsSet();
   int newreturns = net->getNumDataItemsAnswered();
   double y;
-  Vector temp;
+  // Vector temp;
 
   returnID = net->getReceiveID();
   if (returnID >= 0) {
-    temp = net->getX(returnID);
+      //temp = net->getX(returnID);
     y = net->getY(returnID);
     cond_satisfied = ((conditionSatisfied(y) == 1) && (f > y));
     if (cond_satisfied) {
       cout << "New optimum value f(x) = " << y << " at \n";
       f = y;
       power = returnID - 1;
-      alpha = temp[0];
-      x = net->makeVector(temp);
-      for (i = 0; i < x.dimension() ; i++)
+      alpha = net->getX(returnID)[0];
+      x = net->makeVector(net->getX(returnID));
+      for (i = 0; i < x.Size() ; i++)
 	cout << x[i] << " ";
       cout << endl << endl;
     }
@@ -120,15 +120,15 @@ void Armijo::prepareNewLineSearch() {
     cerr << "Error in linesearch - bad derivative\n";
     net->stopUsingDataGroup();
   }
-  Vector tempx(1);
-  tempx[0] = 0.0;
+  DoubleVector tempx(1,0.0);
+  // tempx[0] = 0.0;
   net->setDataPair(tempx, initialf);
 }
 
 void Armijo::initiateAlphas() {
   int i = net->getTotalNumProc();
   int j;
-  Vector tempx(1);
+  DoubleVector tempx(1);
   assert(beta > 0.0);
   assert(beta <= 0.5);
   for (j = 0; j < i; j++) {
@@ -161,7 +161,7 @@ int Armijo::outstandingRequests() {
 }
 
 int Armijo::setData() {
-  Vector tempx(1);
+  DoubleVector tempx(1);
   int counter = net->getNumDataItemsSet() - 1;
   double a = pow(beta, counter) * s;
   tempx[0] = a;

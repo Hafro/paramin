@@ -4,10 +4,10 @@ DataScaler::DataScaler() {
   numVar = -1;
 }
 
-void DataScaler::setInitialData(const Vector& l, const Vector& u) {
-  assert(l.dimension() > 0);
-  assert(l.dimension() == u.dimension());
-  numVar = l.dimension();
+void DataScaler::setInitialData(const DoubleVector& l, const DoubleVector& u) {
+  assert(l.Size() > 0);
+  assert(l.Size() == u.Size());
+  numVar = l.Size();
   lbd = l;
   ubd = u;
 }
@@ -15,18 +15,19 @@ void DataScaler::setInitialData(const Vector& l, const Vector& u) {
 DataScaler::~DataScaler() {
 }
 
-double DataScaler::scaleResult(double y, int id, const Vector& v1) {
+double DataScaler::scaleResult(double y, int id, const DoubleVector& v1) {
   return y;
 }
 
-Vector DataScaler::scaleX(const Vector& v1) {
+const DoubleVector& DataScaler::scaleX(const DoubleVector& v1) {
   assert(numVar > 0);
-  assert(numVar == v1.dimension());
+  assert(numVar == v1.Size());
   int i;
-  Vector vec(numVar);
+  x_vec.Reset();
+  x_vec.resize(numVar, 0.0);
   for (i = 0; i < numVar; i++)
-    vec[i] = scale(v1[i], i);
-  return vec;
+    x_vec[i] = scale(v1[i], i);
+  return x_vec;
 }
 
 double DataScaler::scale(double p, int i) {
@@ -35,14 +36,15 @@ double DataScaler::scale(double p, int i) {
   return (p - ((ubd[i] + lbd[i]) * 0.5)) / ((ubd[i] - lbd[i]) * 0.5);
 }
 
-Vector DataScaler::unscaleX(const Vector& v1) {
+const DoubleVector& DataScaler::unscaleX(const DoubleVector& v1) {
   assert(numVar > 0);
-  assert(v1.dimension() == numVar);
+  assert(v1.Size() == numVar);
   int i;
-  Vector vec(numVar);
+  x_vec.Reset();
+  x_vec.resize(numVar, 0.0);
   for (i = 0; i < numVar; i++)
-    vec[i]= unscale(v1[i], i);
-  return vec;
+    x_vec[i]= unscale(v1[i], i);
+  return x_vec;
 }
 
 double DataScaler::unscale(double p, int i) {
@@ -52,16 +54,14 @@ double DataScaler::unscale(double p, int i) {
 }
 
 void DataScaler::setPenalty(int numIndexes) {
-  Vector temp(numIndexes);
-  penalty = temp;
-  penalty.setValue(0.0);
+  penalty.resize(numVar, 0.0);
 }
 
-Vector DataScaler::getLower() {
+const DoubleVector& DataScaler::getLower() {
   return lbd;
 }
 
-Vector DataScaler::getUpper() {
+const DoubleVector& DataScaler::getUpper() {
   return ubd;
 }
 

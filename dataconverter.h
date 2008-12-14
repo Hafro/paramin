@@ -2,7 +2,8 @@
 #define dataconverter_h
 
 #include "paramin.h"
-#include "vector.h"
+#include "intvector.h"
+#include "doublevector.h"
 
 /**
  *
@@ -16,17 +17,18 @@ private:
   /**
    * \brief initial values for vector
    */
-  Vector xfullraw;  
-  int* xind;
+  DoubleVector xfullraw;
+  DoubleVector xConverted;
+  IntVector xind;
   int numVarTotal;
 public:
   DataConverter();
   ~DataConverter();
-  void setInitialData(int* xi, const Vector& xr);
-  Vector getXFull();
+  void setInitialData(const IntVector& xi, const DoubleVector& xr);
+  const DoubleVector& getXFull();
   int getNumVarTotal();
-  Vector convertX(const Vector& v1);
-  Vector getOptInfo();
+  const DoubleVector& convertX(const DoubleVector& v1);
+  const IntVector& getOptInfo();
 };
 
 #endif

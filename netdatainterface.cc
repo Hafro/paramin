@@ -14,7 +14,7 @@ void NetInterface::startNewDataGroup() {
   isAlpha = 0;
 }
 
-void NetInterface::startNewDataGroup(const Vector& x1, const Vector& h1) {
+void NetInterface::startNewDataGroup(const DoubleVector& x1, const DoubleVector& h1) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
@@ -38,7 +38,7 @@ void NetInterface::startNewDataGroup(int numInGroup) {
   isAlpha = 0;
 }
 
-void NetInterface::startNewDataGroup(int numInGroup, const Vector& x1, const Vector& h1) {
+void NetInterface::startNewDataGroup(int numInGroup, const DoubleVector& x1, const DoubleVector& h1) {
   if (dctrl != NULL)
     stopUsingDataGroup();
   int newTag = getNextMsgTag();
@@ -67,7 +67,7 @@ void NetInterface::stopUsingDataGroup() {
 // ********************************************************
 // Functions for setting/getting netdata
 // ********************************************************
-void NetInterface::setX(const Vector& x1) {
+void NetInterface::setX(const DoubleVector& x1) {
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
@@ -81,7 +81,7 @@ void NetInterface::setX(const Vector& x1) {
   dataSet->put(id);
 }
 
-void NetInterface::setXFirstToSend(const Vector& x1) {
+void NetInterface::setXFirstToSend(const DoubleVector& x1) {
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
@@ -95,7 +95,7 @@ void NetInterface::setXFirstToSend(const Vector& x1) {
   dataSet->putFirst(id);
 }
 
-void NetInterface::setDataPair(const Vector& x1, double fx) {
+void NetInterface::setDataPair(const DoubleVector& x1, double fx) {
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
@@ -107,7 +107,7 @@ void NetInterface::setDataPair(const Vector& x1, double fx) {
   dctrl->setDataPair(x1, fx);
 }
 
-Vector NetInterface::getX(int id) {
+const DoubleVector& NetInterface::getX(int id) {
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
@@ -123,7 +123,7 @@ double NetInterface::getY(int id) {
   return dctrl->getY(id);
 }
 
-Vector NetInterface::getNextAnswerX() {
+const DoubleVector& NetInterface::getNextAnswerX() {
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
@@ -139,26 +139,38 @@ double NetInterface::getNextAnswerY() {
   return dctrl->getNextAnsweredY();
 }
 
-Vector NetInterface::getUpperScaleConstant() {
+const DoubleVector& NetInterface::getUpperScaleConstant() {
   return upperScale;
 }
 
-Vector NetInterface::getLowerScaleConstant() {
+const DoubleVector& NetInterface::getLowerScaleConstant() {
   return lowerScale;
 }
 
-Vector NetInterface::getInitialX() {
+const DoubleVector& NetInterface::getInitialX() {
   return initialX;
 }
-
-void NetInterface::setBestX(const Vector& x) {
-  if (x.dimension() != initialX.dimension()) {
-    cerr << "Error in netinterface - vectors different size\n";
-    exit(EXIT_FAILURE);
-  }
-  initialX = x;
+double NetInterface::getScore() {
+    return initialScore;
 }
-
+void NetInterface::setScore(double fx) {
+    initialScore = fx;
+}
+double NetInterface::getInitialScore(DoubleVector& x) {
+  //void NetInterface::getInitialScore(DoubleVector& x, double fx) {
+    // must make sure this is ok
+    x  = this->prepareVectorToSend(initialX);
+    //fx = initialScore;
+    return initialScore;
+}
+void NetInterface::setInitialScore(const DoubleVector& x, double fx) {
+     if (x.Size() != initialX.Size()) {
+	 cerr << "Error in netinterface - vectors different size\n";
+	 exit(EXIT_FAILURE);
+     }
+    initialX = x;
+    initialScore = fx;
+}
 // ********************************************************
 // Functions for getting/setting information about datagroup
 // ********************************************************
@@ -257,83 +269,97 @@ void NetInterface::printResult(char* outputFileName) {
 }
 
 void NetInterface::printX(int id) {
+  int i;
+  DoubleVector temp;
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
-  cout << dctrl->getX(id);
+  temp = dctrl->getX(id);
+  for (i = 0; i < temp.Size(); i++)
+      cout << temp[i] << sep;
+  cout << endl;
 }
 
 void NetInterface::printXUnscaled(int id) {
+    int i;
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
-  Vector vec = dctrl->getX(id);
+  DoubleVector vec;
   if (scaler != NULL) {
-    Vector vecscaled = scaler->unscaleX(vec);
-    cout << vecscaled;
+      // DoubleVector vecscaled = scaler->unscaleX(vec);
+      // cout << scaler->unscaleX(dctrl->getX(id));
+      //cout << vecscaled;
+      vec = scaler->unscaleX(dctrl->getX(id));
   } else
-    cout << vec;
+      vec = dctrl->getX(id);
+  for (i = 0; i < vec.Size(); i++)
+      cout << vec[i] << sep;
+  cout << endl;
 }
 
 // ********************************************************
 // Functions for data converting and data scaling vectors
 // ********************************************************
-const Vector& NetInterface::makeVector(const Vector& vec) {
+const DoubleVector& NetInterface::makeVector(const DoubleVector& vec) {
+  int i;
+  // must check if numvarindatagroup is correct and formula to make vector is correct!!!! also check if ok to set here DoubleVector temp and then return const DoubleVector& will it be a copy or not!!!!
   if (isAlpha == 1) {
-    tmp = alphaX + (vec[0] * h);
-    return tmp;
+      // DoubleVector tmp(numVarInDataGroup);
+    for (i = 0; i < numVarInDataGroup; i++)
+       alphaX_h[i] = alphaX[i] + (vec[0] * h[i]);
+    return alphaX_h;
   } else
     return vec;
 }
 
-const Vector& NetInterface::unscaleX(const Vector& vec) {
+const DoubleVector& NetInterface::unscaleX(const DoubleVector& vec) {
   if (scaler != NULL) {
-    xUnscale = scaler->unscaleX(vec);
-    return xUnscale;
+      // xUnscale = scaler->unscaleX(vec);
+      return scaler->unscaleX(vec);
+      // return xUnscale;
   } else
     return vec;
 }
 
-const Vector& NetInterface::convertX(const Vector& vec) {
+const DoubleVector& NetInterface::convertX(const DoubleVector& vec) {
   if (dataConvert != NULL) {
-    xConvert = dataConvert->convertX(vec);
-    return xConvert;
+      // xConvert = dataConvert->convertX(vec);
+    return dataConvert->convertX(vec);
   } else
     return vec;
 }
 
-const Vector& NetInterface::prepareVectorToSend(const Vector& vec) {
-  xToSend = convertX(unscaleX(makeVector(vec)));
-  return xToSend;
+const DoubleVector& NetInterface::prepareVectorToSend(const DoubleVector& vec) {
+    // xToSend = convertX(unscaleX(makeVector(vec)));
+  return convertX(unscaleX(makeVector(vec)));
 }
 
-const Vector& NetInterface::getLowerbound() {
-  assert(lowerBound.dimension() != 0);
+const DoubleVector& NetInterface::getLowerbound() {
+  assert(lowerBound.Size() != 0);
   return lowerBound;
 }
 
-const Vector& NetInterface::getUpperbound() {
-  assert(upperBound.dimension() != 0);
+const DoubleVector& NetInterface::getUpperbound() {
+  assert(upperBound.Size() != 0);
   return upperBound;
 }
 
-CharPtrVector NetInterface::getSwitches() {
+const ParameterVector& NetInterface::getSwitches() {
   assert(switches.Size() != 0);
   return switches;
 }
 
-const Vector& NetInterface::getOptInfo() {
+const IntVector& NetInterface::getOptInfo() {
   int i;
   if (dataConvert != NULL)
-    opt = dataConvert->getOptInfo();
+    return dataConvert->getOptInfo();
   else {
     // no dataconverter, so all parameters must be optimised
-    Vector vec(numVarToSend);
-    opt = vec;
-    for (i = 0; i < numVarToSend; i++)
-      opt[i] = 1;
+      optVec.Reset();
+    optVec.resize(numVarToSend, 1);
+    return optVec;
   }
-  return opt;
 }

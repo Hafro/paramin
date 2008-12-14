@@ -8,11 +8,14 @@ ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
   T = 100.0;
   cs = 2.0;
 
-  Vector tempVec(numvar);
-  vm = tempVec;
-  vm.setValue(1.0);
-  xp = tempVec;
-  nfcnev = 0;
+  // Vector tempVec(numvar);
+  // vm = tempVec;
+  vm.resize(numvar, 1.0);
+      // vm.setValue(1.0);
+      // xp = tempVec;
+  xp.resize(numvar, 0.0);
+  // changed to iters...
+  // nfcnev = 0;
   nt = 2;
   ns = 5;
   check = 4;
@@ -21,25 +24,29 @@ ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
   rt = 0.85;
   eps = 1e-4;
   maxiterations = 2000;
-  
-  ID = new int[numvar];
-  nacp = new int[numvar];
-  acpPointID = new int[numvar];
+  /// NEED TO check if 0 is OK or maybe -1????
+  // ID = new int[numvar];
+  // nacp = new int[numvar];
+  // acpPointID = new int[numvar];
+  ID.resize(numvar, 0);
+  nacp.resize(numvar, 0);
+  acpPointID.resize(numvar, 0);
   // total number of processes initiated at beginning
   NumberOfHosts = net->getTotalNumProc();
-  converged = 0;
+  // converged = 0;
 }
 
 ParaminSimann::~ParaminSimann() {
-  delete[] ID;
-  delete[] nacp;
-  delete[] acpPointID;
+    // delete[] ID;
+    // delete[] nacp;
+    // delete[] acpPointID;
 }
 
-void ParaminSimann::Read(CommentStream& infile, char* text) {
+void ParaminSimann::read(CommentStream& infile, char* text) {
   int i = 0;
+  int j = 0;
   double temp;
-
+ 
   while (!infile.eof() && strcasecmp(text, "seed") && strcasecmp(text, "[hooke]") && strcasecmp(text, "[bfgs]")) {
     infile >> ws;
     if (strcasecmp(text, "ns") == 0) {
@@ -71,7 +78,8 @@ void ParaminSimann::Read(CommentStream& infile, char* text) {
 
     } else if (strcasecmp(text, "vm") == 0) {
       infile >> temp;
-      vm.setValue(temp);
+      for (j = 0; j < vm.Size(); j++)
+	  vm[j] = temp;
 
     } else if ((strcasecmp(text, "maxiterations") == 0) || (strcasecmp(text, "simanniter") == 0)) {
       infile >> maxiterations;
@@ -103,27 +111,32 @@ void ParaminSimann::Read(CommentStream& infile, char* text) {
   cs = cs / lratio;
 }
 
-void ParaminSimann::doSearch(const Vector& startx, double startf) {
+void ParaminSimann::OptimiseLikelihood() {
   int i, numtoset;
   int numloops_ns, numloops_nt;
   int numset_nsloop;     // 0 < numset_nsloop <= numvar
   int rock = 0;
 
-  bestx = startx;
-  xstart = startx;
-  if (xstart > upperbound || xstart < lowerbound) {
-    cerr << "Error in Simmulated Annealing - x is not within bounds\n";
-    exit(EXIT_FAILURE);
+  bestx = net->getInitialX();
+  xstart = bestx;
+  for (i = 0; i < numvar; i++) {
+      if (xstart[i] > upperbound[i] || xstart[i] < lowerbound[i]) {
+	  cerr << "Error in Simmulated Annealing - x is not within bounds\n";
+	  exit(EXIT_FAILURE);
+      }
   }
   initialVM = vm;
 
-  bestf = startf;
+  bestf = net->getScore();
+  
   if (!maxim)
     bestf = -bestf;
 
-  Vector tempVec(check);
-  tempVec.setValue(bestf);
-  fstar = tempVec;
+  // Vector tempVec(check);
+  // tempVec.setValue(bestf);
+  fstar.Reset();
+  fstar.resize(check, bestf);
+  // fstar = tempVec;
   fstart = bestf;
 
   for (i = 0; i < numvar; i++) {
@@ -139,15 +152,15 @@ void ParaminSimann::doSearch(const Vector& startx, double startf) {
 
   // start the main loop.  Note that it terminates if (i) the algorithm
   // succesfully otimizes the function or (ii) there are too many func. eval.
-  while ((rock == 0) && (nfcnev < maxiterations)) {
+  while ((rock == 0) && (iters < maxiterations)) {
     numloops_nt = 0;
     net->startNewDataGroup((ns * nt * (numvar + 1)));
-    while ((numloops_nt < nt) && (nfcnev < maxiterations)) {
+    while ((numloops_nt < nt) && (iters < maxiterations)) {
       numloops_ns = 0;
       naccepted_nsloop = 0;
       randomOrder(ID);
 
-      while ((numloops_ns < ns) && (nfcnev < maxiterations)) {
+      while ((numloops_ns < ns) && (iters < maxiterations)) {
         if (numloops_ns == 0) {
           for (i = 0; i < numtoset; i++)
             SetXP(ID[i]);
@@ -157,10 +170,10 @@ void ParaminSimann::doSearch(const Vector& startx, double startf) {
 
         // sends all available data to all free hosts.
         net->sendToAllIdleHosts();
-        while ((numset_nsloop < numvar) && (nfcnev < maxiterations)) {
+        while ((numset_nsloop < numvar) && (iters < maxiterations)) {
           // get a function value and do any update that's necessary.
           ReceiveValue();
-          if (nfcnev < maxiterations) {
+          if (iters < maxiterations) {
             SetXP(ID[numset_nsloop]);
             numset_nsloop++;
           }
@@ -169,8 +182,8 @@ void ParaminSimann::doSearch(const Vector& startx, double startf) {
         numloops_ns++;
       }
 
-      if (nfcnev < maxiterations) {
-        while ((net->getNumNotAns() > 0) && (nfcnev < maxiterations)) {
+      if (iters < maxiterations) {
+        while ((net->getNumNotAns() > 0) && (iters < maxiterations)) {
           // get a function value and do any update that's necessary
           ReceiveValue();
         }
@@ -193,19 +206,20 @@ void ParaminSimann::doSearch(const Vector& startx, double startf) {
     fstar[0] = fstart;
 
     rock = 0;
-    if (absolute(bestf - fstart) < eps) {
+    if (fabs(bestf - fstart) < eps) {
       rock = 1;
       for (i = 0; i < check - 1; i++)
-        if (absolute(fstar[i + 1] - fstar[i]) > eps)
+        if (fabs(fstar[i + 1] - fstar[i]) > eps)
           rock = 0;
     }
 
-    cout << "\nChecking convergence criteria after " << nfcnev << " function evaluations ...\n";
+    cout << "\nChecking convergence criteria after " << iters << " function evaluations ...\n";
 
     // if termination criteria is not met, prepare for another loop.
     if (rock == 0) {
       T *= rt;
       cout << "Reducing the temperature to " << T << endl;
+      cout << "simann best result so far " << bestf << endl;
       fstart = bestf;
       xstart = bestx;
     }
@@ -215,32 +229,32 @@ void ParaminSimann::doSearch(const Vector& startx, double startf) {
   if (!maxim)
     bestf = -bestf;
 
-  net->setBestX(bestx);
+  net->setInitialScore(bestx, bestf);
+  score = bestf;
 
-  if ((nfcnev >= maxiterations) && (rock == 1)) {
-    cout << "\nSimulated Annealing optimisation completed after " << nfcnev
+  if ((iters >= maxiterations) && (rock == 1)) {
+    cout << "\nSimulated Annealing optimisation completed after " << iters
       << " iterations (max " << maxiterations << ")\nThe model terminated "
       << "because the maximum number of iterations was reached\n";
   } else {
-    cout << "\nStopping Simulated Annealing\n\nThe optimisation stopped after " << nfcnev
+    cout << "\nStopping Simulated Annealing\n\nThe optimisation stopped after " << iters
       << " function evaluations (max " << maxiterations << ")\nThe optimisation stopped "
       << "because an optimum was found for this run\n";
-    converged = 1;
+    converge = 1;
   }
 }
 
 // generate xp, the trial value of x - note use of vm to choose xp.
 void ParaminSimann::SetXP(int k) {
   int i;
-  Vector temp;
+  DoubleVector temp;
   int id;
-
   for (i = 0; i < numvar; i++) {
     if (i == k) {
-      xp[k] = xstart[k] + (randomNumber() * 2.0 - 1.0) * vm[k];
+      xp[k] = xstart[k] + ((randomNumber() * 2.0) - 1.0) * vm[k];
       if (xp[k] < lowerbound[k] || xp[k] > upperbound[k]) {
 	while((xp[k] < lowerbound[k] || xp[k] > upperbound[k])) {
-	  xp[k] = xstart[k] + (randomNumber() * 2.0 - 1.0) * vm[k];
+	  xp[k] = xstart[k] + ((randomNumber() * 2.0) - 1.0) * vm[k];
 	}
 	
       }
@@ -253,7 +267,7 @@ void ParaminSimann::SetXP(int k) {
         xp[i] = xstart[i];
     }
   }
-
+  
   if (!net->dataGroupFull()) {
     // net->setX(xp);          // this uses a FIFO stack
     net->setXFirstToSend(xp);  // this uses a LIFO stack
@@ -265,6 +279,8 @@ void ParaminSimann::SetXP(int k) {
 }
 
 void ParaminSimann::AcceptPoint() {
+  int i;
+  DoubleVector temp;
   xstart = xp;
   fstart = fp;
   nacp[ID[returnID % numvar]]++;
@@ -274,8 +290,10 @@ void ParaminSimann::AcceptPoint() {
   // if better than any other point record as new optimum.
   if (fp > bestf) {
     bestx = xp;
-    cout << "\nNew optimum after " << nfcnev << " function evaluations, f(x) = " << -fp << " at\n";
-    cout << net->unscaleX(bestx);
+    cout << "\nNew optimum after " << iters << " function evaluations, f(x) = " << -fp << " at\n";
+    temp = net->unscaleX(bestx);
+    for (i = 0; i < temp.Size(); i++)
+	cout << temp[i];
     bestf = fp;
   }
 }
@@ -312,14 +330,17 @@ void ParaminSimann::ReceiveValue() {
     returnID = net->getReceiveID();
     if (returnID >= 0) {
       // received data belonging to correct datagroup
-      nfcnev++;
+      iters++;
       fp = net->getY(returnID);
       xp = net->getX(returnID);
       if (!maxim)
         fp = -fp;
       // accept the new point if the function value increases.
-      if (fp >= fstart)
+      if (fp >= fstart)  {
         AcceptPoint();
+	//cout << "accepted point" << endl;
+	//cout << "fp is " << fp << endl;
+      }
       else {
         p = expRep((fp - fstart) / T);
         pp = randomNumber();
@@ -334,4 +355,7 @@ void ParaminSimann::ReceiveValue() {
     cerr << "Trying to receive value during Simulated Annealing but failed" << endl;
     exit(EXIT_FAILURE);
   }
+}
+void ParaminSimann::Print(ofstream& outfile, int prec) {
+
 }

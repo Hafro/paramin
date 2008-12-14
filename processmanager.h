@@ -59,7 +59,7 @@ public:
   int getNumFreeProc();
   int isFreeProc();
   virtual void setFreeProc(int id);
-  int getNextTidToSend(NetCommunication* n);
+  int getTidToSend(NetCommunication* n);
   int checkForNewProcess(NetCommunication* n);
   virtual int getNextTidToSend(int numLeftToSend, NetCommunication* n);
   virtual void sent(int procID);
