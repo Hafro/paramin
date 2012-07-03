@@ -30,7 +30,6 @@ void CommandLineInfo::showUsage() {
     << " -o <filename>                print model parameters to <filename>\n"
     << "                              (default filename is 'params.out')\n"
     << " -scale                       scale the variables to be optimised\n"
-    << " -condor                      use CONDOR to control the PVM network\n"
     << "\nOther valid command line options:\n"
     << " -v --version                 display version information and exit\n"
     << " -h --help                    display this help screen and exit\n"
@@ -41,7 +40,6 @@ void CommandLineInfo::showUsage() {
 CommandLineInfo::CommandLineInfo() {
   numProc = 0;
   scale = 0;
-  condor = 0;
   waitMaster = 300;
   hostMultiple = 2.0;
   runMultiple = 0.5;
@@ -59,13 +57,6 @@ void CommandLineInfo::read(int aNumber, char* const aVector[]) {
     while (k < aNumber) {
       if (strcasecmp(aVector[k], "-scale") == 0) {
         scale = 1;
-
-      } else if (strcasecmp(aVector[k], "-condor") == 0) {
-        condor = 1;
-
-        #ifndef CONDOR
-          handle.logMessage(LOGFAIL, "Error - Paramin cannot currently run in CONDOR mode\nParamin must be recompiled to enable CONDOR support");
-        #endif
 
       } else if (strcasecmp(aVector[k], "-i") == 0) {
         if (k == aNumber - 1)
@@ -131,10 +122,6 @@ void CommandLineInfo::read(int aNumber, char* const aVector[]) {
     outputfile.resize(defaultname);
     delete[] defaultname;
   }
-
-  // Set the network paramaters for CONDOR is required
-  if (condor)
-    waitMaster = -1;
 }
 
 const CharPtrVector& CommandLineInfo::getFunction() {

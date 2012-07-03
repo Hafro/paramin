@@ -1,656 +1,381 @@
 #include "netcommunication.h"
+#include <iostream>
 
 NetCommunication::NetCommunication(const CharPtrVector& funcNameArgs, int nh) {
-  // pvmConst contains information about which tags and dataencoding to use
-  pvmConst = new PVMConstants();
-  nHostInn = nh;
-
-  int i;
-  if (funcNameArgs.Size() <= 0) {
-    cerr << "Must have name of the function to start on slaves\n";
-    exit(EXIT_FAILURE);
-  }
-  slaveProgram = new char[strlen(funcNameArgs[0]) + 1];
-  strcpy(slaveProgram, funcNameArgs[0]);
-  numarg = funcNameArgs.Size() - 1;
-  slaveArguments = new char*[numarg + 1];
-  for (i = 0; i < numarg; i++) {
-    slaveArguments[i] = new char[strlen(funcNameArgs[i + 1]) + 1];
-    strcpy(slaveArguments[i], funcNameArgs[i + 1]);
-  }
-  slaveArguments[numarg] = NULL;
-
-  numVar = -1;
-  mytid = -1;
-  nhost = 0;
-  narch = 0;
-  numProcesses = 0;
-  numGoodProcesses = 0;
-  NETSTARTED = 0;
-  tids = NULL;
-  status = NULL;
-  ERROR = -1;
-  SUCCESS = 1;
-
-  likelihoodHJ = 0.0;
-  likelihoodSA = 0.0;
-  likelihoodBFGS = 0.0;
-  convergedSA = 0;
-  convergedHJ = 0;
-  convergedBFGS = 0;
-
-  //For condor
-  NONTORECEIVE = 0;
-  tidsCounter = 0;
-  maxNumHosts = 500;
-  NEEDMOREHOSTS = 2;
-  NEEDMOREDATA = 3;
-  WAITFORPROCESS = 4;
-  DATANOTSENT = 5;
+  	// pvmConst contains information about which tags and dataencoding to use
+  	pvmConst = new PVMConstants();
+  	nHostInn = nh;
+  	int i;
+  	if (funcNameArgs.Size() <= 0) 
+	{
+    	cerr << "Must have name of the function to start on slaves\n";
+    	exit(EXIT_FAILURE);
+  	}
+  	slaveProgram = new char[strlen(funcNameArgs[0]) + 1];
+  	strcpy(slaveProgram, funcNameArgs[0]);
+  	numarg = funcNameArgs.Size() - 1;
+  	slaveArguments = new char*[numarg + 1];
+  	for (i = 0; i < numarg; i++) 
+	{
+    	slaveArguments[i] = new char[strlen(funcNameArgs[i + 1]) + 1];
+    	strcpy(slaveArguments[i], funcNameArgs[i + 1]);
+  	}
+  	slaveArguments[numarg] = NULL;
+	
+	numVar = -1;
+	mytid = -1;
+	nhost = 0;
+	narch = 0;
+	numProcesses = 0;
+	numGoodProcesses = 0;
+	NETSTARTED = 0;
+	tids = NULL;
+	status = NULL;
+	ERROR = -1;
+	SUCCESS = 1;
+	
+	likelihoodHJ = 0.0;
+	likelihoodSA = 0.0;
+	likelihoodBFGS = 0.0;
+	convergedSA = 0;
+	convergedHJ = 0;
+	convergedBFGS = 0;
+	maxNumHosts = 500;
 }
 
-NetCommunication::~NetCommunication() {
-  int i;
-  if (tids != NULL)
-    delete[] tids;
-  if (status != NULL)
-    delete[] status;
-  if (hostTids != NULL)
-    delete[] hostTids;
-  if (dataIDs != NULL)
-    delete[] dataIDs;
-  delete[] slaveProgram;
-  for (i = 0; i < numarg; i++)
-    delete[] slaveArguments[i];
-  delete[] slaveArguments;
-  if (NETSTARTED == 1)
-    stopNetCommunication();
-  delete pvmConst;
+NetCommunication::~NetCommunication() 
+{
+  	int i;
+  	if (tids != NULL)
+    	delete[] tids;
+  	if (status != NULL)
+    	delete[] status;
+  	if (hostTids != NULL)
+    	delete[] hostTids;
+  	if (dataIDs != NULL)
+    	delete[] dataIDs;
+  	delete[] slaveProgram;
+  	for (i = 0; i < numarg; i++)
+    	delete[] slaveArguments[i];
+  	delete[] slaveArguments;
+  	if (NETSTARTED == 1)
+    	stopNetCommunication();
+  	delete pvmConst;
 }
 
 // ********************************************************
 // Functions for starting and stopping netcommunication
 // ********************************************************
-int NetCommunication::startPVM() {
-  int info;
+int NetCommunication::startPVM() 
+{
+	/*
+		Þetta fall er afgreitt í bili!
+		ATH: Þarf e.t.v. að skoða parametrana í MPI_Init.
+	*/
+	int info;
+  	// Held að það sé í lagi að hafa bara NULL hér...
+  	MPI_Init(NULL, NULL);
+	if (mytid < 0) 
+	{
+    	MPI_Comm_rank(MPI_COMM_WORLD, &mytid);
+    	if (mytid < 0) 
+		{
+      		printErrorMsg("Error in netcommunication - MPI not started");
+      		return ERROR;
+    	}
+	
+		int flag;
+		flag = 0;
+		// Checks whether MPI_Init has been called successfully.
+		MPI_Initialized(&flag);
+		if (!flag)
+		{
+			printErrorMsg("Error in netcommunication - MPI_Init has not been called!");
+		}
+		// nhost á að vera 1 hérna
+		MPI_Comm_size(MPI_COMM_WORLD, &nhost);
 
-  if (mytid < 0) {
-    // have not yet enrolled in PVM
-    mytid = pvm_mytid();
-    if (mytid < 0) {
-      printErrorMsg("Error in netcommunication - PVM not started");
-      return ERROR;
-    }
+    	tids = new int[maxNumHosts];
+    	status = new int[maxNumHosts];
+    	hostTids = new int[maxNumHosts];  //Added jongud
+    	dataIDs = new int[maxNumHosts];   //Added jongud
 
-    info = pvm_config(&nhost, &narch, &hostp);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - PVM not responding");
-      return ERROR;
-    }
-
-    assert(nhost > 0);
-    tids = new int[maxNumHosts];
-    status = new int[maxNumHosts];
-    hostTids = new int[maxNumHosts];  //Added jongud
-    dataIDs = new int[maxNumHosts];   //Added jongud
-
-    if (nHostInn > 0)
-      nhost = nHostInn;
-
-    // export PWD to all processes spawned
-    char* tempString;
-    tempString = new char[strlen("PWD") + 1];
-    strcpy(tempString, "PWD");
-    // Take out for multiprocessor maybe also Norway??
-    info = pvm_export(tempString);
-    delete[] tempString;
-    return SUCCESS;
-
-  } else {
-    cerr << "Warning in netcommunication - already enrolled in PVM\n";
-    return SUCCESS;
-  }
+    	if (nHostInn > 0)
+      		nhost = nHostInn;
+	}
+	return 1;
 }
 
-int NetCommunication::startNetCommunication() {
-  int i, OK, info;
+int NetCommunication::startNetCommunication() 
+{
+	/*
+		Þetta fall er afgreitt í bili!
+	*/
+	int i, OK, info;
+  	if (NETSTARTED == 1 && mytid >= 0) 
+	{
+    	// have alredy enrolled in MPI and spawned program on slaves
+    	cerr << "Warning in netcommunication - already enrolled in MPI and running " << slaveProgram << " on slaves\n";
+    	return SUCCESS;
+	} 
+	else 
+	{
+    	if (numVar <= 0) 
+		{
+      		cerr << "Error in netcommunication - number of variables must be positive\n";
+      		return ERROR;
+    	}
+    	OK = startPVM();
+		int* errcodes = new int[nhost];
+		if (OK == 1) 
+		{
+			/* 
+				Í PVM var notað pvm_catchout(stdin) til að fá output úr
+				child processunum, í MPI setur maður flag á eftir mpirun
+				til að fá sambærilega hegðun, þá búast til skrár fyrir hvert
+				process sem skrifa út allt sem kemur úr stdout og stderr í þeim. 
+			*/
+			MPI_Comm_spawn(slaveProgram, slaveArguments, nhost, MPI_INFO_NULL, 
+	          	0, MPI_COMM_WORLD, &intercomm, errcodes);
+			int tidsCounter;
+			for (i = 0; i < nhost; i++)
+			{
+				tidsCounter = i;
+				if(errcodes[i] == 0)
+				{
+					numProcesses++;
+					numGoodProcesses++;
+					status[i] = 1;
+					tids[i]=i;
+				}
+				else
+				{
+					cerr << "Error in netcommunication - unable to spawn process\n";
+					return ERROR;
+				}
+			}
+			delete [] errcodes;
+		}
 
-  if (NETSTARTED == 1 && mytid >= 0) {
-    // have alredy enrolled in pvm and spawned program on slaves
-    cerr << "Warning in netcommunication - already enrolled in PVM and running " << slaveProgram << " on slaves\n";
-    return SUCCESS;
+		/*
+		Þýðandinn var eitthvað að kvarta hérna...
+    	for (i = 0; i < nhost; i++) 
+		{
+      		
+			//hosts to be monitored for deletion, suspension and resumption
+      		hostTids[i] = hostp[i].hi_tid;
+    	}
 
-  } else {
-    if (numVar <= 0) {
-      cerr << "Error in netcommunication - number of variables must be positive\n";
-      return ERROR;
-    }
+		*/
+    	if (OK == 1) 
+		{
+      		// Have started slaveProgram slaveArguments on all nhost hosts.
+      		// send initial info to all slave processes
+      		OK = startProcesses();
+      		if (OK == 1) 
+			{
+        		NETSTARTED = 1;
+        		return SUCCESS;
+      		} 
+			else if (OK == -1) 
+			{
+        		return ERROR;
+      		} 
+			else 
+			{
+        		printErrorMsg("Error in netcommunication - unrecognised return value");
+        		stopNetCommunication();
+        		return ERROR;
+      		}
 
-    OK = startPVM();
-    if (OK == 1) {
-      for (i = 0; i < nhost; i++) {
-        tidsCounter = i;
-        OK = spawnOneProgram(tidsCounter);
-        if (OK == ERROR) {
-          cerr << "Error in netcommunication - unable to spawn process\n";
-          return ERROR;
-        }
-      }
-    }
-
-    for (i = 0; i < nhost; i++) {
-      /* hosts to be monitored for deletion, suspension and resumption*/
-      hostTids[i] = hostp[i].hi_tid;
-    }
-
-#ifdef CONDOR
-    //jongud added pvm_notify to help CONDOR keep track of hosts
-    info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), nhost, hostTids);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - pvmnotify failed");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), nhost, hostTids);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - pvmnotify failed");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), nhost, hostTids);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - pvmnotify failed");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_notify(PvmHostAdd, pvmConst->getAddHostTag(), -1, 0);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - pvmnotify failed");
-      stopNetCommunication();
-      return ERROR;
-    }
-#endif
-
-    if (OK == 1) {
-      // Have started slaveProgram slaveArguments on all nhost hosts.
-      // send initial info to all slave processes
-      OK = startProcesses();
-      if (OK == 1) {
-        NETSTARTED = 1;
-        return SUCCESS;
-      } else if (OK == -1) {
-        return ERROR;
-      } else {
-        printErrorMsg("Error in netcommunication - unrecognised return value");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-    } else if (OK == 0) {
-      // could not spawn all nhost processes
-      stopNetCommunication();
-      return ERROR;
-    } else {
-      printErrorMsg("Error in netcommunication - unrecognised return value");
-      stopNetCommunication();
-      return ERROR;
-    }
-  }
+    	} 
+		else if (OK == 0) 
+		{
+      		stopNetCommunication();
+      		return ERROR;
+    	} 
+		else 
+		{
+      		printErrorMsg("Error in netcommunication - unrecognised return value");
+      		stopNetCommunication();
+      		return ERROR;
+    	}
+  	}
 }
 
-void NetCommunication::stopNetCommunication() {
-  int i, tid, info, numTasks;
-  int stopparam = -1;
-
-  tid = pvm_mytid();
-  if (tid > 0) {
-    // pvmd is up and running and have joined pvm
-    if (NETSTARTED == 1) {
-      // have successfully spawned slaves and sent initial message to them
-      info = pvm_initsend(pvmConst->getDataEncode());
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to stop communication");
-
-      } else {
-        info = pvm_pkint(&stopparam, 1, 1);
-        if (info < 0) {
-          printErrorMsg("Error in netcommunication - unable to stop communication");
-
-        } else {
-          //Checking the status of processes and shutting them down.
-          //jongud. PVM is checked to see id of processes
-          int* tidsArray = new int[maxNumHosts];
-          info = pvm_tasks(0, &numTasks, &taskp);
-          for (i = 0; i < numTasks; i++)
-            tidsArray[i] = taskp[i].ti_tid;
-
-          info = pvm_mcast(tidsArray, numTasks, pvmConst->getStopTag());
-          if (info < 0) {
-            printErrorMsg("Error in netcommunication - unable to stop communication");
-          }
-	  delete[] tidsArray;
-        }
-      }
-    }
-    pvm_exit();
-  }
-  mytid = -1;
-  NETSTARTED = 0;
+void NetCommunication::stopNetCommunication() 
+{
+	/*
+		Fínt í bili.
+	*/
+	int i, tid, info, numTasks;
+  	int stopparam = -1;
+	
+  	MPI_Comm_rank(MPI_COMM_WORLD, &tid);
+  	if (tid >= 0) 
+	{
+		for(int i=0; i<nhost; i++)
+		{
+			MPI_Send(&stopparam, 1, MPI_INT, i, pvmConst->getStopTag(), intercomm);
+		}
+		MPI_Finalize();
+  	}
+  	mytid = -1;
+  	NETSTARTED = 0;
 }
 
-int NetCommunication::spawnProgram() {
-  int i, nspawn;
-
-  // Round-robin assignment is used to distribute the nhost processes on
-  // hosts participating. As nhost = total number of hosts participating,
-  // one process is started on each host. If startPVM is changed so that
-  // continue even though not all hosts can participate then must change
-  // this or set nhost to actual hosts .....
-
-  i = pvm_catchout(stdout);
-  nspawn = pvm_spawn(slaveProgram, slaveArguments, PvmTaskDefault, NULL, nhost, tids);
-  //nspawn = pvm_spawn(slaveProgram, slaveArguments, 1024 + 1, "ask.ii.uib.no", nhost, tids);
-
-  if (nspawn < 0) {
-    printErrorMsg("Error in netcommunication - unable to spawn process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-
-  } else if (nspawn < nhost) {
-    printErrorMsg("Error in netcommunication - unable to spawn process");
-    return ERROR;
-
-  } else {
-    numProcesses = nhost;
-    numGoodProcesses = nhost;
-    for (i = 0; i < numProcesses; i++)
-      status[i] = 1;
-    return SUCCESS;
-  }
-}
-
-int NetCommunication::spawnOneProgram(int vectorNumber) {
-  int i, nspawn;
-
-  i = pvm_catchout(stdout);
-  nspawn = pvm_spawn(slaveProgram, slaveArguments, PvmTaskDefault, NULL, 1, &tids[vectorNumber]);
-  if (nspawn < 0) {
-    printErrorMsg("Error in netcommunication - unable to spawn one process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-
-  } else if (tids[vectorNumber] < 0) {
-    printErrorMsg("Error in netcommunication - unable to spawn one process");
-    return ERROR;
-
-  } else {
-    numProcesses++;
-    numGoodProcesses++;
-    status[vectorNumber] = 1;
-    return SUCCESS;
-  }
-}
-
-int NetCommunication::spawnOneMoreProgram(int& newTid, int vectorNumber) {
-  int i, nspawn;
-  i = pvm_catchout(stdout);
-
-  int* newTidVector = new int[1];
-  nspawn = pvm_spawn(slaveProgram, slaveArguments, PvmTaskDefault, NULL, 1, newTidVector);
-  newTid = newTidVector[0];
-  delete[] newTidVector;
-
-  if (nspawn < 0) {
-    printErrorMsg("Error in netcommunication - unable to spawn one more process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-
-  } else if (newTid < 0) {
-    printErrorMsg("Error in netcommunication - unable to spawn one more process");
-    return ERROR;
-
-  } else {
-    numProcesses++;
-    numGoodProcesses++;
-    status[vectorNumber] = 1;
-    return SUCCESS;
-  }
-}
-
-int NetCommunication::startProcesses() {
+int NetCommunication::startProcesses() 
+{
+	/*
+		Þetta fall er afgreitt í bili!
+	*/
   //Send number of variables, group name and number of processes to spawned processes
-  int cansend = 1;
-  int i, info;
+  	int cansend = 1;
+  	int i, info;
 
-  info = pvm_notify(PvmTaskExit, pvmConst->getTaskDiedTag(), nhost, tids);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - pvmnotify failed");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  for (i = 0; i < nhost; i++) {
-    // send initial message to all spawned processes
-    cansend = sendInitialMessage(i);
-    if (cansend == -1) {
-      // Error occured in sending inital message to process with id = i
-      printErrorMsg("Error in netcommunication - unable to send message");
-      return ERROR;
-
-    } else if (cansend == 0) {
-      printErrorMsg("Error in netcommunication - unable to send message");
-      status[i] = -1;
-      return ERROR;
-
-    } else if (cansend == 1) {
-      status[i] = 1;
-
-    } else {
-      printErrorMsg("Error in netcommunication - unrecognised return value");
-      stopNetCommunication();
-      return ERROR;
-    }
-  }
-  return SUCCESS;
+  	for (i = 0; i < nhost; i++) 
+	{
+    	// send initial message to all spawned processes
+    	cansend = sendInitialMessage(i);
+    	if (cansend == -1) 
+		{
+      		// Error occured in sending inital message to process with id = i
+      		printErrorMsg("Error in netcommunication - unable to send message");
+      		return ERROR;
+		} 
+		else if (cansend == 0) 
+		{
+      		printErrorMsg("Error in netcommunication - unable to send message");
+      		status[i] = -1;
+      		return ERROR;
+    	} 
+		else if (cansend == 1) 
+		{
+      		status[i] = 1;
+    	} 
+		else 
+		{
+      		printErrorMsg("Error in netcommunication - unrecognised return value");
+      		stopNetCommunication();
+      		return ERROR;
+    	}
+  	}
+  	return SUCCESS;
 }
 
-int NetCommunication::startOneProcess(int processNum, int processTid) {
-  int info, cansend;
-  int tidToNotify[] = {processTid};
-  int hostTidToNotify[] = {hostTids[processNum]};
+int NetCommunication::sendInitialMessage(int id) 
+{
+  	int OK, info;
+	
+  	if (id < 0 || id >= nhost) 
+	{
+    	printErrorMsg("Error in netcommunication - invalid slave ID");
+    	return 0;
+  	}
 
-#ifdef CONDOR
-  //jongud added pvm_notify to help CONDOR keep track of hosts
-  info = pvm_notify(PvmTaskExit, pvmConst->getDiedTag(), 1, tidToNotify);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - pvmnotify failed");
-    stopNetCommunication();
-    return ERROR;
-  }
+  	// check if process with identity = id is up and running
+  	// spurning að sleppa þessu í bili, leyfum þessu að vera á meðan hitt er klárað.
+  	OK = checkProcess(id);
+  	if (OK == 1) 
+	{
+		MPI_Comm parentcomm;
+		MPI_Comm_get_parent( &parentcomm );
+		if(parentcomm == MPI_COMM_NULL)
+		{
+			MPI_Send(&numVar, 1, MPI_INT, id, pvmConst->getStartTag(), intercomm);
+			MPI_Send(&id, 1, MPI_INT, id, pvmConst->getStartTag(), intercomm);
+		}
+		else
+		{
+			printErrorMsg("Error in netcommunication - slave calling master send");
+	    	stopNetCommunication();
+		}
+    	return SUCCESS;
 
-  info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - pvmnotify failed");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  info = pvm_notify(PvmHostDelete, pvmConst->getHostDeleteTag(), 1, hostTidToNotify);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - pvmnotify failed");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  info = pvm_notify(PvmHostResume, pvmConst->getHostResumeTag(), 1, hostTidToNotify);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - pvmnotify failed");
-    stopNetCommunication();
-    return ERROR;
-  }
-#endif
-
-  //Send initial message to the last spawned process, nhost == number of processes
-  cansend = sendInitialMessageToTid(processTid, processNum);
-  if (cansend == -1) {
-    printErrorMsg("Error in netcommunication - unable to send message");
-    return ERROR;
-  } else if (cansend == 0) {
-    status[processNum] = -1;
-  } else if (cansend == 1) {
-    status[processNum] = 1;
-  } else {
-    printErrorMsg("Error in netcommunication - unrecognised return value");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  // Have successfully sent starting message to slave
-  tids[processNum] = processTid;
-  return SUCCESS;
-}
-
-int NetCommunication::sendInitialMessage(int id) {
-  int OK, info;
-
-  if (id < 0 || id >= nhost) {
-    printErrorMsg("Error in netcommunication - invalid slave ID");
-    return 0;
-  }
-
-  // check if process with identity = id is up and running
-  OK = checkProcess(id);
-  if (OK == 1) {
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send initial message");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_pkint(&numVar, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send initial message");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_pkint(&id, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send initial message");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_send(tids[id], pvmConst->getStartTag());
-
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send initial message");
-      stopNetCommunication();
-      return ERROR;
-    }
-    return SUCCESS;
-
-  } else if (OK == -1) {
-    printErrorMsg("Error in netcommunication - unable to check status");
-    stopNetCommunication();
-    return ERROR;
-
-  } else if (OK == 0) {
-    printErrorMsg("Error in netcommunication - unable to send initial message");
-    return OK;
-
-  } else {
-    printErrorMsg("Error in netcommunication - unrecognised return value");
-    stopNetCommunication();
-    return ERROR;
-  }
-}
-
-int NetCommunication::sendInitialMessageToTid(int tid, int processNum) {
-  int OK;
-  int info;
-
-  if ((processNum < 0)|| (processNum >= numProcesses)) {
-    printErrorMsg("Error in netcommunication - invalid slave ID");
-    return 0;
-  }
-
-  // check if process with identity = id is up and running
-  OK = checkProcessByTid(tid, processNum);
-  if (OK == 1) {
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to start process");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_pkint(&numVar, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to start process");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_pkint(&processNum, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to start process");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_send(tid, pvmConst->getStartTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to start process");
-      stopNetCommunication();
-      return ERROR;
-    }
-    // sent successfully to slave with tids[id] numVar and id
-    return SUCCESS;
-
-  } else if (OK == -1) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    return ERROR;
-  } else if (OK == 0) {
-    return OK;
-  } else {
-    printErrorMsg("Error in netcommunication - unrecognised return value");
-    stopNetCommunication();
-    return ERROR;
-  }
-}
-
-int NetCommunication::sendNumberOfVariables() {
-  int info;
-
-  if (numVar <= 0) {
-    printErrorMsg("Error in netcommunication - invalid number of variables");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  // tell slave program how many variables to expect in vector sent
-  info = pvm_initsend(pvmConst->getDataEncode());
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - unable to send variables");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  info = pvm_pkint(&numVar, 1, 1);
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - unable to send variables");
-    stopNetCommunication();
-    return ERROR;
-  }
-
-  info = pvm_mcast(tids, nhost, pvmConst->getStartTag());
-  if (info < 0) {
-    printErrorMsg("Error in netcommunication - unable to send variables");
-    stopNetCommunication();
-    return ERROR;
-  }
-  return SUCCESS;
+  	} 
+	else if (OK == -1) 
+	{
+    	printErrorMsg("Error in netcommunication - unable to check status");
+    	stopNetCommunication();
+    	return ERROR;
+  	} 
+	else if (OK == 0) 
+	{
+    	printErrorMsg("Error in netcommunication - unable to send initial message");
+    	return OK;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unrecognised return value");
+    	stopNetCommunication();
+    	return ERROR;
+  	}
 }
 
 int NetCommunication::checkProcess(int id) {
-  int info, bufID, recvTid;
-  assert(id >= 0);
-  assert(id < numProcesses);
+	/*
+		Þetta fall er ekki að gera neitt, því það sendir adrei nein
+		út með tagginu getTaskDiedTag()
+	*/
+  	int info, bufID, recvTid, flag;
+  	MPI_Status stats, recvstats;
+  	assert(id >= 0);
+  	assert(id < numProcesses);
 
-  bufID = pvm_probe(tids[id], pvmConst->getTaskDiedTag());
-  if (bufID > 0) {
+  	//bufID = pvm_probe(tids[id], pvmConst->getTaskDiedTag());
+
+  	// Non-blocking probe which checks for a message with this tag, if there is no message then
+  	// flag is false, otherwise it is true, then something is maybe wrong with the process!
+	
+	// ATH: Þetta flag mun líklega alltaf vera false... það tékkar bara strax og heldur svo 
+	// áfram, þetta virkar eins og pvm_probe, svo þetta ætti að vera í lagi hér.
+	// Held samt að það sé irrelevant að vera með þetta checkprocess núna, það á allt að
+	// vera í lagi... 
+	bufID = MPI_Iprobe(id, pvmConst->getTaskDiedTag(), intercomm, &flag, &stats);
+  	if (flag == true) {
     // message has arrived from tids[id] that has halted
-    info = pvm_recv(tids[id], pvmConst->getTaskDiedTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to check process");
-      return ERROR;
-    }
+    //info = pvm_recv(tids[id], pvmConst->getTaskDiedTag());
 
-    info = pvm_upkint(&recvTid, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to check process");
-      return ERROR;
-    }
+	// Blocking receive-message for bookkeeping of status of the process.
+		MPI_Recv(&recvTid, 1, MPI_INT, stats.MPI_SOURCE, pvmConst->getTaskDiedTag(), intercomm, &recvstats);
+  	//if (info < 0) {
+    //  printErrorMsg("Error in netcommunication - unable to check process");
+    //  return ERROR;
+    //}
 
+    //info = pvm_upkint(&recvTid, 1, 1);
+    //if (info < 0) {
+    //  printErrorMsg("Error in netcommunication - unable to check process");
+    //  return ERROR;
+    //}
+	
+	
     if (recvTid != tids[id])
-      return ERROR;
+      	return ERROR;
 
     status[id] = -1;
     numGoodProcesses--;
     return 0;
 
-  } else if (bufID < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    return ERROR;
-  } else {
-    return SUCCESS;
-  }
-}
-
-int NetCommunication::checkProcessByTid(int tidToCheck,int processNum) {
-  int info, recvTid, bufID;
-
-  bufID = pvm_probe(tidToCheck, pvmConst->getTaskDiedTag());
-  if (bufID > 0) {
-    // message has arrived from tids[id] that has halted
-    info = pvm_recv(tidToCheck, pvmConst->getTaskDiedTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to check process");
-      return ERROR;
-    }
-
-    info = pvm_upkint(&recvTid, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to check process");
-      return ERROR;
-    }
-
-    if (recvTid != tidToCheck)
-      return ERROR;
-
-    status[processNum] = -1;
-    numGoodProcesses--;
-    return 0;
-
-  } else if (bufID < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    return ERROR;
-  } else {
-    return SUCCESS;
-  }
-}
-
-void NetCommunication::getHealthOfProcesses(int* procTids) {
-  checkProcesses();
-  int i;
-  for (i = 0; i < numProcesses; i++)
-    procTids[i] = status[i];
-}
-
-int NetCommunication::getHealthOfProcessesAndHostAdded(int* procTids) {
-  int i, newProcess = -1;
-  checkProcesses();
-  checkHostsForDelete();
-  checkHostsForResume();
-  newProcess = checkHostsForAdded();
-  for (i = 0; i < numProcesses; i++)
-    procTids[i] = status[i];
-  return newProcess;
+  	} 
+  	else 
+	{
+    	return SUCCESS;
+  	}
 }
 
 void NetCommunication::checkProcesses() {
-  int i, info, tidDown;
-
-  int received = pvm_nrecv(-1, pvmConst->getTaskDiedTag());
-  while (received > 0) {
+	/*
+		Þetta fall er komið í bili.
+		Þetta fall erl íka í raun óþarfi...
+	*/
+  int i, info, tidDown, flag;
+  MPI_Request req;
+  MPI_Status nonb;
+  MPI_Irecv(&tidDown,1,MPI_INT,MPI_ANY_SOURCE,pvmConst->getTaskDiedTag(),intercomm,&req);
+  MPI_Test(&req, &flag, &nonb);
+  while (flag == true) {
     // got message that task is down, receive it
-    info = pvm_upkint(&tidDown, 1, 1);
     i = 0;
     while ((tids[i] != tidDown) && (i < numProcesses))
       i++;
@@ -658,316 +383,35 @@ void NetCommunication::checkProcesses() {
     assert((i >= 0) && (i < numProcesses));
     status[i] = -1;
     numGoodProcesses--;
-    received = pvm_nrecv(-1, pvmConst->getTaskDiedTag());
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
+	MPI_Irecv (&tidDown,1,MPI_INT,MPI_ANY_SOURCE,pvmConst->getTaskDiedTag(),intercomm,&req);
+	MPI_Test(&req, &flag, &nonb);
   }
 }
 
-void  NetCommunication::checkHostsForSuspend() {
-  int i, j, info;
-  int taskSuspended = 0;
-  int hostSuspended;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
-  while (received > 0) {
-    // got message that task is suspended, receive it
-    info = pvm_upkint(&hostSuspended, 1, 1);
-    // find id of hostSuspended
-    i = 0;
-    while ((hostTids[i] != hostSuspended) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    j = 0;
-    while ((taskp[j].ti_host != hostSuspended) && (i < numProcesses))
-      j++;
-
-    assert((j >= 0) && (j < numProcesses));
-    taskSuspended = taskp[j].ti_tid;
-    status[j] = -1;
-    numGoodProcesses--;
-    received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-}
-
-void NetCommunication::checkHostsForDelete() {
-  int i, info, tidDelete;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
-  while (received > 0) {
-    // got message that task is down, receive it
-    info = pvm_upkint(&tidDelete, 1, 1);
-    // find id of tidDown
-    i = 0;
-    while ((hostTids[i] != tidDelete) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    status[i] = -1;
-    numGoodProcesses--;
-    received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-}
-
-int NetCommunication::spawnAndStartOneProcess(int processNumber) {
-  int check;
-  int newTid = 0;
-
-  check = spawnOneMoreProgram(newTid, processNumber);
-  if (!(check == SUCCESS)) {
-    printErrorMsg("Error in netcommunication - unable to spawn process");
-    return ERROR;
-  }
-
-  check = startOneProcess(processNumber, newTid);
-  if (!(check == SUCCESS)) {
-    printErrorMsg("Error in netcommunication - unable to spawn process");
-    return ERROR;
-  }
-  return SUCCESS;
-}
-
-int NetCommunication::checkHostsForAdded() {
-  int i, check, info, infos, tidAdded;
-  int numOfProcessAdded = -1;
-  int checkIfNew = 0;
-  int received = pvm_nrecv(-1, pvmConst->getHostAddTag());
-
-  if (received > 0) {
-    // got message that host is added, receive it
-    info = pvm_upkint(&tidAdded, 1, 1);
-    // find id of tidDown
-    for (i = 0; i < (tidsCounter + 1); i++) {
-      if (tids[i] == tidAdded) {
-        checkIfNew++;
-        numOfProcessAdded = i;
-      }
-    }
-
-    if (checkIfNew == 0) {
-      nhost++;
-      numOfProcessAdded = tidsCounter + 1;
-      hostTids[numOfProcessAdded] = tidAdded;
-      check = spawnAndStartOneProcess(numOfProcessAdded);
-
-    } else {
-      check = spawnAndStartOneProcess(numOfProcessAdded);
-    }
-
-    if (check == SUCCESS) {
-      pvm_addhosts(NULL, 1, &infos);
-      tidsCounter++;
-      return numOfProcessAdded;
-    } else if (check == ERROR) {
-      printErrorMsg("Error in netcommunication - unable to spawn process");
-      return ERROR;
-    } else {
-      printErrorMsg("Error in netcommunication - unable to spawn process");
-      return ERROR;
-    }
-
-  } else if (received == 0) {
-    return ERROR;
-  } else {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    return ERROR;
-  }
-}
-
-void NetCommunication::checkHostsForResume() {
-  int i, info, tidResume;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
-  while (received > 0) {
-    // got message that task is down, receive it
-    info = pvm_upkint(&tidResume, 1, 1);
-    // find id of tidDown
-    i = 0;
-    while ((hostTids[i] != tidResume) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    status[i] = 1;
-    numGoodProcesses++;
-    received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-}
-
-int NetCommunication::checkHostForSuspendReturnsDataid(int* procTids) {
-  int processID = -1;
-  int dataID = -1;
-  int i, info;
-  int taskSuspended = 0;
-  int hostSuspended;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostSuspendTag());
-  if (received > 0) {
-    // got message that task is suspended, receive it
-    info = pvm_upkint(&hostSuspended, 1, 1);
-    // find id of hostSuspended
-    i = 0;
-    while ((hostTids[i] != hostSuspended) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    taskSuspended = tids[i];
-    status[i] = -1;
-    numGoodProcesses--;
-    for (i = 0; i < numProcesses; i++)
-      procTids[i] = status[i];
-
-    for (i = 0; (i < numProcesses) && (processID == -1); i++)
-      if (tids[i] == taskSuspended)
-        processID = i;
-
-    if (processID == -1) {
-      printErrorMsg("Error in netcommunication - invalid process ID");
-      exit(EXIT_FAILURE);
-    }
-
-    dataID = dataIDs[processID];
-    return dataID;
-
-  }
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-  return -2;
-}
-
-int NetCommunication::checkHostForDeleteReturnsDataid(int* procTids) {
-  int processID = -1;
-  int dataID = -1;
-  int i, j, info;
-  int taskDeleted = 0;
-  int hostDeleted;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostDeleteTag());
-  if (received > 0) {
-    // got message that task is deleted, receive it
-    info = pvm_upkint(&hostDeleted, 1, 1);
-    // find id of hostDeleted
-    i = 0;
-    while ((hostTids[i] != hostDeleted) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    j = 0;
-    while ((taskp[j].ti_host != hostDeleted) && (i < numProcesses))
-      j++;
-
-    assert((j >= 0) && (j < numProcesses));
-    taskDeleted = taskp[j].ti_tid;
-    status[j] = -1;
-    numGoodProcesses--;
-    for (i = 0; i < numProcesses; i++)
-      procTids[i] = status[i];
-
-    for (i = 0; (i < numProcesses) && (processID == -1); i++)
-      if (tids[i] == taskDeleted)
-        processID = i;
-
-    if (processID == -1) {
-      printErrorMsg("Error in netcommunication - invalid process ID");
-      exit(EXIT_FAILURE);
-    }
-
-    dataID = dataIDs[processID];
-    return dataID;
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-  return -2;
-}
-
-int NetCommunication::checkHostForResumeReturnsDataid(int* procTids) {
-  int processID = -1;
-  int dataID = -1;
-  int i, j, info;
-  int taskResumed = 0;
-  int hostResumed;
-
-  int received = pvm_nrecv(-1, pvmConst->getHostResumeTag());
-  if (received > 0) {
-    // got message that task is resumed, receive it
-    info = pvm_upkint(&hostResumed, 1, 1);
-    // find id of hostResumed
-    i = 0;
-    while ((hostTids[i] != hostResumed) && (i < numProcesses))
-      i++;
-
-    assert((i >= 0) && (i < numProcesses));
-    j = 0;
-    while ((taskp[j].ti_host != hostResumed) && (i < numProcesses))
-      j++;
-
-    assert((j >= 0) && (j < numProcesses));
-    taskResumed = taskp[j].ti_tid;
-    status[j] = 1;
-    numGoodProcesses++;
-    for (i = 0; i < numProcesses; i++)
-      procTids[i] = status[i];
-
-#ifdef CONDOR
-    int hostTidToNotify[] = {hostResumed};
-    info = pvm_notify(PvmHostSuspend, pvmConst->getHostSuspendTag(), 1, hostTidToNotify);
-#endif
-
-    for (i = 0; (i < numProcesses) && (processID == -1); i++)
-      if (tids[i] == taskResumed)
-        processID = i;
-
-    if (processID == -1) {
-      printErrorMsg("Error in netcommunication - invalid process ID");
-      exit(EXIT_FAILURE);
-    }
-
-    dataID = dataIDs[processID];
-    return dataID;
-  }
-
-  if (received < 0) {
-    printErrorMsg("Error in netcommunication - unable to check process");
-    stopNetCommunication();
-    exit(EXIT_FAILURE);
-  }
-  return -2;
+void NetCommunication::getHealthOfProcesses(int* procTids) {
+	/*
+		Þetta fall er afgreitt.
+		
+	*/
+  checkProcesses();
+  int i;
+  for (i = 0; i < numProcesses; i++)
+    procTids[i] = status[i];
 }
 
 // ********************************************************
 // Functions for sending and receiving messages
 // ********************************************************
 int NetCommunication::sendData(const ParameterVector& sendP) {
+	/*
+		Komið í bili, þarf samt að skoða MPI_PACK eða eitthvað álíka til að 
+		raða inn í buffer og senda strengina, gæti verið að maður þurfi þá að
+		pakka int með sem er lengd char fylkisins. Það er samt bara kallað á þetta
+		fall einu sinni í byrjun til að senda switches, svo að það ætti að vera í lagi.
+		!!! ATH !!!
+		Passa að allir sem kalla á þetta sendi communicator !!!
+		!!!
+	*/
     // must absolutely check if this is possible or can not delete
     // stringValue now.}}}}}}}}}}}}}x
     int i, info;
@@ -975,28 +419,18 @@ int NetCommunication::sendData(const ParameterVector& sendP) {
   if (NETSTARTED == 1) {
       stringValue = new char*[numVar];
       for (i = 0; i < numVar; i++) {
-	  stringValue[i] = new char(strlen(sendP[i].getName())+1);
-          strcpy(stringValue[i], sendP[i].getName());
+	  	stringValue[i] = new char(strlen(sendP[i].getName())+1);
+        strcpy(stringValue[i], sendP[i].getName());
+		// This was done with pvm_mcast in the old version, it works similar to this, but it might be
+		// broadcasting the data via a tree structure, this should not create too much overhead.
+		for(int j = 0; j<nhost; j++)
+		{
+			MPI_Send(stringValue[i],strlen(stringValue[i]), MPI_BYTE, j, pvmConst->getMasterSendStringTag(), intercomm);
+		}
       };
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
     assert(sendP.Size() >= numVar);
-    for (i = 0; i < numVar; i++) {
-      info = pvm_pkstr(stringValue[i]);
-      if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-    }
-
-    info = pvm_mcast(tids, nhost, pvmConst->getMasterSendStringTag());
-    for (i = 0; i < numVar; i++)
+    
+	for (i = 0; i < numVar; i++)
 	delete [] stringValue[i];
     delete [] stringValue;
     if (info < 0) {
@@ -1013,412 +447,214 @@ int NetCommunication::sendData(const ParameterVector& sendP) {
 }
 
 int NetCommunication::sendData(const ParameterVector& sendP, int processID) {
-  int i, info;
-  char** stringValue;
-  if (NETSTARTED == 1) {
-      stringValue = new char*[numVar];
-      for (i = 0; i < numVar; i++) {
-	  stringValue[i] = new char(strlen(sendP[i].getName())+1);
-          strcpy(stringValue[i], sendP[i].getName());
-      };
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
+	/*
+		Búið í bili...
+	*/
+	int i, info;
+  	char** stringValue;
+  	if (NETSTARTED == 1) 
+	{
+      	stringValue = new char*[numVar];
+      	for (i = 0; i < numVar; i++) 
+		{
+	  		stringValue[i] = new char(strlen(sendP[i].getName())+1);
+        	strcpy(stringValue[i], sendP[i].getName());
+			// This could be causing some overhead, could consider packing it in a buffer
+			// before I send it, like the old pvm version, let's see if this works ok.
+			// I think this function is only called once.
+			MPI_Send(stringValue[i],strlen(stringValue[i]), MPI_BYTE,tids[processID],pvmConst->getMasterSendStringTag(),intercomm);  
+      	};
+    	assert(sendP.Size() >= numVar);
 
-    assert(sendP.Size() >= numVar);
-    for (i = 0; i < numVar; i++) {
-      info = pvm_pkstr(stringValue[i]);
-      if (info < 0) {
-	  printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-	for (i = 0; i < numVar; i++)
-	    delete [] stringValue[i];
-	delete [] stringValue;
-        return ERROR;
-      }
-    }
-
-    info = pvm_send(tids[processID], pvmConst->getMasterSendStringTag());
-    for (i = 0; i < numVar; i++)
-	delete [] stringValue[i];
-    delete [] stringValue;
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    } else {
-      return SUCCESS;
-    }
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to send data");
-    return ERROR;
-  }
+    	for (i = 0; i < numVar; i++)
+			delete [] stringValue[i];
+    	delete [] stringValue;
+		return SUCCESS;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to send data");
+    	return ERROR;
+  	}
 }
 
-int NetCommunication::sendBoundData(const DoubleVector& sendP) {
-  int i, info;
-  double* temp;
+int NetCommunication::sendBoundData(const DoubleVector& sendP) 
+{
+	/*
+		Komið í bili...
+	*/
+  	int i, info;
+  	double* temp;
 
-  if (NETSTARTED == 1) {
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    temp = new double[numVar];
-    for (i = 0; i < numVar; i++)
-      temp[i] = sendP[i];
-
-    info = pvm_pkdouble(temp, numVar, 1);
-
-    delete[] temp;
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_mcast(tids, nhost, pvmConst->getMasterSendBoundTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    } else
-      return SUCCESS;
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to send data");
-    return ERROR;
-  }
+  	if (NETSTARTED == 1) 
+	{
+    	temp = new double[numVar];
+    	for (i = 0; i < numVar; i++)
+      		temp[i] = sendP[i];
+		for(int j = 0; j< nhost; j++)
+		{
+			// This was originally done with pvm_mcast, question if this is causing overhead.
+			MPI_Send(temp, numVar , MPI_DOUBLE,j,pvmConst->getMasterSendBoundTag(),intercomm);
+		}
+    	delete[] temp;
+		return SUCCESS;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to send data");
+    	return ERROR;
+  	}
 }
 
-int NetCommunication::sendBoundData(const DoubleVector& sendP, int processID) {
-  int i, info;
-  double* temp;
+int NetCommunication::sendBoundData(const DoubleVector& sendP, int processID) 
+{
+	/*
+		Komið í bili!
+	*/
+  	int i, info;
+  	double* temp;
 
-  if (NETSTARTED == 1) {
-    info = pvm_initsend(pvmConst->getDataEncode());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
+  	if (NETSTARTED == 1) 
+	{
+    	temp = new double[numVar];
+    	for (i = 0; i < numVar; i++)
+      		temp[i] = sendP[i];
 
-    temp = new double[numVar];
-    for (i = 0; i < numVar; i++)
-      temp[i] = sendP[i];
-
-    info = pvm_pkdouble(temp, numVar, 1);
-    delete[] temp;
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_send(tids[processID], pvmConst->getMasterSendBoundTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    } else
-      return SUCCESS;
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to send data");
-    return ERROR;
-  }
+		MPI_Send(temp,numVar, MPI_DOUBLE,tids[processID],pvmConst->getMasterSendBoundTag(),intercomm); 
+    	delete[] temp;
+    	return SUCCESS;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to send data");
+    	return ERROR;
+  	}
 }
 
-int NetCommunication::sendData(NetDataVariables* sendP, int processID) {
-  int info;
-  int cansend = 1;
-  assert(processID >= 0);
-  assert(processID < numProcesses);
+int NetCommunication::sendData(NetDataVariables* sendP, int processID) 
+{
+	/*
+		Komið í bili!
+	*/
+  	int info;
+  	int cansend = 1;
+  	assert(processID >= 0);
+  	assert(processID < numProcesses);
 
-  if (NETSTARTED == 1) {
-    // check is process with id = processID is up and running
-    cansend = checkProcess(processID);
-    if (cansend == -1) {
-      printErrorMsg("Error in netcommunication - invalid process ID");
-      stopNetCommunication();
-      return ERROR;
+  	if (NETSTARTED == 1) 
+	{
+    	// check is process with id = processID is up and running
+    	cansend = checkProcess(processID);
+    	if (cansend == -1) 
+		{
+      		printErrorMsg("Error in netcommunication - invalid process ID");
+      		stopNetCommunication();
+      		return ERROR;
 
-    } else if (cansend == 0) {
-      //process with id = processID is not up and running
-      return cansend;
+    	} 
+		else if (cansend == 0) 
+		{
+      		//process with id = processID is not up and running
+      		return cansend;
 
-    } else if (cansend == 1) {
-      info = pvm_initsend(pvmConst->getDataEncode());
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
+    	} 
+		else if (cansend == 1) 
+		{
+			MPI_Send(&sendP->tag,1,MPI_INT, tids[processID],pvmConst->getMasterSendVarTag(),intercomm);
+			MPI_Send(&sendP->x_id,1,MPI_INT, tids[processID],pvmConst->getMasterSendVarTag(),intercomm);
+			MPI_Send(sendP->x,numVar,MPI_DOUBLE, tids[processID],pvmConst->getMasterSendVarTag(),intercomm);
+      		return SUCCESS;
+		} 
+		else 
+		{
+      		printErrorMsg("Error in netcommunication - unable to send data");
+      		stopNetCommunication();
+      		return ERROR;
+    	}
 
-      info = pvm_pkint(&sendP->tag, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_pkint(&sendP->x_id, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_pkdouble(sendP->x, numVar, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_send(tids[processID], pvmConst->getMasterSendVarTag());
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-      return SUCCESS;
-
-    } else {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to send data");
-    return ERROR;
-  }
+ 	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to send data");
+    	return ERROR;
+  	}
 }
 
-int NetCommunication::sendData(NetDataVariables* sendP, int processID, int dataID) {
-  int info;
-  int cansend = 1;
-  assert(processID >= 0);
-  assert(processID < numProcesses);
+int NetCommunication::receiveData(NetDataResult* rp) 
+{
+	/*
+		Komið í bili...
+		Þarf að passa að kasta villu ef einhver af þessum nær ekki að receive-a, nota kannski
+		MPI_Probe...
+	*/
+  	int info;
+	MPI_Status status, status2;
 
-  if (NETSTARTED == 1) {
-    // check is process with id = processID is up and running
-    cansend = checkProcess(processID);
-    if (cansend == -1) {
-      printErrorMsg("Error in netcommunication - invalid process ID");
-      stopNetCommunication();
-      return ERROR;
-
-    } else if (cansend == 0) {
-      //process with id = processID is not up and running
-      return cansend;
-
-    } else if (cansend == 1) {
-      info = pvm_initsend(pvmConst->getDataEncode());
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_pkint(&sendP->tag, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_pkint(&sendP->x_id, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_pkdouble(sendP->x, numVar, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_send(tids[processID], pvmConst->getMasterSendVarTag());
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to send data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      dataIDs[processID] = dataID;
-      return SUCCESS;
-
-    } else {
-      printErrorMsg("Error in netcommunication - unable to send data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to send data");
-    return ERROR;
-  }
-}
-
-int NetCommunication::receiveData(NetDataResult* rp) {
-  int info;
-
-  if (NETSTARTED == 1) {
-    // receive data from any process which sends data with msgtag = receiveTag
-    info = pvm_recv(-1, pvmConst->getMasterReceiveDataTag());
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-
-    } else {
-      info = pvm_upkint(&rp->tag, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to receive data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_upkdouble(&rp->result, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to receive data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_upkint(&rp->who, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to receive data");
-        stopNetCommunication();
-        return ERROR;
-      }
-
-      info = pvm_upkint(&rp->x_id, 1, 1);
-      if (info < 0) {
-        printErrorMsg("Error in netcommunication - unable to receive data");
-        stopNetCommunication();
-        return ERROR;
-      }
-      return SUCCESS;
-    }
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to receive data");
-    return ERROR;
-  }
-}
-
-//Added jongud
-int NetCommunication::probeForReceiveData() {
-  int bufid;
-  bufid = pvm_probe(-1, pvmConst->getMasterReceiveDataTag());
-  if (bufid > 0)
-    return SUCCESS;
-  else if (bufid == 0)
-    return NONTORECEIVE;
-  else {
-    printErrorMsg("Error in netcommunication - unable to receive data");
-    stopNetCommunication();
-    return ERROR;
-  }
-}
-
-int NetCommunication::receiveDataNonBlocking(NetDataResult* rp) {
-  int info;
-
-  info = pvm_nrecv(-1, pvmConst->getMasterReceiveDataTag());
-  if (info == 0) {
-    return NONTORECEIVE;
-
-  } else if (info > 0) {
-    // received information from process
-    info = pvm_upkint(&rp->tag, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkdouble(&rp->result, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkint(&rp->who, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkint(&rp->x_id, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-    dataIDs[rp->who] = -1;
-    return SUCCESS;
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to receive data");
-    stopNetCommunication();
-    return ERROR;
-  }
+  	if (NETSTARTED == 1) 
+	{
+		MPI_Recv(&rp->tag, 1, MPI_INT, MPI_ANY_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status);
+		MPI_Recv(&rp->result, 1, MPI_DOUBLE, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+		MPI_Recv(&rp->who, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+		MPI_Recv(&rp->x_id, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+    	return SUCCESS;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to receive data");
+    	return ERROR;
+  	}
 }
 
 // ********************************************************
 // Functions which set/return information about netcommunication
 // ********************************************************
-int NetCommunication::getNumHosts() {
-  return nhost;
+int NetCommunication::getNumHosts() 
+{
+  	return nhost;
 }
 
-int NetCommunication::getNumProcesses() {
-  return numProcesses;
+int NetCommunication::getNumProcesses() 
+{
+  	return numProcesses;
 }
 
-int NetCommunication::getNumVar() {
-  return numVar;
+int NetCommunication::getNumVar() 
+{
+  	return numVar;
 }
 
-int NetCommunication::getNumRunningProcesses() {
-  return numGoodProcesses;
+int NetCommunication::getNumRunningProcesses() 
+{
+  	return numGoodProcesses;
 }
 
-int NetCommunication::netCommStarted() {
-  return NETSTARTED;
+int NetCommunication::netCommStarted() 
+{
+  	return NETSTARTED;
 }
 
-void NetCommunication::setNumInSendVar(int nVar) {
-  if (nVar <= 0) {
-    cerr << "Error in netcommunication - number of variables must be positive\n";
-    exit(EXIT_FAILURE);
-  }
-  numVar = nVar;
+void NetCommunication::setNumInSendVar(int nVar) 
+{
+  	if (nVar <= 0) 
+	{
+    	cerr << "Error in netcommunication - number of variables must be positive\n";
+    	exit(EXIT_FAILURE);
+  	}
+  	numVar = nVar;
 }
 
-void NetCommunication::printErrorMsg(const char* errorMsg) {
-  char* msg;
-  msg = new char[strlen(errorMsg) + 1];
-  strcpy(msg, errorMsg);
-  pvm_perror(msg);
-  delete[] msg;
-  cerr << errorMsg << endl;
+void NetCommunication::printErrorMsg(const char* errorMsg) 
+{
+	/*
+		Eina fallið sem ég virðist þurfa að eiga eitthvað við hér...
+	*/
+  	char* msg;
+  	msg = new char[strlen(errorMsg) + 1];
+  	strcpy(msg, errorMsg);
+	// Ákvað að gera þetta svona, vona að þetta flood-i ekki command line...
+	cout << msg << "\n";
+  	delete[] msg;
+  	cerr << errorMsg << endl;
 }
 
 int NetCommunication::netError() {
@@ -1429,132 +665,51 @@ int NetCommunication::netSuccess() {
   return SUCCESS;
 }
 
-int NetCommunication::netDataNotSent() {
-  return DATANOTSENT;
-}
-
-int NetCommunication::netNoneToReceive() {
-  return NONTORECEIVE;
-}
-
-int NetCommunication::netNeedMoreHosts() {
-  return NEEDMOREHOSTS;
-}
-
-int NetCommunication::netNeedMoreData() {
-  return NEEDMOREDATA;
-}
-
-int NetCommunication::netWaitForBetterProcesses() {
-  return WAITFORPROCESS;
-}
-
 MasterCommunication::MasterCommunication(CommandLineInfo* info)
-  : NetCommunication(info->getFunction(), info->getNumProc()) {
-  int wait = info->getWaitMaster();
-  tmout = new timeval;
-  if (wait == -1)
-    tmout = NULL;
-  else if (wait >= 0) {
-    tmout->tv_sec = wait;
-    tmout->tv_usec = 0;
-  } else {
-    cerr << "Error in netcommunication - invalid value for wait " << wait << "\n";
-    exit(EXIT_FAILURE);
-  }
+  : NetCommunication(info->getFunction(), info->getNumProc()) 
+{
+  	int wait = info->getWaitMaster();
+  	tmout = new timeval;
+  	if (wait == -1)
+    	tmout = NULL;
+  	else if (wait >= 0) 
+	{
+    	tmout->tv_sec = wait;
+    	tmout->tv_usec = 0;
+  	} 
+	else 
+	{
+    	cerr << "Error in netcommunication - invalid value for wait " << wait << "\n";
+    	exit(EXIT_FAILURE);
+  	}
 }
 
-MasterCommunication::~MasterCommunication() {
-  delete tmout;
+MasterCommunication::~MasterCommunication() 
+{
+  	delete tmout;
 }
 
-int MasterCommunication::receiveData(NetDataResult* rp) {
-  int info, timeout;
-  timeout = pvm_trecv(-1, pvmConst->getMasterReceiveDataTag(), tmout);
-  if (timeout < 0) {
-    printErrorMsg("Error in netcommunication - unable to receive data");
-    stopNetCommunication();
-    return ERROR;
+int MasterCommunication::receiveData(NetDataResult* rp) 
+{
+	/*
+		Komið í bili...
+		Þarf að passa að kasta villu ef einhver af þessum nær ekki að receive-a, nota kannski
+		MPI_Probe, þetta var gert með Timeout receive í gömlu útgáfunni...
+	*/
+  	int info;
+	MPI_Status status, status2;
 
-  } else if (timeout > 0) {
-    // received information from process within tmout.
-    info = pvm_upkint(&rp->tag, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkdouble(&rp->result, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkint(&rp->who, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkint(&rp->x_id, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-    return SUCCESS;
-
-  } else {
-    rp->who = -1;
-    return SUCCESS;
-  }
-}
-
-//Added method jongud. 17.07.02 . Not finished.
-int MasterCommunication::receiveDataNonBlocking(NetDataResult* rp) {
-  int info;
-  info = pvm_nrecv(-1, pvmConst->getMasterReceiveDataTag());
-
-  if (info == 0)
-    return NONTORECEIVE;
-
-  else if (info > 0) {
-   // received information from process
-    info = pvm_upkint(&rp->tag, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkdouble(&rp->result, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-    info = pvm_upkint(&rp->who, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-
-    info = pvm_upkint(&rp->x_id, 1, 1);
-    if (info < 0) {
-      printErrorMsg("Error in netcommunication - unable to receive data");
-      stopNetCommunication();
-      return ERROR;
-    }
-    dataIDs[rp->who] = -1;
-    return SUCCESS;
-
-  } else {
-    printErrorMsg("Error in netcommunication - unable to receive data");
-    stopNetCommunication();
-    return ERROR;
-  }
+  	if (NETSTARTED == 1) 
+	{
+		MPI_Recv(&rp->tag, 1, MPI_INT, MPI_ANY_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status);
+		MPI_Recv(&rp->result, 1, MPI_DOUBLE, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+		MPI_Recv(&rp->who, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+		MPI_Recv(&rp->x_id, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+    	return SUCCESS;
+  	} 
+	else 
+	{
+    	printErrorMsg("Error in netcommunication - unable to receive data");
+    	return ERROR;
+  	}
 }

@@ -18,7 +18,6 @@ public:
   double getBestMultiple() { return bestMultiple; };
   double getHostMultiple() { return hostMultiple; };
   int getScale() { return scale; };
-  int runCondor() { return condor; };
   char* getInputFilename();
   char* getOutputFilename();
   char* getOptFilename();
@@ -32,7 +31,6 @@ private:
   CharPtrVector function;
   int numProc;
   int scale;
-  int condor;
   // Time in sec. for how long slave will wait for
   // a message from master before bailing out.
   // value of 0 means that slave will check for a message from master and

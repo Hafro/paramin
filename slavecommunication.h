@@ -1,7 +1,7 @@
 #ifndef slavecommunication_h
 #define slavecommunication_h
 
-#include "pvm3.h"
+#include "mpi.h"
 #include "netdata.h"
 #include "pvmconstants.h"
 #include "doublevector.h"
@@ -49,13 +49,15 @@ public:
   int send(NetDataResult* sendData);
   int sendToMaster(double res);
   int receivedVector();
-  void getVector(DoubleVector& vec);
+  //void getVector(DoubleVector& vec);
+  void getVector(double* vec);
   int getReceiveType();
   int receiveString();
   int receiveBound();
   int receivedString();
   int receivedBounds();
-  void getBound(DoubleVector& vec);
+  //void getBound(DoubleVector& vec);
+  void getBound(double* vec);
   const Parameter& getString(int num);
   const ParameterVector& getStringVector();
 };

@@ -2,7 +2,6 @@
 #define paraminsimann_h
 
 #include "paraminsearch.h"
-
 class ParaminSimann : public ParaminSearch {
 private:
   /**

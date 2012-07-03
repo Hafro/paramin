@@ -2,7 +2,8 @@
 #define netcommunication_h
 
 #include "paramin.h"
-#include "pvm3.h"
+#include "mpi.h"
+
 #include "netdata.h"
 #include "pvmconstants.h"
 #include "doublevector.h"
@@ -38,7 +39,6 @@ protected:
   int nhost;
   int numarg;
   int* tids;
-  int tidsCounter;
   int* status;
   /**
    * \brief array that contains information about each host
@@ -75,21 +75,14 @@ protected:
 
   int* hostTids;
   int* dataIDs;
-  int maxNumHosts;
-
-  int NONTORECEIVE;
-  int NEEDMOREHOSTS;
-  int NEEDMOREDATA;
-  int WAITFORPROCESS;
-  int DATANOTSENT;
 
 public:
   // this should be changed to use commandline...
+	MPI_Comm intercomm;
   NetCommunication(const CharPtrVector& funcNameArgs, int nh);
   virtual ~NetCommunication();
+  int maxNumHosts;
   int startPVM();
-  int spawnProgram();
-  int sendNumberOfVariables();
   int startProcesses();
   int sendInitialMessage(int id);
   int startNetCommunication();
@@ -121,30 +114,6 @@ public:
   double getLikelihoodHJ() const { return likelihoodHJ; };
   void setLikelihoodHJ(double set) { likelihoodHJ = set; };
 
-  //Added for condor
-  void checkHostsForSuspend();
-  void checkHostsForDelete();
-  void checkHostsForResume();
-  int checkHostsForAdded();
-  int checkHostForSuspendReturnsDataid(int* procTids);
-  int checkHostForDeleteReturnsDataid(int* procTids);
-  int checkHostForResumeReturnsDataid(int* procTids);
-  virtual int receiveDataNonBlocking(NetDataResult* rp);
-  int startOneProcess(int processNum, int processTid);
-  int spawnAndStartOneProcess(int processNumber);
-  int sendInitialMessageToTid(int tid, int processNum);
-  int spawnOneProgram(int vectorNumber);
-  int spawnOneMoreProgram(int& newTid, int vectorNumber);
-  int netDataNotSent();
-  int netNoneToReceive();
-  int netNeedMoreHosts();
-  int netNeedMoreData();
-  int netWaitForBetterProcesses();
-  int getHealthOfProcessesAndHostAdded(int* procTids);
-  int probeForReceiveData();
-  int checkProcessByTid(int tidToCheck, int processNum);
-  int sendData(NetDataVariables* sendP, int processID, int dataID);
-
   int sendData(const ParameterVector& sendP);
   int sendData(const ParameterVector& sendP, int processID);
   int sendBoundData(const DoubleVector& sendP);
@@ -164,7 +133,6 @@ public:
   MasterCommunication(CommandLineInfo* info);
   virtual ~MasterCommunication();
   virtual int receiveData(NetDataResult* rp);
-  virtual int receiveDataNonBlocking(NetDataResult* rp);
 };
 
 #endif

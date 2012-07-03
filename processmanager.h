@@ -48,12 +48,11 @@ protected:
   int totalNumProc;
   int* procStat;
   int maxNumHosts;
-  int pmCondor;
 public:
   int* getStatus();
   ProcessManager();
   virtual ~ProcessManager();
-  virtual void initializePM(int numProc, int condor);
+  virtual void initializePM(int numProc);
   virtual void addProc(int id);
   virtual void addMoreProc(int id);
   int getNumFreeProc();
@@ -90,7 +89,7 @@ private:
 public:
   WorkLoadScheduler(CommandLineInfo* info);
   ~WorkLoadScheduler();
-  virtual void initializePM(int totalNumProc, int condor);
+  virtual void initializePM(int totalNumProc);
   virtual void addProc(int id);
   virtual void addMoreProc(int id);
   virtual void setFreeProc(int tid);

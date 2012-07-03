@@ -5,6 +5,7 @@
 // functions for class ParaminBFGS
 // ********************************************************
 ParaminBFGS::ParaminBFGS(NetInterface* netInt) : ParaminSearch(netInt) {
+  type = OPTBFGS;
     // Vector temp(numvar);
   lineS = new Armijo();   // use lineS to do linesearch
   grad = new NetGradient(numvar);            // use grad to compute gradient
@@ -465,5 +466,13 @@ void ParaminBFGS::OptimiseLikelihood() {
   }
 }
 void ParaminBFGS::Print(ofstream& outfile, int prec) {
-
+	outfile << "; BFGS algorithm ran for " << iters
+	    << " function evaluations\n; and stopped when the likelihood value was "
+	    << setprecision(prec) << score;
+	  if (converge == -1)
+	    outfile << "\n; because an error occured during the optimisation\n";
+	  else if (converge == 1)
+	    outfile << "\n; because the convergence criteria were met\n";
+	  else
+	    outfile << "\n; because the maximum number of function evaluations was reached\n";
 }

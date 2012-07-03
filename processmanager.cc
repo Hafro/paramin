@@ -57,7 +57,6 @@ ProcessManager::ProcessManager() {
   errorWaitForProcesses = -2;
   freeProcesses = new Queue();
   totalNumProc = 0;
-  pmCondor = 0;
   procStat = NULL;
 }
 
@@ -70,19 +69,14 @@ ProcessManager::~ProcessManager() {
   }
 }
 
-void ProcessManager::initializePM(int numProc, int condor) {
+void ProcessManager::initializePM(int numProc) {
   int i;
   if (numProc <= 0) {
     cerr << "Error in processmanager - number of processes must be positive\n";
     exit(EXIT_FAILURE);
   }
   totalNumProc = numProc;
-  pmCondor = condor;
-
-  if (pmCondor)
-    procStat = new int[maxNumHosts];
-  else
-    procStat = new int[totalNumProc];
+  procStat = new int[totalNumProc];
   for (i = 0; i < totalNumProc; i++) {
     procStat[i] = -1;
     addProc(i);
@@ -176,9 +170,12 @@ int ProcessManager::getTidToSend(NetCommunication* n) {
     return tid;
   }
 }
+/*
+Hvergi kallað á þetta...
 
 int ProcessManager::checkForNewProcess(NetCommunication* n) {
   int tid;
+	//Búinn að eyða út getHealthOfProcessesAndHostAdded, sem var útfært í netcommunication.cc
   tid = n->getHealthOfProcessesAndHostAdded(procStat);
   removeBadProc();
   if (tid > -1)
@@ -186,18 +183,21 @@ int ProcessManager::checkForNewProcess(NetCommunication* n) {
   return tid;
 }
 
+*/
+
 int ProcessManager::getNextTidToSend(int numLeftToSend, NetCommunication* n) {
   int tid;
-  tid = n->getHealthOfProcessesAndHostAdded(procStat);
-  removeBadProc();
-  if (tid > -1)
-    addMoreProc(tid);
-  if (freeProcesses->isEmpty())
-    return errorNoProcesses;
-  else {
+  //tid = n->getHealthOfProcessesAndHostAdded(procStat);
+  //removeBadProc();
+  //if (tid > -1)
+  //  addMoreProc(tid);
+  //if (freeProcesses->isEmpty())
+  //  return errorNoProcesses;
+  //else {
+  cout << "Hello\n";
     tid = freeProcesses->get();
     return tid;
-  }
+  //}
 }
 
 void ProcessManager::sent(int processID) {
@@ -265,9 +265,9 @@ WorkLoadScheduler::~WorkLoadScheduler() {
   }
 }
 
-void WorkLoadScheduler::initializePM(int totalNumProc, int condor) {
+void WorkLoadScheduler::initializePM(int totalNumProc) {
   runInfo = new RunTime*[totalNumProc];
-  ProcessManager::initializePM(totalNumProc, condor);
+  ProcessManager::initializePM(totalNumProc);
 }
 
 void WorkLoadScheduler::addProc(int id) {

@@ -47,7 +47,6 @@ void Armijo::doArmijo(const DoubleVector& v1, double fx, double dery,
   prepareNewLineSearch();
   initiateAlphas();
   cond_satisfied = net->sendAndReceiveSetData(cond);
-  //cond_satisfied = net->sendAndReceiveSetDataCondor(cond); //JMB
   if (cond_satisfied == -1) {
     cerr << "Error in linesearch - cannot receive or send data\n";
     net->stopUsingDataGroup();

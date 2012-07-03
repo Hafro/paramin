@@ -4,6 +4,7 @@
 // functions for class ParaminSimann
 // ********************************************************
 ParaminSimann::ParaminSimann(NetInterface* netInt) : ParaminSearch(netInt) {
+  type = OPTSIMANN;
   maxim = 0;
   T = 100.0;
   cs = 2.0;
@@ -219,7 +220,9 @@ void ParaminSimann::OptimiseLikelihood() {
     if (rock == 0) {
       T *= rt;
       cout << "Reducing the temperature to " << T << endl;
+	  bestf = -bestf;
       cout << "simann best result so far " << bestf << endl;
+	  bestf = -bestf;
       fstart = bestf;
       xstart = bestx;
     }
@@ -231,8 +234,8 @@ void ParaminSimann::OptimiseLikelihood() {
 
   net->setInitialScore(bestx, bestf);
   score = bestf;
-
-  if ((iters >= maxiterations) && (rock == 1)) {
+	// Breytti rock == 0 í stað rock == 1
+  if ((iters >= maxiterations) && (rock == 0)) {
     cout << "\nSimulated Annealing optimisation completed after " << iters
       << " iterations (max " << maxiterations << ")\nThe model terminated "
       << "because the maximum number of iterations was reached\n";
@@ -293,7 +296,7 @@ void ParaminSimann::AcceptPoint() {
     cout << "\nNew optimum after " << iters << " function evaluations, f(x) = " << -fp << " at\n";
     temp = net->unscaleX(bestx);
     for (i = 0; i < temp.Size(); i++)
-	cout << temp[i];
+	cout << temp[i] << " ";
     bestf = fp;
   }
 }
@@ -357,5 +360,13 @@ void ParaminSimann::ReceiveValue() {
   }
 }
 void ParaminSimann::Print(ofstream& outfile, int prec) {
-
+	outfile << "; Simmulated annealing algorithm ran for " << iters
+	    << " function evaluations\n; and stopped when the likelihood value was "
+	    << setprecision(prec) << score;
+	  if (converge == -1)
+	    outfile << "\n; because an error occured during the optimisation\n";
+	  else if (converge == 1)
+	    outfile << "\n; because the convergence criteria were met\n";
+	  else
+	    outfile << "\n; because the maximum number of function evaluations was reached\n";
 }

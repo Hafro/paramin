@@ -33,7 +33,6 @@ Optimizer::Optimizer(CommandLineInfo* info, NetInterface* net) {
   // cout << startx[i] << " ";
   // cout << endl;
   // startx is scaled if scaling is used
- 
   netInt->startNewDataGroup(1);
   netInt->setX(netInt->getInitialX());
   netInt->sendAndReceiveAllData();
@@ -118,9 +117,35 @@ void Optimizer::readOptInfo(char* optfilename) {
 
 void Optimizer::OptimizeFunc() {
     int i;
+	ofstream outfile;
+	outfile.open(outputfile);
     for (i = 0; i < optvec.Size(); i++)
-	optvec[i]->OptimiseLikelihood();
-  
+	{
+		// Keep track of how much time has taken for each optimization.
+		time_t timestart;
+		timestart = time(NULL);
+		optvec[i]->OptimiseLikelihood();
+		time_t timeafter;
+		timeafter = time(NULL);
+		//Added 2/07/2012 to measure time of each optimization G.E. 
+		if(optvec[i]->getType() == OPTSIMANN)
+		{
+			outfile <<  "; Simulated annealing optimization finished in " <<": " << difftime(timeafter, timestart) << " seconds\n";
+		}
+		else if(optvec[i]->getType() == OPTHOOKE)
+		{
+			outfile <<  "; Hooke and Jeeves optimization finished in " <<": " << difftime(timeafter, timestart) << " seconds\n";
+		}
+		else if(optvec[i]->getType() == OPTBFGS)
+		{
+			outfile <<  "; BFGS optimization finished in " <<": " << difftime(timeafter, timestart) << " seconds\n";
+		}
+		else
+		{
+			outfile <<  "; New algorithm optimization finished in " <<": " << difftime(timeafter, timestart) << " seconds\n";
+		}
+	}
+	outfile.close();	
 }
 
 void Optimizer::getScore(DoubleVector& x, double fx) {
@@ -138,7 +163,7 @@ void Optimizer::printResult() {
   time_t timenow;
   timenow = time(NULL);
   ofstream outfile;
-  outfile.open(outputfile);
+  outfile.open(outputfile, ios::out | ios::app);
   DoubleVector x;
   double fx;
   //netInt->getInitialScore(x, fx);

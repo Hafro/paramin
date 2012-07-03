@@ -10,6 +10,7 @@ ParaminHooke::ParaminHooke(NetInterface* netInt) : ParaminSearch(netInt) {
   rho = 0.5;
   epsilon = 1e-4;
   maxiterations = 1000;
+  type = OPTHOOKE;
   // already set in optinfo
   // converge = 0;
 }
@@ -194,7 +195,6 @@ void ParaminHooke::OptimiseLikelihood() {
   score = bestf;
 }
 
-// JMB - CONDOR version is different ...
 void ParaminHooke::bestNearby() {
   double ftmp;
   int i, j;

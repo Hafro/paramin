@@ -106,7 +106,7 @@ public:
   // ******************************************************
   // Function for initiating values before start using class NetInterface
   // ******************************************************
-  void initiateNetComm(ProcessManager* pm, int condor);
+  void initiateNetComm(ProcessManager* pm);
   // ******************************************************
   // Functions for starting/stopping a new data group
   // ******************************************************
@@ -187,23 +187,6 @@ public:
   int sendAndReceiveTillCondition(Condition* con);
   int sendAndReceiveSetData(Condition* con);
 
-  //Added for condor
-  int probeForReceiveOne();
-  int receiveOneNonBlocking();
-  int sendToIdleHostIfCan();
-  int sendOneAndDataid(int processID, int x_id);
-  int checkHostForSuspend();
-  int checkHostForDelete();
-  int checkHostForResume();
-  void checkHealthOfProcesses();
-  int sendAllCondor();
-  int receiveAndSendCondor();
-  int receiveAllCondor();
-  int sendDataCondor();
-  int sendAndReceiveAllDataCondor();
-  int sendAndReceiveSetDataCondor(Condition* con);
-  int sendToAllIdleHostsCondor();
-
   // ******************************************************
   // Functions concerning netcommunication
   // ******************************************************
@@ -222,13 +205,6 @@ public:
   void sendStringValue(int processID);
   void sendBoundValues();
   void sendBoundValues(int processID);
-
-  //Added for condor
-  int netNoneToReceive();
-  int netNeedMoreData();
-  int netNeedMoreHosts();
-  int netDataNotSent();
-  int netWaitForBetterProcesses();
 };
 
 #endif

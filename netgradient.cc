@@ -82,7 +82,6 @@ int NetGradient::computeGradient(NetInterface* net, const DoubleVector& x, doubl
   int SEND_RECEIVE = 0;
   setXVectors(x, f, net);
   SEND_RECEIVE = net->sendAndReceiveAllData();
-  //SEND_RECEIVE = net->sendAndReceiveAllDataCondor(); //JMB
   if (SEND_RECEIVE == -1) {
     cerr << "Error in netgradient - could not send or receive data\n";
     exit(EXIT_FAILURE);

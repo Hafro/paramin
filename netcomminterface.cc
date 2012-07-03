@@ -84,67 +84,6 @@ int NetInterface::sendOne(int processID, int x_id) {
   }
 }
 
-int NetInterface::sendOneAndDataid(int processID, int x_id) {
-  // Function returns ERROR if error occures while trying to send
-  // Function returns SUCCESS if successfully sent data
-  // Function return 0 if process with process identity = processID can not be used.
-  // Function returns 2 if x_id does not belong to the data group.
-
-  int cansend;
-  // Vector vec;           // vec has id = x_id stored in dctrl and is converted
-  DoubleVector vecSend;       // into vecSend before sending
-  int i;
-  if (dctrl == NULL) {
-    cerr << "Error in netinterface - no valid datagroup\n";
-    exit(EXIT_FAILURE);
-  }
-  if (processID < 0 || (processID >= net->getNumProcesses())) {
-    cerr << "Error in netinterface - invalid process id\n";
-    stopNetComm();
-    return net->netError();
-  }
-  if (x_id < 0) {
-    cerr << "Error in netinterface - invalid data vector id\n";
-    stopNetComm();
-    return net->netError();
-  }
-  if (x_id >= dctrl->getTotalSet()) {
-    cerr << "Error in netinterface - unknown data vector id\n";
-    return 2;
-  }
-
-  // Prepare data to be sent
-  assert(numVarToSend > 0);
-  NetDataVariables* sp = new NetDataVariables(numVarToSend);
-  // vec = dctrl->getX(x_id);
-  vecSend = prepareVectorToSend(dctrl->getX(x_id));
-  // prepare sp for sending
-  for (i = 0; i < numVarToSend; i++)
-    sp->x[i] = vecSend[i];
-
-  sp->x_id = x_id;
-  sp->tag = dctrl->getTag();
-  // send sp to slave with id = processID
-  cansend = net->sendData(sp, processID, x_id);
-  delete sp;
-  if (cansend == 1) {
-    //successfully sent sp using processID
-    dctrl->sentOne(x_id);
-    pManager->sent(processID);
-    return net->netSuccess();
-  } else if (cansend == -1) {
-    cerr << "Error in netinterface - failed to send data\n";
-    return net->netError();
-  } else if (cansend == 0) {
-    pManager->processDown(processID);
-    return cansend;
-  } else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    stopNetComm();
-    return net->netError();
-  }
-}
-
 int NetInterface::resend() {
   int i, canresend;
   int tid = -1;
@@ -283,73 +222,6 @@ int NetInterface::receiveOne() {
   }
 }
 
-//Added jongud 24.07.02
-void NetInterface::checkHealthOfProcesses() {
-  net->getHealthOfProcesses(pManager->getStatus());
-}
-
-//Added jongud 18.07.02
-int NetInterface::probeForReceiveOne() {
-  return net->probeForReceiveData();
-}
-
-//Added jongud 18.07.02
-int NetInterface::receiveOneNonBlocking() {
-  // function returns SUCCESS if successfully could receive data
-  // function return ERROR if netcommunication is down or error
-  // functions returns NONTORECEIVE if no message was to receive
-  if (dctrl == NULL) {
-    cerr << "Error in netinterface - no valid datagroup\n";
-    exit(EXIT_FAILURE);
-  }
-
-  NetDataResult* dp = new NetDataResult;
-  double res;
-  int received = net->receiveDataNonBlocking(dp);
-  if (received == netSuccess()) {
-    // received data successfully from process with id = dp->who
-    pManager->setFreeProc(dp->who);
-    if (dctrl->getTag() == dp->tag) {
-      // received data belonging to datagroup
-      if (scaler != NULL) {
-	  // Vector tempV;
-	  // tempV = makeVector(dctrl->getX(dp->x_id));
-	  // res = scaler->scaleResult(dp->result, dp->x_id, tempV);
-	  res = scaler->scaleResult(dp->result, dp->x_id, makeVector(dctrl->getX(dp->x_id)));
-      } else {
-        res = dp->result;
-      }
-      if (dctrl->hasAnswer(dp->x_id)) {
-        receiveID = -1;
-      } else {
-        receiveID = dp->x_id;
-        dctrl->setY(dp->x_id, res);
-      }
-
-    } else {
-      // received data which does not belong to current datagroup
-      receiveID = -1;
-    }
-    delete dp;
-    return received;
-
-  } else if (received == netNoneToReceive()) {
-    delete dp;
-    return received;
-  } else if (received == netError()) {
-    cerr << "Error in netinterface - failed to receive data\n";
-    receiveID = -1;
-    delete dp;
-    return received;
-  } else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    receiveID = -1;
-    stopNetComm();
-    delete dp;
-    return netError();
-  }
-}
-
 int NetInterface::sendToAllIdleHosts() {
   // functions returns ERROR if error occures in netcommunication
   // function return SUCCESS if successfully sent all available data
@@ -398,156 +270,23 @@ int NetInterface::sendToAllIdleHosts() {
   }
 }
 
-int NetInterface::sendToAllIdleHostsCondor() {
-  // functions returns ERROR if error occures in netcommunication
-  // while trying to send�
-  // function return SUCCESS if successfully sent all available data
-  // to free processes.
-  int tid = 0;          // identity of process to be sent to
-  int dataID;           // identity of data to be sent
-  int cansend = 1;
-
-  if (dctrl == NULL) {
-    cerr << "Error in netinterface - no valid datagroup\n";
-    exit(EXIT_FAILURE);
-  }
-  if (!dctrl->allSent())
-    tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
-
-  while ((tid != this->noAvailableProcesses()) && !dctrl->allSent()
-      && (cansend == 1 || cansend == 0 || cansend == 2)) {
-
-    if (tid == this->waitForBetterProcesses())
-      tid = pManager->getTidToSend(net);
-
-    if (tid == -1) {
-      cerr << "Error in netinterface - illiegal task id\n";
-      return net->netError();
-    }
-
-    if (tid != this->noAvailableProcesses()) {
-      assert(tid >= 0);
-      assert(!dataSet->isEmpty());
-      dataID = dataSet->get();
-      cansend = sendOneAndDataid(tid, dataID);
-      if (cansend == 0)
-        dataSet->putFirst(dataID);
-
-      if (!dctrl->allSent() && (cansend == 1 || cansend == 0 || cansend == 2))
-        tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
-    }
-  }
-
-  if (cansend > 2 || cansend < -1) {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    stopNetComm();
-    return net->netError();
-  } else if (cansend == -1) {
-    return net->netError();
-  } else {
-    return net->netSuccess();
-  }
-}
-
-int NetInterface::sendToIdleHostIfCan() {
-
-  int tid = 0;
-  int dataID;
-  int cansend = 1;
-  int newTid = 0;
-
-  if (dctrl == NULL) {
-    cerr << "Error in netinterface - no valid datagroup\n";
-    exit(EXIT_FAILURE);
-  }
-
-  if (dctrl->allSent())
-    return net->netNeedMoreData();
-
-  newTid = pManager->checkForNewProcess(net);
-  if (newTid > -1) {
-    sendStringValue(newTid);
-    sendBoundValues(newTid);
-  }
-
-  tid = pManager->getTidToSend(net);
-  //Check if free process was available. If not return with NEEDMOREHOSTS
-  if (tid == pManager->noAvailableProcesses()) {
-    return net->netNeedMoreHosts();
-
-  } else {
-    assert(tid >= 0);
-    assert(!dataSet->isEmpty());
-    dataID = dataSet->get();
-    cansend = sendOneAndDataid(tid, dataID);
-    if (cansend == 0)
-      dataSet->putFirst(dataID);
-
-    if (cansend > 2 || cansend < -1) {
-      cerr << "Error in netinterface - unrecognised return value\n";
-      stopNetComm();
-      return net->netError();
-    } else if (cansend == -1) {
-      return net->netError();
-    } else if (cansend == 0) {
-      return net->netDataNotSent();
-    } else {
-      return net->netSuccess();
-    }
-  }
-}
-
-int NetInterface::checkHostForSuspend() {
-  int dataID = net->checkHostForSuspendReturnsDataid(pManager->getStatus());
-  if (dataID >= 0)
-    dataSet->putFirst(dataID);
-  else if ((dataID == -1) || (dataID == -2))
-    cerr << "Error in netinterface - unknown host\n";
-  else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    exit(EXIT_FAILURE);
-  }
-  return dataID;
-}
-
-int NetInterface::checkHostForDelete() {
-  int dataID = net->checkHostForDeleteReturnsDataid(pManager->getStatus());
-  if (dataID >= 0)
-    dataSet->putFirst(dataID);
-  else if ((dataID == -1) || (dataID == -2))
-    cerr << "Error in netinterface - unknown host\n";
-  else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    exit(EXIT_FAILURE);
-  }
-  return dataID;
-}
-
-int NetInterface::checkHostForResume() {
-  int dataID = net->checkHostForResumeReturnsDataid(pManager->getStatus());
-  return dataID;
-}
-
 int NetInterface::sendToIdleHosts() {
   // function returns ERROR if error occures while trying to send data,
   // function returns SUCCESS if successfully sent available data
   int tid = 0;
   int dataID;
   int cansend = 1;
-
   if (dctrl == NULL) {
     cerr << "Error in netinterface - no valid datagroup\n";
     exit(EXIT_FAILURE);
   }
-  
   if (!dctrl->allSent()) {
+	// dctrl->getNumLeftToSend() er í lagi, vesen í getNextTidToSend
       tid = pManager->getNextTidToSend(dctrl->getNumLeftToSend(), net);
-      // tid = 0;
+      //tid = 0;
   }
-  
   while ((tid != this->noAvailableProcesses()) && (tid != this->waitForBetterProcesses())
       && (!dctrl->allSent()) && (cansend == 1 || cansend == 0)) {
-
     // Have not sent all data and there is a suitable process available
     assert(tid >= 0);
     assert(!dataSet->isEmpty());
@@ -578,17 +317,6 @@ int NetInterface::sendAll() {
     // try to receive data from a host as no more suitable processes
     // available and still have data to send
     OK = receiveAndSend();
-  }
-  return OK;
-}
-
-int NetInterface::sendAllCondor() {
-  assert(dctrl != NULL);
-  int OK = sendToIdleHostIfCan();
-  while (!dctrl->allSent() && OK >= 1) {
-    // try to receive data from a host as no more suitable processes
-    // available and still have data to send
-    OK = receiveAndSendCondor();
   }
   return OK;
 }
@@ -633,75 +361,6 @@ int NetInterface::receiveAndSend() {
     cerr << "Error in netinterface - unrecognised return value\n";
     stopNetComm();
     return net->netError();
-  }
-}
-
-int NetInterface::receiveAndSendCondor() {
-  // This function tries to keep all processes busy by first trying to
-  // receive and then sending available data to all suitable processes
-  // It is assumed that there is an outstanding message to be received.
-  int counter = 0;
-  int cansend = 1;
-  int canreceive = 0;
-  int check, hasSent;
-
-  while (canreceive == 0)  {
-    // Try to receive again from a process, netcommunication is OK but
-    // could not receive probably because of no messages coming in
-    check = checkHostForSuspend();
-    if (check >= 0) {
-      // Send data that was running on host suspended again
-      hasSent = netDataNotSent();
-      while (hasSent != netSuccess()) {
-        hasSent = sendDataCondor();
-        if (probeForReceiveOne()) {
-          canreceive = receiveOneNonBlocking();
-          counter++;
-        }
-      }
-    }
-    canreceive = receiveOne();
-    counter++;
-  }
-
-  if (canreceive == 1) {
-    cansend = sendToIdleHostIfCan();
-    return cansend;
-  } else if (canreceive == -1) {
-    return net->netError();
-  } else if (canreceive == 0) {
-    if (!pManager->isFreeProc()) {
-      cerr << "Error in netinterface - all processes busy\n";
-      return net->netError();
-    } else {
-      cansend = sendToAllIdleHostsCondor();
-      return cansend;
-    }
-  } else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    stopNetComm();
-    return net->netError();
-  }
-}
-
-int NetInterface::sendDataCondor() {
-  int sendInfo = sendToIdleHostIfCan();
-  if (sendInfo == netSuccess())
-    return netSuccess();
-  else if (sendInfo == netNeedMoreData())
-    return netNeedMoreData();
-  else if (sendInfo == netNeedMoreHosts())
-    return netNeedMoreHosts();
-  else if (sendInfo == netWaitForBetterProcesses())
-    return netWaitForBetterProcesses();
-  else if (sendInfo == netDataNotSent())
-    return netDataNotSent();
-  else if (sendInfo == netError()) {
-    cerr << "Error in netinterface - failed to send data\n";
-    exit(EXIT_FAILURE);
-  } else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    exit(EXIT_FAILURE);
   }
 }
 
@@ -791,66 +450,11 @@ int NetInterface::receiveAll() {
   }
 }
 
-int NetInterface::receiveAllCondor() {
-  int canreceive = 1;
-  int cansend = 1;
-  int check, hasSent;
-
-  while (!(dctrl->allReceived()) && (canreceive == 0 || canreceive == 1) && cansend == 1) {
-    check = checkHostForSuspend();
-    if (check >= 0) {
-      //Send data that was running on host suspended again
-      hasSent = netDataNotSent();
-      while ((hasSent != netSuccess()) && (hasSent != netNeedMoreData())) {
-        hasSent = sendDataCondor();
-        if (probeForReceiveOne()) {
-          canreceive = receiveOneNonBlocking();
-          if (canreceive == netError()) {
-            cerr << "Error in netinterface - network error\n";
-            return net->netError();
-          }
-        }
-      }
-    }
-    canreceive = receiveOneNonBlocking();
-  }
-
-  if (canreceive == -1 || cansend == -1) {
-    return net->netError();
-  } else if (canreceive > 1 || canreceive < -1) {
-    cerr << "Error in netinterface - failed to receive data\n";
-    stopNetComm();
-    return net->netError();
-  } else if (cansend > 1 || cansend < -1) {
-    cerr << "Error in netinterface - failed to send data\n";
-    stopNetComm();
-    return net->netError();
-  } else if (dctrl->allReceived()) {
-    return net->netSuccess();
-  } else {
-    cerr << "Error in netinterface - unrecognised return value\n";
-    stopNetComm();
-    return net->netError();
-  }
-}
-
 int NetInterface::sendAndReceiveAllData() {
   int cansend_receive;
   cansend_receive = sendAll();
   if (cansend_receive == 1)
    cansend_receive = receiveAll();
-
-  if (cansend_receive == 1)
-    return net->netSuccess();
-  else
-    return net->netError();
-}
-
-int NetInterface::sendAndReceiveAllDataCondor() {
-  int cansend_receive;
-  cansend_receive = sendAllCondor();
-  if (cansend_receive == 1)
-    cansend_receive = receiveAllCondor();
 
   if (cansend_receive == 1)
     return net->netSuccess();
@@ -933,53 +537,6 @@ int NetInterface::sendAndReceiveSetData(Condition* con) {
         }
       }
 
-      if (sendreceive == 1)
-        cond = con->computeCondition();
-    }
-  }
-
-  if (sendreceive == -1)
-    return net->netError();
-  else if (cond == 1)
-    return cond;
-  else
-    return net->netError();
-}
-
-int NetInterface::sendAndReceiveSetDataCondor(Condition* con) {
-  int cond = 0;
-  int sendreceive = 1;
-  int numTries = 0;
-  int counter, newreturns, numLeftToReceive, totalNumHosts;
-  int check, hasSent, canreceive;
-
-  while ((sendreceive != netError()) && cond == 0) {
-    counter = getNumDataItemsSet();
-    newreturns = getNumDataItemsAnswered();
-    numLeftToReceive = counter - newreturns;
-    totalNumHosts = getTotalNumProc();
-
-    sendreceive = sendToAllIdleHostsCondor();
-    if (sendreceive == netSuccess()) {
-
-      // can start resending, waiting for last data to come in
-      check = checkHostForSuspend();
-      if (check >= 0) {
-        //Send data that was running on host suspended again
-        hasSent = netDataNotSent();
-        while (hasSent != netSuccess()) {
-          hasSent = sendDataCondor();
-          if (probeForReceiveOne()) {
-            canreceive = receiveOneNonBlocking();
-            if (canreceive == netError()) {
-              cerr << "Error in netinterface - received no data\n";
-              return net->netError();
-            }
-          }
-        }
-      }
-
-      sendreceive = receiveOneNonBlocking();
       if (sendreceive == 1)
         cond = con->computeCondition();
     }
@@ -1094,26 +651,6 @@ int NetInterface::netError() {
 
 int NetInterface::netSuccess() {
   return net->netSuccess();
-}
-
-int NetInterface::netNoneToReceive() {
-  return net->netNoneToReceive();
-}
-
-int NetInterface::netDataNotSent() {
-  return net->netDataNotSent();
-}
-
-int NetInterface::netNeedMoreHosts() {
-  return net->netNeedMoreHosts();
-}
-
-int NetInterface::netNeedMoreData() {
-  return net->netNeedMoreData();
-}
-
-int NetInterface::netWaitForBetterProcesses() {
-  return net->netWaitForBetterProcesses();
 }
 
 int NetInterface::noAvailableProcesses() {

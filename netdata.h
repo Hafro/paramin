@@ -3,7 +3,7 @@
 
 /**
  * \class NetDataVariables
- * \brief this class is used to keep a vector of relevant data to be sent/received using PVM communication 
+ * \brief this class is used to keep a vector of relevant data to be sent/received using MPI communication 
  */
 class NetDataVariables {
 public:
@@ -26,7 +26,7 @@ public:
 
 /**
  * \class NetDataResult
- * \brief this class is used to keep relevant data to be sent/received using PVM communication 
+ * \brief this class is used to keep relevant data to be sent/received using MPI communication 
  */
 class NetDataResult {
 public:

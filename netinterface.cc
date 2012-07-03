@@ -18,7 +18,7 @@ NetInterface::NetInterface(NetCommunication* netComm,
   net = netComm;
   readInputFile(commandline->getInputFilename());
 
-   initiateNetComm(pm, commandline->runCondor());
+  initiateNetComm(pm);
 }
 
 NetInterface::~NetInterface() {
@@ -129,7 +129,7 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
 // ********************************************************
 // Function for initiating values before start using class NetInterface
 // ********************************************************
-void NetInterface::initiateNetComm(ProcessManager* pm, int condor) {
+void NetInterface::initiateNetComm(ProcessManager* pm) {
   int netStarted, numProc;
   isAlpha = -1;
   pManager = pm;
@@ -144,7 +144,7 @@ void NetInterface::initiateNetComm(ProcessManager* pm, int condor) {
       cerr << "Error in netinterface - no processes\n";
       exit(EXIT_FAILURE);
     }
-    pManager->initializePM(numProc, condor);
+    pManager->initializePM(numProc);
     numberOfTags = 0;
     receiveID = -1;
   }
