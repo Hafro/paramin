@@ -127,9 +127,8 @@ void ParaminSimann::OptimiseLikelihood() {
       }
   }
   initialVM = vm;
-
   bestf = net->getScore();
-  
+
   if (!maxim)
     bestf = -bestf;
 

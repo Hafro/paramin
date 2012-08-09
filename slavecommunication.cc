@@ -1,13 +1,6 @@
 #include "slavecommunication.h"
 #include "gadget.h"
 
-//! Constructor for SlaveCommunication
-    /*!
-      \Some clean-up may be needed here, since there is no
-	  \timeout receive for MPI.
-      \param c1 the first argument.
-      \param c2 the second argument.
-    */
 SlaveCommunication::SlaveCommunication() 
 {
 	MAXWAIT = 30;
@@ -22,7 +15,6 @@ SlaveCommunication::SlaveCommunication()
   	tmout.tv_usec = 0;
 }
 
-//! Destructor for SlaveCommunication
 SlaveCommunication::~SlaveCommunication() 
 {
   	delete pvmConst;
@@ -33,20 +25,20 @@ SlaveCommunication::~SlaveCommunication()
   	}
 }
 
-//! Outputs the error message.
 void SlaveCommunication::printErrorMsg(const char* errorMsg) 
 {
+	/*
+		Laga þetta þegar ég fer að pæla í error handler...
+	*/
   	char* msg;
   	msg = new char[strlen(errorMsg) + 1];
   	strcpy(msg, errorMsg);
-  	cerr << msg << "\n";
+	//Prófum þetta hér, var notað pvm_perror sem skrifar villuna sem síðasta pvm kallið olli.
+	std::cout << msg << "\n";
+  	cerr << msg;
   	delete[] msg;
 }
 
-//! Initialize netcommunication
-    /*!
-      \Enrolls in MPI, probes and receives beginning message.
-    */
 int SlaveCommunication::startNetCommunication() 
 {
 	/*
@@ -68,9 +60,11 @@ int SlaveCommunication::startNetCommunication()
     	return 0;
   	}
 	int flag;
-	MPI_Iprobe(0, MPI_ANY_TAG, parentcomm, &flag,&status);
-	if(flag == true)
-	{
+	// Þetta þarf að vera gert með timeout, prófum venjulegt blocking probe:
+	//MPI_Iprobe(0, MPI_ANY_TAG, parentcomm, &flag,&status);
+	MPI_Probe(0, MPI_ANY_TAG, parentcomm,&status);
+	//if(flag == true)
+	//{
 		if (status.MPI_TAG == pvmConst->getStopTag()) 
 		{
 	    	int stopMessage;
@@ -101,21 +95,19 @@ int SlaveCommunication::startNetCommunication()
 			cerr << "Error in slavecommunication - received unrecognised tag of type " << status.MPI_TAG << endl;
 	    	return !OK;
 		}
-	}
-	else
-	{
-		cerr << "Error in slavecommunication - non-blocking-probe fail" << endl;
-    	return !OK;
-	}
+	//}
+	//else
+	//{
+	//	cerr << "Error in slavecommunication - non-blocking-probe fail" << endl;
+    //	return !OK;
+	//}
 }
 
-//! Stops MPI.
 void SlaveCommunication::stopNetCommunication() 
 {
 	MPI_Finalize();
 }
 
-//! Sends results to Master, paramin.
 int SlaveCommunication::sendToMaster(double res) 
 {
   	int info;
@@ -150,8 +142,7 @@ int SlaveCommunication::sendToMaster(double res)
   	}
   	return 0;
 }
-//! This could be simplified by making a new MPI struct and use only one send
-//! and a probe on the Master's behalf.
+
 int SlaveCommunication::send(NetDataResult* sendData) 
 {
   	int info;
@@ -164,9 +155,11 @@ int SlaveCommunication::send(NetDataResult* sendData)
   	return 1;
 }
 
-//! Reiceive based on messagetag which was probed for.
 int SlaveCommunication::receiveFromMaster() 
 {
+	/*
+		Þetta fall er komið í bili, þarf samt að skoða með þetta TIMEOUT fall...
+	*/
   	int bufID = 0;
   	int OK = 1;
   	int info, bytes, source, type;
@@ -175,9 +168,14 @@ int SlaveCommunication::receiveFromMaster()
 	MPI_Comm parentcomm;
 	MPI_Comm_get_parent(&parentcomm);
     
-	// This was implemented with a timeout receive in PVM, since there is no 
-	// Timeout receive in MPI we use a blocking Probe.
+	// Hér er hægt að nota non-blocking probe til að komast eitthvað til móts við þetta timeout, hægt
+	// að láta það bíða í einhvern tíma og probe-a aftur... Hérna gæti verið góð pæling að útfæra bara
+	// sjálfur Timout fall sem testar á fullu í Maxwait tíma og skilar ef flag er true... Ætla að  breyta
+	// þessu í bili, en ræð við Bjarka upp á framhaldið...
+	// Update: Þetta virkar svona, svo það er e.t.v. ekki nein ástæða til að breyta þessu.
+	
     MPI_Probe(0, MPI_ANY_TAG, parentcomm, &status);
+  	//bufID = pvm_trecv(parenttid, -1, &tmout);
     if (status.MPI_TAG == pvmConst->getStopTag()) 
 	{
     	//receive information from master to quit
@@ -260,19 +258,26 @@ int SlaveCommunication::receivedVector()
   	return 0;
 }
 
-void SlaveCommunication::getVector(DoubleVector& vec) 
-{
-	/*
-		Senda út villu ef þetta if condition er ekki uppfyllt... G.E.
-	*/
-  	int i;
-  	if (vec.Size() != numVar) 
-	{
-      // error....
-  	}
- 
-  	for (i = 0; i < numVar; i++) 
-	  	vec[i] = netDataVar->x[i];
+// Þetta var ekki að virka rétt þar sem kallað var á þetta í Gadget.
+//void SlaveCommunication::getVector(DoubleVector& vec) 
+//{
+//	/*
+//		Senda út villu ef þetta if condition er ekki uppfyllt... G.E.
+//	*/
+//  	int i;
+//  	if (vec.Size() != numVar) 
+//	{
+//      // error....
+//  	}
+// 
+//  	for (i = 0; i < numVar; i++) 
+//	  	vec[i] = netDataVar->x[i];
+//}
+
+void SlaveCommunication::getVector(double* vec) {
+  int i;
+  for (i = 0; i < numVar; i++)
+    vec[i] = netDataVar->x[i];
 }
 
 int SlaveCommunication::getReceiveType() 
@@ -327,14 +332,21 @@ const Parameter& SlaveCommunication::getString(int num)
   	return netDataStr[num];
 }
 
-void SlaveCommunication::getBound(DoubleVector& vec) 
-{
-  	int i;
-  	if (vec.Size() != numVar)
-      // errror...
-  /*
+// Þetta var ekki að virka rétt þar sem kallað var á þetta í Gadget.
+//void SlaveCommunication::getBound(DoubleVector& vec) 
+//{
+//  	int i;
+//  	if (vec.Size() != numVar)
+//      // errror...
+//  /*
+//  for (i = 0; i < numVar; i++)
+//    vec[i] = netDataDouble[i];
+//  */
+//  vec = netDataDouble;
+//}
+
+void SlaveCommunication::getBound(double* vec) {
+  int i;
   for (i = 0; i < numVar; i++)
     vec[i] = netDataDouble[i];
-  */
-  vec = netDataDouble;
 }

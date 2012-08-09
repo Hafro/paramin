@@ -596,6 +596,7 @@ int NetCommunication::receiveData(NetDataResult* rp)
 		MPI_Recv(&rp->result, 1, MPI_DOUBLE, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
 		MPI_Recv(&rp->who, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
 		MPI_Recv(&rp->x_id, 1, MPI_INT, status.MPI_SOURCE, pvmConst->getMasterReceiveDataTag(), intercomm, &status2);
+		cout << "Skrifa result úr netcomm: " << rp->result << "\n";
     	return SUCCESS;
   	} 
 	else 

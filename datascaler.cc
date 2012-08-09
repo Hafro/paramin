@@ -5,8 +5,8 @@ DataScaler::DataScaler() {
 }
 
 void DataScaler::setInitialData(const DoubleVector& l, const DoubleVector& u) {
-  assert(l.Size() > 0);
-  assert(l.Size() == u.Size());
+  //assert(l.Size() > 0);
+  //assert(l.Size() == u.Size());
   numVar = l.Size();
   lbd = l;
   ubd = u;
@@ -31,14 +31,14 @@ const DoubleVector& DataScaler::scaleX(const DoubleVector& v1) {
 }
 
 double DataScaler::scale(double p, int i) {
-  assert(numVar > 0);
-  assert(i > 0 && i <= numVar);
+  //assert(numVar > 0);
+  //assert(i > 0 && i <= numVar);
   return (p - ((ubd[i] + lbd[i]) * 0.5)) / ((ubd[i] - lbd[i]) * 0.5);
 }
 
 const DoubleVector& DataScaler::unscaleX(const DoubleVector& v1) {
-  assert(numVar > 0);
-  assert(v1.Size() == numVar);
+  //assert(numVar > 0);
+  //assert(v1.Size() == numVar);
   int i;
   x_vec.Reset();
   x_vec.resize(numVar, 0.0);
@@ -48,8 +48,8 @@ const DoubleVector& DataScaler::unscaleX(const DoubleVector& v1) {
 }
 
 double DataScaler::unscale(double p, int i) {
-  assert(numVar > 0);
-  assert(i > 0 && i <= numVar);
+  //assert(numVar > 0);
+  //assert(i > 0 && i <= numVar);
   return (p * (ubd[i] - lbd[i]) * 0.5 + (lbd[i] + ubd[i]) * 0.5);
 }
 
