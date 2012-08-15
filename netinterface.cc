@@ -102,7 +102,7 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
     //else {
 	numVarInDataGroup = 0;
 	for (i = 0; i < numVarToSend; i++) {
-		cout << optValue[i] << "\n";
+	  //	cout << optValue[i] << "\n";
 	if (optValue[i] == 1) {
 	    initialX.resize(1,xValue[numVarInDataGroup]);
 	    lowerScale.resize(1, lowerBound[numVarInDataGroup]);
