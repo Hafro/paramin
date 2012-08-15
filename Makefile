@@ -16,7 +16,7 @@ GCCWARNINGS = -Wimplicit -Wreturn-type -Wswitch -Wcomment -Wformat \
 # first - see the Makefile for Gadget to create libgadgetinput.a
 # and the location of the gadget directory needs to be set here
 
-GADGETDIR = /home/haf/gue/GadogPar/Gadget
+GADGETDIR = ../../gadget/trunk
 ################################################################
 # 1. Linux, g++ compiler
 #CXX = g++
