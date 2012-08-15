@@ -91,16 +91,18 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
 	cerr << "Error in netinterface - could not read vectors from file\n";
 	exit(EXIT_FAILURE);
     }
-    if (optValue.Size() == 0 || numVarToSend == optValue.Size())  {
-	// no opt info or all parameters used for optimizing
-	initialX = xValue;
-	lowerScale = lowerBound;
-	upperScale = upperBound;
-	numVarInDataGroup = numVarToSend;
-    }
-    else {
+	//cout << optValue[0] << "\n";
+    //if (optValue.Size() == 0 || numVarToSend == optValue.Size())  {
+	//// no opt info or all parameters used for optimizing
+	//initialX = xValue;
+	//lowerScale = lowerBound;
+	//upperScale = upperBound;
+	//numVarInDataGroup = numVarToSend;
+    //}
+    //else {
 	numVarInDataGroup = 0;
 	for (i = 0; i < numVarToSend; i++) {
+		cout << optValue[i] << "\n";
 	if (optValue[i] == 1) {
 	    initialX.resize(1,xValue[numVarInDataGroup]);
 	    lowerScale.resize(1, lowerBound[numVarInDataGroup]);
@@ -111,7 +113,7 @@ void NetInterface::setOptInfo(InitialInputFile* data) {
 	dataConvert->setInitialData(optValue, xValue);
     }
     // have set opt info if any
-    }
+    //}
     if (toscale == 1) {
 	 scaler = new DataScaler();
 	 scaler->setInitialData(lowerScale, upperScale);
