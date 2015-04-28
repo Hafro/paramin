@@ -5,6 +5,10 @@ GCCWARNINGS = -Wimplicit -Wreturn-type -Wswitch -Wcomment -Wformat \
               -Wparentheses -Wpointer-arith -Wcast-qual -Wconversion \
               -Wreorder -Wwrite-strings -Wsynth -Wchar-subscripts \
               -Wuninitialized -pedantic -W
+INC_DIR = ./headers
+SRC_DIR = ./src
+OBJ_DIR = .
+
 
 #PVMDIR = $(PVM_ROOT)
 #PVMLIBDIR = -L$(PVM_ROOT)/lib/$(PVM_ARCH)
@@ -16,53 +20,26 @@ GCCWARNINGS = -Wimplicit -Wreturn-type -Wswitch -Wcomment -Wformat \
 # first - see the Makefile for Gadget to create libgadgetinput.a
 # and the location of the gadget directory needs to be set here
 
-GADGETDIR = ../../gadget/trunk
-################################################################
-# 1. Linux, g++ compiler
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgadgetinput
-#DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
-################################################################
-# 2. Solaris, g++ compiler
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lsocket -lgadgetinput
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
-################################################################
-# 3. Linux, g++ compiler, running CONDOR
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lgadgetinput
-##DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
-#DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
+GADGET_H = ../gadget/headers
+GADGET_L = ../gadget/
 ###############################################################
-# 4. Solaris, g++ compiler, running CONDOR
-#CXX = g++
-#LIBDIRS = $(PVMLIBDIR) -L. -L$(GADGETDIR)
-#LIBRARIES = -lm -lnsl -lpvm3 -lsocket -lgadgetinput
-#DEFINE_FLAGS = -D CONDOR -D NDEBUG -D GADGET_NETWORK -O3
-#CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(PVMINCLUDE) -I$(GADGETDIR)
-###############################################################
-# 5. Linux, mpic++ Wrapper Compiler
+# 1. Linux, mpic++ Wrapper Compiler
 CXX = mpic++
-LIBDIRS = -L$(GADGETDIR)
+LIBDIRS = -L$(GADGET_L)
 LIBRARIES = -lgadgetinput -lm
 DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
 #DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
-CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(GADGETDIR)
+CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(GADGET_H) -I$(INC_DIR)
 ###############################################################
 
-OBJECTS =  paramin.o processmanager.o netdatacontrol.o netgradient.o \
+_OBJECTS =  paramin.o processmanager.o netdatacontrol.o netgradient.o \
 	netcommunication.o linesearch.o netinterface.o netdatainterface.o \
 	netcomminterface.o condition.o datascaler.o dataconverter.o \
 	datastructure.o slavecommunication.o netdata.o pvmconstants.o \
 	commandlineinfo.o optimizer.o paraminsearch.o paraminhooke.o \
 	paraminsimann.o paraminbfgs.o armijo.o lineseeker.o vector.o
+
+OBJECTS = $(patsubst %,$(SRC_DIR)/%,$(_OBJECTS))
 
 LDFLAGS = $(CXXFLAGS) $(LIBDIRS) $(LIBRARIES)
 
