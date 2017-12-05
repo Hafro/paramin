@@ -1,17 +1,49 @@
-# paramin
-Parallel optimizer for Gadget
+# Parallel optimizer for Gadget
 
-This chapter describes how to run Gadget with paramin which runs the optimisation routines in parallel across a network of processors which will result in a much faster optimisation run.  The current version of paramin is implemented with MPI, Message Passing Interface, which handles all the message passing between the master process, paramin, and the slave processes, which are Gadget simulation runs.  The setup is very similar to a normal Gadget run, with all the Gadget input files are the same, it's only the optimisation execution that differs.
+Paramin runs the optimisation routines in parallel across a network of processors which will (hopefully) result in a much faster optimisation run.  The current version of paramin is implemented with MPI, Message Passing Interface, which handles all the message passing between the master process, paramin, and the slave processes, which are Gadget simulation runs.  The setup is very similar to a normal Gadget run, with all the Gadget input files are the same, it's only the optimisation execution that differs.
 
 ## Installation
-In order to begin one must first download and install a version of MPI.  This version of paramin is made with an implementation of MPI-2 called OPEN-MPI, one can download the MPI library and a wrapper compiler called mpic++ from their website www.open-mpi.org.  Now before trying to run paramin make sure you have the newest version of Gadget downloaded.  Now open the Makefile with a text-editor and uncomment the section referring to a Gadget Network version and comment out the lines which refer to an install without MPI.  Now you should open a console window and navigate to the folder where you saved Gadget.  Now you can simply type make in the console and the program should be compiled and you get an executable, let's assume it's called gadget-PARA.  Now paramin is dependent on some Gadget objects, so you now need to type the following in the console:
+In order to begin one must first download and install a version of MPI.  This version of paramin is made with an implementation of MPI-2 called OPEN-MPI, one can download the MPI library and a wrapper compiler called `mpic++` from their [website](www.open-mpi.org).  Now before trying to run paramin make sure you have the newest version of Gadget downloaded from [hafro/gadget](https://github.com/Hafro/gadget/).  Now open the Makefile with a text-editor and uncomment the section referring to a Gadget Network version and comment out the lines which refer to an install without MPI. That is, uncomment these lines: 
+
+```
+##########################################################################
+# 1. Linux, or Cygwin, or Solaris, with MPI, mpic++ compiler
+CXX = mpic++
+LIBDIRS = -L. -L/usr/local/lib
+LIBRARIES = -lm
+CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -D GADGET_NETWORK
+_OBJECTS = $(GADGETINPUT) $(GADGETOBJECTS) $(SLAVEOBJECTS)
+
+```
+and comment out:
+
+```
+##########################################################################
+# 2. Linux, Mac, Cgwin or Solaris, without MPI, using g++ compiler
+#CXX = g++
+#LIBDIRS = -L. -L/usr/local/lib -I $(INC_DIR)
+#LIBRARIES = -lm
+#CXXFLAGS = $(DEFINE_FLAGS)
+#_OBJECTS = $(GADGETINPUT) $(GADGETOBJECTS)
+```
+
+and rename the resulting gadget executable to something like `gadget-PARA` by finding in the Makefile the `GADGET` variable:
+
+```
+GADGET = 'gadget-PARA'
+```
+
+Now you should open a console window and navigate to the folder where you saved Gadget.  Now you can simply type make in the console and the program should be compiled and you get an executable, let's assume it's called gadget-PARA.  Now paramin is dependent on some Gadget objects, so you now need to type the following in the console:
 
 ```
 make libgadgetinput.a
 ```
+and to compile a network aware gadget do:
+```
+make
+```
 
-Now you are ready to start compiling paramin.  Download the newest version of paramin and open the paramin folder in the console.  You need to edit the Makefile and add the path to the directory where you installed Gadget as described above.  Now you can run the make command to compile paramin and get an executable, let's assume it's called paramin.
-
+Now you are ready to start compiling paramin.  Download the newest version of paramin and open the paramin folder in the console.  You need to edit the Makefile and add the path to the directory where you installed Gadget as described above if the folder is not placed in the same directory as the source folder.  
 
 
 ## Running paramin
@@ -28,10 +60,12 @@ Next we need to specify the optimization parameters with the `-opt <filename>` s
 
 The next switch tells paramin how many subprocesses paramin will spawn, this switch is not in Gadget.  Note that having at least 8 subprocesses will greatly improve the time of the run, but there is no need to let the number of subprocesses exceed the number of parameters, optimally it should be best to have as many subprocesses as the number of parameters, but then one should have access to at least that many processing cores.  A sample file which tells paramin to spawn 30 subprocesses looks like this:
 
-> ;
-> ;Sample network file
-> ;
-> numproc    30
+```
+;
+;Sample network file
+;
+numproc    30
+```
 
 The `-o <filename>` switch specifies which file to output the optimized parameters.  This file will also contain information about the optimization run, how much overall time was taken and how much time was taken for each optimizing algorithm.  The format of this outputted file is the same as the one used as input, so the output can be used as a starting point for later runs.
 
