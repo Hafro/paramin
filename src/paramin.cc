@@ -1,10 +1,11 @@
 #include "mpi.h"
 #include "paramin.h"
 #include "optimizer.h"
-#include "errorhandler.h"
+#include "global.h"
+/*#include "errorhandler.h"
 
 ErrorHandler handle;
-
+*/
 int main(int argc, char* argv[]) {
 	// Tékka hvort viðföng séu í lagi þegar mpirun er notað.
 	//cout << "argc = " << argc << endl; 

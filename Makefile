@@ -27,8 +27,8 @@ GADGET_L = ../gadget/
 CXX = mpic++
 LIBDIRS = -L$(GADGET_L)
 LIBRARIES = -lgadgetinput -lm
-DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
-#DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
+#DEFINE_FLAGS = -D DEBUG -D GADGET_NETWORK -g -O
+DEFINE_FLAGS = -D NDEBUG -D GADGET_NETWORK -O3
 CXXFLAGS = $(GCCWARNINGS) $(DEFINE_FLAGS) -I$(GADGET_H) -I$(INC_DIR)
 ###############################################################
 
