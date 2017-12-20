@@ -33,7 +33,7 @@ void CommandLineInfo::showUsage() {
     << "\nOther valid command line options:\n"
     << " -v --version                 display version information and exit\n"
     << " -h --help                    display this help screen and exit\n"
-    << "\nFor more information see the web page at http://www.hafro.is/gadget/paramin.html\n\n";
+    << "\nFor more information see the web page at http://www.github.com/hafro/paramin\n\n";
   exit(EXIT_SUCCESS);
 }
 
